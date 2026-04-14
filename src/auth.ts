@@ -68,16 +68,24 @@ export function buildPermissionsFromEndpoints(
 
 class AuthManager {
   private msalApp: ConfidentialClientApplication;
+  private secrets: AppSecrets;
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
 
-  constructor(config: Configuration) {
+  constructor(config: Configuration, secrets: AppSecrets) {
     this.msalApp = new ConfidentialClientApplication(config);
+    this.secrets = secrets;
     this.accessToken = null;
     this.tokenExpiry = null;
   }
 
   static async create(secrets: AppSecrets): Promise<AuthManager> {
+    if (!secrets.clientId) {
+      throw new Error(
+        'MS365_ADMIN_MCP_CLIENT_ID is required. ' +
+          'Register an app in Azure AD and provide the Application (client) ID.'
+      );
+    }
     if (!secrets.clientSecret) {
       throw new Error(
         'MS365_ADMIN_MCP_CLIENT_SECRET is required for client credentials flow. ' +
@@ -91,7 +99,7 @@ class AuthManager {
       );
     }
     const config = createMsalConfig(secrets);
-    return new AuthManager(config);
+    return new AuthManager(config, secrets);
   }
 
   async getToken(): Promise<string> {
@@ -117,7 +125,8 @@ class AuthManager {
   async testLogin(): Promise<{ success: boolean; message: string; tenantInfo?: unknown }> {
     try {
       const token = await this.getToken();
-      const response = await fetch('https://graph.microsoft.com/v1.0/organization', {
+      const cloudEndpoints = getCloudEndpoints(this.secrets.cloudType);
+      const response = await fetch(`${cloudEndpoints.graphApi}/v1.0/organization`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

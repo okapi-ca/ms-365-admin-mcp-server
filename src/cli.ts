@@ -72,6 +72,16 @@ export function parseArgs(): CommandOptions {
     options.enabledTools = process.env.ENABLED_TOOLS;
   }
 
+  // Validate regex early so invalid patterns fail at startup, not silently
+  if (options.enabledTools) {
+    try {
+      new RegExp(options.enabledTools, 'i');
+    } catch {
+      console.error(`Error: invalid --enabled-tools regex: ${options.enabledTools}`);
+      process.exit(1);
+    }
+  }
+
   if (options.cloud) {
     process.env.MS365_ADMIN_MCP_CLOUD_TYPE = options.cloud;
   }

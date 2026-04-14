@@ -1,6 +1,17 @@
 import logger from './logger.js';
 import { parseCloudType, type CloudType } from './cloud-config.js';
 
+function requiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(
+      `Required environment variable ${name} is not set. ` +
+        `Register an app in Azure AD and configure all MS365_ADMIN_MCP_* variables.`
+    );
+  }
+  return value;
+}
+
 export interface AppSecrets {
   clientId: string;
   tenantId: string;
@@ -16,9 +27,9 @@ class EnvironmentSecretsProvider implements SecretsProvider {
   async getSecrets(): Promise<AppSecrets> {
     const cloudType = parseCloudType(process.env.MS365_ADMIN_MCP_CLOUD_TYPE);
     return {
-      clientId: process.env.MS365_ADMIN_MCP_CLIENT_ID || '',
-      tenantId: process.env.MS365_ADMIN_MCP_TENANT_ID || '',
-      clientSecret: process.env.MS365_ADMIN_MCP_CLIENT_SECRET,
+      clientId: requiredEnv('MS365_ADMIN_MCP_CLIENT_ID'),
+      tenantId: requiredEnv('MS365_ADMIN_MCP_TENANT_ID'),
+      clientSecret: requiredEnv('MS365_ADMIN_MCP_CLIENT_SECRET'),
       cloudType,
     };
   }
