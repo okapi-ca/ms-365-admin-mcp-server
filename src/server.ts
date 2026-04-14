@@ -1,0 +1,62 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import logger, { enableConsoleLogging } from './logger.js';
+import { registerGraphTools } from './graph-tools.js';
+import GraphClient from './graph-client.js';
+import AuthManager from './auth.js';
+import type { CommandOptions } from './cli.ts';
+import { getSecrets, type AppSecrets } from './secrets.js';
+
+class AdminGraphServer {
+  private authManager: AuthManager;
+  private options: CommandOptions;
+  private graphClient: GraphClient | null;
+  private server: McpServer | null;
+  private secrets: AppSecrets | null;
+  private version: string = '0.1.0';
+
+  constructor(authManager: AuthManager, options: CommandOptions = {}) {
+    this.authManager = authManager;
+    this.options = options;
+    this.graphClient = null;
+    this.server = null;
+    this.secrets = null;
+  }
+
+  async initialize(version: string): Promise<void> {
+    this.secrets = await getSecrets();
+    this.version = version;
+    this.graphClient = new GraphClient(this.authManager, this.secrets);
+
+    this.server = new McpServer({
+      name: 'Microsoft365AdminMCP',
+      version: this.version,
+    });
+
+    registerGraphTools(
+      this.server,
+      this.graphClient,
+      this.options.readOnly,
+      this.options.enabledTools
+    );
+  }
+
+  async start(): Promise<void> {
+    if (this.options.v) {
+      enableConsoleLogging();
+    }
+
+    logger.info('Microsoft 365 Admin MCP Server starting...');
+    logger.info('Auth mode: client credentials (application permissions)');
+
+    if (this.options.readOnly) {
+      logger.info('Server running in READ-ONLY mode.');
+    }
+
+    const transport = new StdioServerTransport();
+    await this.server!.connect(transport);
+    logger.info('Server connected to stdio transport');
+  }
+}
+
+export default AdminGraphServer;

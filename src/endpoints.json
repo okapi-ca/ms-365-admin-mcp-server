@@ -1,0 +1,118 @@
+[
+  {
+    "pathPattern": "/security/alerts_v2",
+    "method": "get",
+    "toolName": "list-security-alerts",
+    "appPermissions": ["SecurityAlert.Read.All"],
+    "llmTip": "Lists security alerts from Microsoft 365 Defender. Use $filter=status eq 'new' or status eq 'inProgress' to filter by status. Use $filter=severity eq 'high' to filter by severity (informational, low, medium, high). Use $orderby=createdDateTime desc to sort by newest. Use $top to limit results. Each alert has title, description, severity, status, category, serviceSource, detectionSource, and evidence."
+  },
+  {
+    "pathPattern": "/security/alerts_v2/{alert-id}",
+    "method": "get",
+    "toolName": "get-security-alert",
+    "appPermissions": ["SecurityAlert.Read.All"],
+    "llmTip": "Gets a specific security alert by ID. Returns full alert details including title, description, severity, status, category, serviceSource, evidence, mitreTechniques, actorDisplayName, and recommendedActions."
+  },
+  {
+    "pathPattern": "/security/alerts_v2/{alert-id}",
+    "method": "patch",
+    "toolName": "update-security-alert",
+    "appPermissions": ["SecurityAlert.ReadWrite.All"],
+    "llmTip": "Updates a security alert. Body can include: status ('new', 'inProgress', 'resolved'), assignedTo (email), classification ('truePositive', 'falsePositive', 'informationalExpectedActivity'), determination, comment."
+  },
+  {
+    "pathPattern": "/security/incidents",
+    "method": "get",
+    "toolName": "list-security-incidents",
+    "appPermissions": ["SecurityIncident.Read.All"],
+    "llmTip": "Lists security incidents from Microsoft 365 Defender. An incident correlates multiple alerts from the same attack. Use $filter=status eq 'active' to filter active incidents. Use $filter=severity eq 'high' to filter by severity. Use $orderby=createdDateTime desc. Each incident has displayName, severity, status, assignedTo, classification, and linked alerts."
+  },
+  {
+    "pathPattern": "/security/incidents/{incident-id}",
+    "method": "get",
+    "toolName": "get-security-incident",
+    "appPermissions": ["SecurityIncident.Read.All"],
+    "llmTip": "Gets a specific security incident by ID. Returns full details including displayName, severity, status, assignedTo, classification, determination, description, and linked alerts."
+  },
+  {
+    "pathPattern": "/security/incidents/{incident-id}",
+    "method": "patch",
+    "toolName": "update-security-incident",
+    "appPermissions": ["SecurityIncident.ReadWrite.All"],
+    "llmTip": "Updates a security incident. Body can include: status ('active', 'resolved', 'redirected'), assignedTo (email), classification ('truePositive', 'falsePositive', 'informationalExpectedActivity'), determination, customTags."
+  },
+  {
+    "pathPattern": "/auditLogs/directoryAudits",
+    "method": "get",
+    "toolName": "list-directory-audits",
+    "appPermissions": ["AuditLog.Read.All"],
+    "llmTip": "Lists Azure AD directory audit logs. Use $filter=activityDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=category eq 'UserManagement' to filter by category. Use $filter=activityDisplayName eq 'Add user' to find specific activities. Each entry has activityDisplayName, category, result, initiatedBy, targetResources, and activityDateTime."
+  },
+  {
+    "pathPattern": "/auditLogs/signIns",
+    "method": "get",
+    "toolName": "list-sign-ins",
+    "appPermissions": ["AuditLog.Read.All"],
+    "llmTip": "Lists Azure AD sign-in logs. Use $filter=createdDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=userPrincipalName eq 'user@domain.com' to filter by user. Use $filter=status/errorCode ne 0 to find failed sign-ins. Each entry has userDisplayName, userPrincipalName, appDisplayName, ipAddress, location, status, conditionalAccessStatus, and riskState."
+  },
+  {
+    "pathPattern": "/auditLogs/provisioning",
+    "method": "get",
+    "toolName": "list-provisioning-logs",
+    "appPermissions": ["AuditLog.Read.All"],
+    "llmTip": "Lists provisioning logs for Azure AD and third-party integrations. Use $filter=statusInfo/status eq 'failure' to find failed provisioning events. Use $filter=provisioningAction eq 'create' to filter by action type (create, update, delete, disable). Each entry has sourceSystem, targetSystem, provisioningAction, initiatedBy, sourceIdentity, targetIdentity, and statusInfo."
+  },
+  {
+    "pathPattern": "/admin/serviceAnnouncement/healthOverviews",
+    "method": "get",
+    "toolName": "list-service-health",
+    "appPermissions": ["ServiceHealth.Read.All"],
+    "llmTip": "Lists health status for all Microsoft 365 services. Each entry has service name (Exchange Online, Microsoft Teams, etc.) and status (serviceDegradation, serviceOperational, etc.). Use $select=service,status to get a quick overview."
+  },
+  {
+    "pathPattern": "/admin/serviceAnnouncement/issues",
+    "method": "get",
+    "toolName": "list-service-issues",
+    "appPermissions": ["ServiceHealth.Read.All"],
+    "llmTip": "Lists active and recent service health issues. Use $filter=isResolved eq false to see only active issues. Each issue has title, service, status (investigating, serviceRestored, etc.), classification (advisory, incident), startDateTime, and posts with updates."
+  },
+  {
+    "pathPattern": "/admin/serviceAnnouncement/messages",
+    "method": "get",
+    "toolName": "list-service-messages",
+    "appPermissions": ["ServiceMessage.Read.All"],
+    "llmTip": "Lists Message Center posts about planned changes, new features, and actions required. Use $filter=services/any(s:s eq 'Exchange Online') to filter by service. Use $filter=category eq 'planForChange' to filter by category (planForChange, stayInformed, preventOrFixIssue). Each message has title, body, services, tags, startDateTime, endDateTime, and actionRequiredByDateTime."
+  },
+  {
+    "pathPattern": "/reports/getTeamsUserActivityCounts(period='{period}')",
+    "method": "get",
+    "toolName": "get-teams-activity-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets Teams user activity counts for the specified period. The period parameter must be one of: D7, D30, D90, D180 (last 7/30/90/180 days). Returns CSV data with daily counts of teamChatMessages, privateChatMessages, calls, and meetings."
+  },
+  {
+    "pathPattern": "/reports/getEmailActivityCounts(period='{period}')",
+    "method": "get",
+    "toolName": "get-email-activity-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets email activity counts for the specified period. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with daily counts of send, receive, and read email activities."
+  },
+  {
+    "pathPattern": "/reports/getOffice365ActiveUserDetail(period='{period}')",
+    "method": "get",
+    "toolName": "get-active-users-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets details about active Microsoft 365 users. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with per-user details: displayName, isDeleted, lastActivityDate, and product-specific activity dates (Exchange, OneDrive, SharePoint, Teams, etc.)."
+  },
+  {
+    "pathPattern": "/reports/getSharePointSiteUsageDetail(period='{period}')",
+    "method": "get",
+    "toolName": "get-sharepoint-usage-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets SharePoint site usage details. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with per-site details: siteUrl, ownerDisplayName, storageUsedInBytes, fileCount, activeFileCount, pageViewCount, lastActivityDate."
+  }
+]

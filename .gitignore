@@ -1,0 +1,37 @@
+node_modules/
+dist
+coverage
+*.lcov
+.nyc_output
+*.tsbuildinfo
+.npm
+.eslintcache
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OpenAPI spec (downloaded at build time)
+openapi
+
+# Generated client
+src/generated/client.ts
+
+# Token cache
+.token-cache.json
+
+# IDE
+.idea
+.vscode-test
+
+# Claude
+CLAUDE.md
+.claude/
+.serena/
+
+# MCP configuration
+.mcp.json
+
+# OS
+.DS_Store
