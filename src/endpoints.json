@@ -3322,8 +3322,8 @@
     "method": "post",
     "toolName": "set-application-verified-publisher",
     "appPermissions": ["Application.ReadWrite.All"],
-    "riskLevel": "medium",
-    "llmTip": "Sets the verified publisher MPN ID on an application. Body: {\"verifiedPublisherId\":\"<mpn-id>\"}. Requires a verified MPN account in Partner Center."
+    "riskLevel": "high",
+    "llmTip": "Sets the verified publisher MPN ID on an application. Body: {\"verifiedPublisherId\":\"<mpn-id>\"}. Requires a verified MPN account in Partner Center. Impacts the consent UX for every user across every tenant that sees the app."
   },
 
   {
