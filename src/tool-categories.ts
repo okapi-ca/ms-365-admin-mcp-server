@@ -49,7 +49,7 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   intune: {
     name: 'intune',
     pattern:
-      /managed-device|compliance-policy|compliance-state|device-configuration|enrollment|autopilot|detected-app|device-overview|intune|software-update|apple-push|mtd-connector|ios-update|device-categor|compliance-management|device-management-partner|exchange-connector|remote-assistance|notification-message|resource-operation|imported-autopilot|malware|mobile-app|app-categor|app-configuration|managed-app|app-protection|wip-polic|vpp-token|targeted-app/i,
+      /managed-device|compliance-policy|compliance-state|device-configuration|enrollment|autopilot|detected-app|device-overview|intune|software-update|apple-push|mtd-connector|ios-update|device-categor|compliance-management|device-management-partner|exchange-connector|remote-assistance|notification-message|resource-operation|imported-autopilot|malware|mobile-app|app-categor|app-configuration|managed-app|app-protection|wip-polic|vpp-token|targeted-app|wipe-managed|retire-managed|sync-managed|reboot-managed|remote-lock|reset-device|shutdown-managed|lost-mode|locate-managed|bypass-activation|defender-scan|defender-signature|clean-windows|shared-apple|windows-device-account/i,
     description:
       'Intune device management (managed devices, compliance, configurations, Autopilot, apps, MAM, RBAC, reports)',
   },
@@ -63,7 +63,7 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   response: {
     name: 'response',
     pattern:
-      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query/i,
+      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query|wipe-managed|retire-managed|remote-lock|locate-managed|bypass-activation/i,
     description:
       'Incident response operations (disable user, revoke sessions, confirm compromised/safe, dismiss risk, hunting queries)',
   },
