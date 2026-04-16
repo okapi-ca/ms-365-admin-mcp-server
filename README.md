@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **82 tools** covering security, audit, identity, compliance, reports, and incident response
+- **199 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -98,16 +98,26 @@ node dist/index.js --preset identity
 node dist/index.js --preset security,audit,identity
 ```
 
-| Preset       | Description                                                            |
-| ------------ | ---------------------------------------------------------------------- |
-| `security`   | Security alerts, incidents, and attack simulations                     |
-| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items           |
-| `health`     | Service health and Message Center                                      |
-| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps) |
-| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains  |
-| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies |
-| `response`   | Incident response write operations (disable, revoke, confirm, dismiss) |
-| `all`        | All available tools                                                    |
+| Preset            | Description                                                                 |
+| ----------------- | --------------------------------------------------------------------------- |
+| `security`        | Security alerts, incidents, attack simulations, and threat intelligence     |
+| `audit`           | Directory audits, sign-ins, provisioning logs, deleted items                |
+| `health`          | Service health and Message Center                                           |
+| `reports`         | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)      |
+| `identity`        | Users, groups, roles, devices, PIM, guest users, external identities        |
+| `exchange`        | Exchange administration (message traces, mailboxes)                         |
+| `intune`          | Managed devices, compliance, configurations, Autopilot, apps, RBAC          |
+| `governance`      | Access reviews, entitlement management, lifecycle workflows, terms of use   |
+| `compliance`      | Licenses, Secure Score, Identity Protection, risk detections, policies      |
+| `response`        | Incident response write operations (disable, revoke, confirm, dismiss)      |
+| `ediscovery`      | eDiscovery cases (Microsoft Purview)                                        |
+| `cloudpc`         | Cloud PC / Windows 365 (provisioning, images, connections, settings, audit) |
+| `callrecords`     | Teams call records                                                          |
+| `print`           | Universal Print (printers, shares, connectors, services, operations, tasks) |
+| `infoprotection`  | Information Protection (BitLocker recovery keys, threat assessment)         |
+| `sharepointadmin` | SharePoint tenant administration settings                                   |
+| `retention`       | Records Management (retention labels, file plan metadata)                   |
+| `all`             | All available tools                                                         |
 
 ### Verify credentials
 
@@ -115,7 +125,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (82)
+## Available tools (199)
 
 ### Security (8)
 
@@ -224,6 +234,25 @@ node dist/index.js --verify-login
 | `list-user-app-role-assignments` | GET    |
 | `list-sp-app-role-assignments`   | GET    |
 
+### App credentials & owners (7)
+
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `get-application`                | GET    |
+| `list-application-owners`        | GET    |
+| `list-app-federated-credentials` | GET    |
+| `get-app-federated-credential`   | GET    |
+| `get-service-principal`          | GET    |
+| `list-service-principal-owners`  | GET    |
+| `list-sp-delegated-permissions`  | GET    |
+
+### App management policies (2)
+
+| Tool                           | Method |
+| ------------------------------ | ------ |
+| `list-app-management-policies` | GET    |
+| `get-app-management-policy`    | GET    |
+
 ### Organization (2)
 
 | Tool               | Method |
@@ -272,6 +301,210 @@ node dist/index.js --verify-login
 | `get-cross-tenant-access-policy` | GET    |
 | `list-cross-tenant-partners`     | GET    |
 
+### Guest user invitations (2)
+
+| Tool                | Method | Risk   |
+| ------------------- | ------ | ------ |
+| `list-invitations`  | GET    |        |
+| `create-invitation` | POST   | medium |
+
+### External identity providers (2)
+
+| Tool                      | Method |
+| ------------------------- | ------ |
+| `list-identity-providers` | GET    |
+| `get-identity-provider`   | GET    |
+
+### Self-service sign-up (4)
+
+| Tool                  | Method |
+| --------------------- | ------ |
+| `list-b2x-user-flows` | GET    |
+| `get-b2x-user-flow`   | GET    |
+| `list-api-connectors` | GET    |
+| `get-api-connector`   | GET    |
+
+### Custom authentication extensions (2)
+
+| Tool                          | Method |
+| ----------------------------- | ------ |
+| `list-custom-auth-extensions` | GET    |
+| `get-custom-auth-extension`   | GET    |
+
+### Exchange message traces (2)
+
+| Tool                  | Method |
+| --------------------- | ------ |
+| `list-message-traces` | GET    |
+| `get-message-trace`   | GET    |
+
+### Exchange mailboxes (2)
+
+| Tool                      | Method |
+| ------------------------- | ------ |
+| `list-exchange-mailboxes` | GET    |
+| `get-exchange-mailbox`    | GET    |
+
+### Threat intelligence - hosts (4)
+
+| Tool                           | Method |
+| ------------------------------ | ------ |
+| `list-threat-intel-hosts`      | GET    |
+| `get-threat-intel-host`        | GET    |
+| `get-threat-intel-host-whois`  | GET    |
+| `list-threat-intel-host-pairs` | GET    |
+
+### Threat intelligence - articles & profiles (6)
+
+| Tool                                   | Method |
+| -------------------------------------- | ------ |
+| `list-threat-intel-articles`           | GET    |
+| `get-threat-intel-article`             | GET    |
+| `list-threat-intel-article-indicators` | GET    |
+| `list-threat-intel-profiles`           | GET    |
+| `get-threat-intel-profile`             | GET    |
+| `list-threat-intel-profile-indicators` | GET    |
+
+### Threat intelligence - vulnerabilities & WHOIS (4)
+
+| Tool                                | Method |
+| ----------------------------------- | ------ |
+| `list-threat-intel-vulnerabilities` | GET    |
+| `get-threat-intel-vulnerability`    | GET    |
+| `list-threat-intel-whois-records`   | GET    |
+| `get-threat-intel-whois-record`     | GET    |
+
+### Threat intelligence - infrastructure (2)
+
+| Tool                                | Method |
+| ----------------------------------- | ------ |
+| `list-threat-intel-host-components` | GET    |
+| `list-threat-intel-ssl-certs`       | GET    |
+
+### Managed devices (5)
+
+| Tool                               | Method |
+| ---------------------------------- | ------ |
+| `list-managed-devices`             | GET    |
+| `get-managed-device`               | GET    |
+| `list-device-compliance-states`    | GET    |
+| `list-device-configuration-states` | GET    |
+| `get-managed-device-overview`      | GET    |
+
+### Compliance policies (5)
+
+| Tool                                     | Method |
+| ---------------------------------------- | ------ |
+| `list-compliance-policies`               | GET    |
+| `get-compliance-policy`                  | GET    |
+| `list-compliance-policy-device-statuses` | GET    |
+| `get-compliance-policy-status-overview`  | GET    |
+| `get-compliance-state-summary`           | GET    |
+
+### Device configurations (3)
+
+| Tool                                       | Method |
+| ------------------------------------------ | ------ |
+| `list-device-configurations`               | GET    |
+| `get-device-configuration`                 | GET    |
+| `get-device-configuration-status-overview` | GET    |
+
+### Enrollment & Autopilot (4)
+
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `list-enrollment-configurations` | GET    |
+| `get-enrollment-configuration`   | GET    |
+| `list-autopilot-devices`         | GET    |
+| `get-autopilot-device`           | GET    |
+
+### Detected apps (3)
+
+| Tool                        | Method |
+| --------------------------- | ------ |
+| `list-detected-apps`        | GET    |
+| `get-detected-app`          | GET    |
+| `list-detected-app-devices` | GET    |
+
+### Intune RBAC & config (7)
+
+| Tool                               | Method |
+| ---------------------------------- | ------ |
+| `list-intune-audit-events`         | GET    |
+| `get-software-update-summary`      | GET    |
+| `get-apple-push-certificate`       | GET    |
+| `list-intune-role-definitions`     | GET    |
+| `list-intune-role-assignments`     | GET    |
+| `list-intune-terms-and-conditions` | GET    |
+| `list-intune-terms-acceptances`    | GET    |
+
+### Intune connectors & updates (3)
+
+| Tool                                     | Method |
+| ---------------------------------------- | ------ |
+| `get-intune-conditional-access-settings` | GET    |
+| `list-mtd-connectors`                    | GET    |
+| `list-ios-update-statuses`               | GET    |
+
+### Device categories (1)
+
+| Tool                     | Method |
+| ------------------------ | ------ |
+| `list-device-categories` | GET    |
+
+### Access reviews (5)
+
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `list-access-review-definitions` | GET    |
+| `get-access-review-definition`   | GET    |
+| `list-access-review-instances`   | GET    |
+| `get-access-review-instance`     | GET    |
+| `list-access-review-decisions`   | GET    |
+
+### Entitlement management (7)
+
+| Tool                                  | Method |
+| ------------------------------------- | ------ |
+| `list-access-packages`                | GET    |
+| `get-access-package`                  | GET    |
+| `list-access-package-assignments`     | GET    |
+| `list-access-package-requests`        | GET    |
+| `list-access-package-catalogs`        | GET    |
+| `list-connected-organizations`        | GET    |
+| `get-entitlement-management-settings` | GET    |
+
+### Lifecycle workflows (3)
+
+| Tool                              | Method |
+| --------------------------------- | ------ |
+| `list-lifecycle-workflows`        | GET    |
+| `get-lifecycle-workflow`          | GET    |
+| `list-lifecycle-task-definitions` | GET    |
+
+### PIM for Groups (2)
+
+| Tool                                   | Method |
+| -------------------------------------- | ------ |
+| `list-pim-group-assignment-schedules`  | GET    |
+| `list-pim-group-eligibility-schedules` | GET    |
+
+### Terms of use (3)
+
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `list-terms-of-use-agreements`  | GET    |
+| `get-terms-of-use-agreement`    | GET    |
+| `list-terms-of-use-acceptances` | GET    |
+
+### App consent requests (3)
+
+| Tool                         | Method |
+| ---------------------------- | ------ |
+| `list-app-consent-requests`  | GET    |
+| `get-app-consent-request`    | GET    |
+| `list-user-consent-requests` | GET    |
+
 ### Incident response (7) -- requires `--allow-writes`
 
 | Tool                            | Method | Risk     |
@@ -284,40 +517,128 @@ node dist/index.js --verify-login
 | `dismiss-risky-users`           | POST   | medium   |
 | `delete-user-phone-auth-method` | DELETE | high     |
 
+### eDiscovery (1)
+
+| Tool                    | Method | Risk |
+| ----------------------- | ------ | ---- |
+| `list-ediscovery-cases` | GET    |      |
+
+### Teams call records (1)
+
+| Tool                | Method | Risk |
+| ------------------- | ------ | ---- |
+| `list-call-records` | GET    |      |
+
+### Cloud PC / Windows 365 (7)
+
+| Tool                                    | Method | Risk |
+| --------------------------------------- | ------ | ---- |
+| `list-cloud-pcs`                        | GET    |      |
+| `list-cloud-pc-provisioning-policies`   | GET    |      |
+| `list-cloud-pc-device-images`           | GET    |      |
+| `list-cloud-pc-gallery-images`          | GET    |      |
+| `list-cloud-pc-on-premises-connections` | GET    |      |
+| `list-cloud-pc-user-settings`           | GET    |      |
+| `list-cloud-pc-audit-events`            | GET    |      |
+
+### Universal Print (6)
+
+| Tool                          | Method | Risk |
+| ----------------------------- | ------ | ---- |
+| `list-printers`               | GET    |      |
+| `list-print-shares`           | GET    |      |
+| `list-print-connectors`       | GET    |      |
+| `list-print-services`         | GET    |      |
+| `list-print-operations`       | GET    |      |
+| `list-print-task-definitions` | GET    |      |
+
+### Information Protection (2)
+
+| Tool                              | Method | Risk |
+| --------------------------------- | ------ | ---- |
+| `list-bitlocker-recovery-keys`    | GET    |      |
+| `list-threat-assessment-requests` | GET    |      |
+
+### SharePoint admin (1)
+
+| Tool                      | Method | Risk |
+| ------------------------- | ------ | ---- |
+| `get-sharepoint-settings` | GET    |      |
+
+### Records Management (6)
+
+| Tool                         | Method | Risk |
+| ---------------------------- | ------ | ---- |
+| `list-retention-labels`      | GET    |      |
+| `list-file-plan-authorities` | GET    |      |
+| `list-file-plan-categories`  | GET    |      |
+| `list-file-plan-citations`   | GET    |      |
+| `list-file-plan-departments` | GET    |      |
+| `list-file-plan-references`  | GET    |      |
+
 ## Azure AD permissions
 
 ### Read-only (default)
 
 ```
+AccessReview.Read.All
 AdministrativeUnit.Read.All
+Agreement.Read.All
 Application.Read.All
 AppRoleAssignment.ReadWrite.All
 AttackSimulation.Read.All
 AuditLog.Read.All
+ConsentRequest.Read.All
+CustomAuthenticationExtension.Read.All
 Device.Read.All
+DeviceManagementApps.Read.All
+DeviceManagementConfiguration.Read.All
+DeviceManagementManagedDevices.Read.All
+DeviceManagementRBAC.Read.All
+DeviceManagementServiceConfig.Read.All
 Directory.Read.All
 Domain.Read.All
+EntitlementManagement.Read.All
+Exchange.ManageAsApp
 Group.Read.All
 GroupMember.Read.All
+APIConnectors.Read.All
+IdentityProvider.Read.All
 IdentityRiskEvent.Read.All
+IdentityUserFlow.Read.All
 IdentityRiskyServicePrincipal.Read.All
 IdentityRiskyUser.Read.All
+LifecycleWorkflows.Read.All
 Organization.Read.All
 Policy.Read.All
+MailboxSettings.Read
+PrivilegedAccess.Read.AzureADGroup
 Reports.Read.All
 RoleAssignmentSchedule.Read.Directory
 RoleEligibilitySchedule.Read.Directory
 RoleManagement.Read.Directory
+BitlockerKey.Read.All
+CallRecords.Read.All
+CloudPC.Read.All
+eDiscovery.Read.All
+Printer.Read.All
+PrintConnector.Read.All
+PrintJob.Read.All
+RecordsManagement.Read.All
 SecurityAlert.Read.All
 SecurityEvents.Read.All
 SecurityIncident.Read.All
+SharePointTenantSettings.Read.All
+ThreatAssessment.Read.All
+ThreatIntelligence.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
+User.Invite.All
 User.Read.All
 UserAuthenticationMethod.Read.All
 ```
 
-### Write (incident response)
+### Write (incident response + invitations)
 
 ```
 Device.ReadWrite.All

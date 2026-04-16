@@ -7,8 +7,9 @@ export interface ToolCategory {
 export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   security: {
     name: 'security',
-    pattern: /security|alert|incident|attack-simulation/i,
-    description: 'Security alerts, incidents, and attack simulations (Microsoft 365 Defender)',
+    pattern: /security|alert|incident|attack-simulation|threat-intel/i,
+    description:
+      'Security alerts, incidents, attack simulations, and threat intelligence (Microsoft 365 Defender)',
   },
   audit: {
     name: 'audit',
@@ -29,9 +30,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   identity: {
     name: 'identity',
     pattern:
-      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role/i,
+      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role|invitation|identity-provider|b2x|api-connector|custom-auth/i,
     description:
-      'Identity and access management (Entra ID users, groups, roles, devices, PIM, policies)',
+      'Identity and access management (Entra ID users, groups, roles, devices, PIM, guest users, external identities)',
   },
   compliance: {
     name: 'compliance',
@@ -40,12 +41,69 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
     description:
       'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
   },
+  exchange: {
+    name: 'exchange',
+    pattern: /message-trace|exchange-mailbox|mailbox-usage/i,
+    description: 'Exchange administration (message traces, mailboxes)',
+  },
+  intune: {
+    name: 'intune',
+    pattern:
+      /managed-device|compliance-policy|compliance-state|device-configuration|enrollment|autopilot|detected-app|device-overview|intune|software-update|apple-push|mtd-connector|ios-update|device-categor/i,
+    description:
+      'Intune device management (managed devices, compliance, configurations, Autopilot, apps, RBAC)',
+  },
+  governance: {
+    name: 'governance',
+    pattern:
+      /access-review|access-package|entitlement|connected-org|lifecycle|pim-group|terms-of-use|app-consent|user-consent/i,
+    description:
+      'Identity Governance (access reviews, entitlement management, lifecycle workflows, PIM for Groups, terms of use, app consent)',
+  },
   response: {
     name: 'response',
     pattern:
       /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky/i,
     description:
       'Incident response operations (disable user, revoke sessions, confirm compromised, dismiss risk, update alerts)',
+  },
+  ediscovery: {
+    name: 'ediscovery',
+    pattern: /ediscovery/i,
+    description: 'eDiscovery cases (Microsoft Purview)',
+  },
+  cloudpc: {
+    name: 'cloudpc',
+    pattern: /cloud-pc|provisioning-polic/i,
+    description:
+      'Cloud PC / Windows 365 (cloud PCs, provisioning policies, device images, gallery images, network connections, user settings, audit events)',
+  },
+  callrecords: {
+    name: 'callrecords',
+    pattern: /call-record/i,
+    description: 'Teams call records',
+  },
+  print: {
+    name: 'print',
+    pattern: /print/i,
+    description:
+      'Universal Print (printers, shares, connectors, services, operations, task definitions)',
+  },
+  infoprotection: {
+    name: 'infoprotection',
+    pattern: /bitlocker|threat-assessment|recovery-key/i,
+    description: 'Information Protection (BitLocker recovery keys, threat assessment requests)',
+  },
+  sharepointadmin: {
+    name: 'sharepointadmin',
+    pattern: /sharepoint-setting/i,
+    description: 'SharePoint tenant administration settings',
+  },
+  retention: {
+    name: 'retention',
+    pattern: /retention-label|file-plan/i,
+    description:
+      'Records Management (retention labels, file plan authorities, categories, citations, departments, references)',
   },
   all: {
     name: 'all',

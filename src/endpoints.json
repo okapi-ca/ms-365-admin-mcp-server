@@ -609,5 +609,870 @@
     "toolName": "get-attack-simulation",
     "appPermissions": ["AttackSimulation.Read.All"],
     "llmTip": "Gets a specific attack simulation by ID. Returns full details including report with simulationEventsContent (users who clicked, reported, etc.) and trainingsContent."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions",
+    "method": "get",
+    "toolName": "list-access-review-definitions",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists all access review schedule definitions. Each definition has displayName, status (NotStarted, InProgress, Completed, Applied), scope (what is being reviewed: group members, app role assignments, etc.), reviewers, and settings (autoApplyDecisions, mailNotificationsEnabled, recurrence). Use $filter=status eq 'InProgress' to find active reviews."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}",
+    "method": "get",
+    "toolName": "get-access-review-definition",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Gets a specific access review schedule definition by ID. Returns full configuration including scope, reviewers, fallbackReviewers, settings, stageSettings, and instances."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances",
+    "method": "get",
+    "toolName": "list-access-review-instances",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists instances of an access review definition. Each recurring review creates instances. Each instance has status, startDateTime, endDateTime, and scope. Use to track review progress over time."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}",
+    "method": "get",
+    "toolName": "get-access-review-instance",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Gets a specific access review instance. Returns status, startDateTime, endDateTime, scope, and reviewers for this particular execution of the review."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/decisions",
+    "method": "get",
+    "toolName": "list-access-review-decisions",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists decisions made during an access review instance. Each decision has target (user/group), decision (Approve, Deny, NotReviewed, DontKnow), reviewedBy, justification, and appliedDateTime. Use to audit review outcomes and ensure decisions were applied."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages",
+    "method": "get",
+    "toolName": "list-access-packages",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists all access packages in entitlement management. Each package bundles resources (group memberships, app roles, SharePoint sites) that can be requested. Use $select=displayName,description,isHidden,createdDateTime,modifiedDateTime. Use $expand=catalog to see which catalog each package belongs to."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages/{accessPackage-id}",
+    "method": "get",
+    "toolName": "get-access-package",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Gets a specific access package by ID. Use $expand=resourceRoleScopes($expand=role,scope) to see what resources the package grants access to."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignments",
+    "method": "get",
+    "toolName": "list-access-package-assignments",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists access package assignments — who has been granted which access packages. Use $filter=state eq 'Delivered' to find active assignments. Use $filter=targetId eq '{user-id}' to find all packages assigned to a user. Use $expand=target,accessPackage to get user and package details. Each assignment has state (Delivering, Delivered, Expired, DeliveryFailed), schedule, and targetId."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests",
+    "method": "get",
+    "toolName": "list-access-package-requests",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists access package assignment requests. Use $filter=state eq 'submitted' to find pending requests. Each request has requestType (UserAdd, AdminAdd, AdminRemove), state (submitted, approved, denied, delivering, delivered, deliveryFailed), createdDateTime, and schedule."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/catalogs",
+    "method": "get",
+    "toolName": "list-access-package-catalogs",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists access package catalogs. Catalogs are containers for access packages and their resources. Each has displayName, description, catalogType (UserManaged, ServiceDefault), state (published, unpublished), isExternallyVisible, and createdDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/connectedOrganizations",
+    "method": "get",
+    "toolName": "list-connected-organizations",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists connected organizations in entitlement management. Connected organizations represent external organizations whose users can request access packages. Each has displayName, description, state (configured, proposed), identitySources (tenant IDs, domains), and createdDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/settings",
+    "method": "get",
+    "toolName": "get-entitlement-management-settings",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Gets entitlement management settings for the tenant. Returns externalUserLifecycleAction (None, BlockSignIn, BlockSignInAndDelete), daysUntilExternalUserDeletedAfterBlocked, and isB2BExternalCollab settings."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows",
+    "method": "get",
+    "toolName": "list-lifecycle-workflows",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists lifecycle workflows (joiner, mover, leaver). Each workflow has displayName, description, category (joiner, mover, leaver), isEnabled, isSchedulingEnabled, executionConditions (scope, trigger), and tasks. Useful for auditing automated onboarding/offboarding processes."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}",
+    "method": "get",
+    "toolName": "get-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Gets a specific lifecycle workflow by ID. Returns full details including tasks, executionConditions, lastModifiedDateTime, and version. Use $expand=tasks to see all tasks in the workflow."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/taskDefinitions",
+    "method": "get",
+    "toolName": "list-lifecycle-task-definitions",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists available task definitions for lifecycle workflows. Each has displayName, description, category (joiner, leaver), and parameters. Examples: Send welcome email, Add user to group, Remove user from group, Disable user account, Delete user."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentSchedules",
+    "method": "get",
+    "toolName": "list-pim-group-assignment-schedules",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilitySchedules",
+    "method": "get",
+    "toolName": "list-pim-group-eligibility-schedules",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/termsOfUse/agreements",
+    "method": "get",
+    "toolName": "list-terms-of-use-agreements",
+    "appPermissions": ["Agreement.Read.All"],
+    "llmTip": "Lists terms of use agreements. Each agreement has displayName, isPerDeviceAcceptanceRequired, isViewingBeforeAcceptanceRequired, userReexpireFrequency, and termsExpiration. Useful for auditing compliance with organizational policies."
+  },
+  {
+    "pathPattern": "/identityGovernance/termsOfUse/agreements/{agreement-id}",
+    "method": "get",
+    "toolName": "get-terms-of-use-agreement",
+    "appPermissions": ["Agreement.Read.All"],
+    "llmTip": "Gets a specific terms of use agreement. Returns full details including acceptance status configuration and file content."
+  },
+  {
+    "pathPattern": "/identityGovernance/termsOfUse/agreements/{agreement-id}/acceptances",
+    "method": "get",
+    "toolName": "list-terms-of-use-acceptances",
+    "appPermissions": ["Agreement.Read.All"],
+    "llmTip": "Lists acceptances for a terms of use agreement. Each acceptance has userId, userDisplayName, userPrincipalName, state (accepted, declined), recordedDateTime, and expirationDateTime. Useful for compliance reporting on who has accepted terms."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/appConsent/appConsentRequests",
+    "method": "get",
+    "toolName": "list-app-consent-requests",
+    "appPermissions": ["ConsentRequest.Read.All"],
+    "llmTip": "Lists app consent requests. When users request access to apps that require admin consent, those requests appear here. Each has appId, appDisplayName, and pendingScopes. Use to review and manage pending consent requests."
+  },
+  {
+    "pathPattern": "/identityGovernance/appConsent/appConsentRequests/{appConsentRequest-id}",
+    "method": "get",
+    "toolName": "get-app-consent-request",
+    "appPermissions": ["ConsentRequest.Read.All"],
+    "llmTip": "Gets a specific app consent request. Returns appId, appDisplayName, pendingScopes, and linked userConsentRequests showing which users requested access."
+  },
+  {
+    "pathPattern": "/identityGovernance/appConsent/appConsentRequests/{appConsentRequest-id}/userConsentRequests",
+    "method": "get",
+    "toolName": "list-user-consent-requests",
+    "appPermissions": ["ConsentRequest.Read.All"],
+    "llmTip": "Lists user consent requests for a specific app consent request. Each has createdBy, status (Submitted, InProgress, Completed), and reason. Shows which individual users requested consent for the app."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/managedDevices",
+    "method": "get",
+    "toolName": "list-managed-devices",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists all Intune-managed devices. Use $filter=operatingSystem eq 'Windows' to filter by OS. Use $filter=complianceState eq 'noncompliant' to find non-compliant devices. Use $select=deviceName,operatingSystem,osVersion,complianceState,isEncrypted,managementAgent,enrolledDateTime,lastSyncDateTime,userPrincipalName. Use $filter=lastSyncDateTime le 2024-01-01T00:00:00Z to find stale devices."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}",
+    "method": "get",
+    "toolName": "get-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Gets a specific Intune-managed device by ID. Returns full details: deviceName, operatingSystem, osVersion, complianceState, isEncrypted, jailBroken, managementAgent, enrolledDateTime, lastSyncDateTime, userPrincipalName, azureADDeviceId, model, manufacturer, serialNumber, wiFiMacAddress."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deviceCompliancePolicyStates",
+    "method": "get",
+    "toolName": "list-device-compliance-states",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists compliance policy states for a specific managed device. Shows which compliance policies apply and their state (compliant, nonCompliant, notApplicable, error). Each has displayName, state, settingCount, settingStates."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deviceConfigurationStates",
+    "method": "get",
+    "toolName": "list-device-configuration-states",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists configuration profile states for a specific managed device. Shows which configuration profiles apply and their state (notApplicable, success, error, conflict). Each has displayName, state, settingCount."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies",
+    "method": "get",
+    "toolName": "list-compliance-policies",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists all Intune device compliance policies. Each has displayName, description, @odata.type (platform-specific: windows10, iOS, androidWorkProfile, macOS), createdDateTime, lastModifiedDateTime, and version. Use to audit what compliance rules are in place."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "get",
+    "toolName": "get-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a specific compliance policy. Returns full details including platform-specific settings (password requirements, encryption, OS version, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/deviceStatuses",
+    "method": "get",
+    "toolName": "list-compliance-policy-device-statuses",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists device statuses for a specific compliance policy. Each has deviceDisplayName, userName, status (compliant, nonCompliant, error, conflict, notApplicable), lastReportedDateTime, and complianceGracePeriodExpirationDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/deviceStatusOverview",
+    "method": "get",
+    "toolName": "get-compliance-policy-status-overview",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets the device status overview for a compliance policy. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicyDeviceStateSummary",
+    "method": "get",
+    "toolName": "get-compliance-state-summary",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets the tenant-wide device compliance state summary. Returns aggregate counts: inGracePeriodCount, compliantDeviceCount, nonCompliantDeviceCount, remediatedDeviceCount, errorDeviceCount, conflictDeviceCount, unknownDeviceCount, notApplicableDeviceCount."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations",
+    "method": "get",
+    "toolName": "list-device-configurations",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists all Intune device configuration profiles. Each has displayName, description, @odata.type (platform-specific), createdDateTime, lastModifiedDateTime, and version. Covers Wi-Fi, VPN, email, certificates, device restrictions, endpoint protection, etc."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "get",
+    "toolName": "get-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a specific device configuration profile. Returns full details including platform-specific settings (Wi-Fi SSID, VPN config, device restrictions, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/deviceStatusOverview",
+    "method": "get",
+    "toolName": "get-device-configuration-status-overview",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets device status overview for a configuration profile. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
+    "method": "get",
+    "toolName": "list-enrollment-configurations",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists device enrollment configurations. Includes Windows Autopilot deployment profiles, enrollment restrictions (platform, device limit), and enrollment status page settings. Each has displayName, @odata.type, priority, createdDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations/{deviceEnrollmentConfiguration-id}",
+    "method": "get",
+    "toolName": "get-enrollment-configuration",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets a specific enrollment configuration. Returns full details including platform restrictions, device limits, or Autopilot profile settings depending on the type."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceCategories",
+    "method": "get",
+    "toolName": "list-device-categories",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists Intune device categories. Categories allow organizing devices for dynamic group targeting. Each has displayName and description."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities",
+    "method": "get",
+    "toolName": "list-autopilot-devices",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Windows Autopilot device identities. Each has serialNumber, model, manufacturer, groupTag, purchaseOrderIdentifier, enrollmentState, deploymentProfileAssignmentStatus, lastContactedDateTime. Use to audit Autopilot-registered devices and their deployment status."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities/{windowsAutopilotDeviceIdentity-id}",
+    "method": "get",
+    "toolName": "get-autopilot-device",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets a specific Autopilot device identity. Returns serialNumber, model, manufacturer, groupTag, enrollmentState, deploymentProfileAssignmentStatus, and assignedDeploymentProfile."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/detectedApps",
+    "method": "get",
+    "toolName": "list-detected-apps",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists all applications detected on Intune-managed devices. Each has displayName, version, sizeInByte, deviceCount, and platform. Use to audit software inventory and find unauthorized applications. Use $orderby=deviceCount desc to see most-installed apps."
+  },
+  {
+    "pathPattern": "/deviceManagement/detectedApps/{detectedApp-id}",
+    "method": "get",
+    "toolName": "get-detected-app",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Gets a specific detected application. Returns displayName, version, sizeInByte, deviceCount, and platform."
+  },
+  {
+    "pathPattern": "/deviceManagement/detectedApps/{detectedApp-id}/managedDevices",
+    "method": "get",
+    "toolName": "list-detected-app-devices",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists managed devices that have a specific application installed. Useful for finding all devices with a particular app version (e.g., outdated or unauthorized software)."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/managedDeviceOverview",
+    "method": "get",
+    "toolName": "get-managed-device-overview",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Gets a high-level overview of all managed devices. Returns aggregate counts by enrolledDeviceCount, mdmEnrolledCount, dualEnrolledDeviceCount, deviceOperatingSystemSummary (android, iOS, macOS, windows, windowsMobile), and deviceExchangeAccessStateSummary."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/auditEvents",
+    "method": "get",
+    "toolName": "list-intune-audit-events",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists Intune audit events. Each has displayName, componentName, activity, activityDateTime, activityType, actor (userPrincipalName, applicationDisplayName), and resources (displayName, type). Use $filter=activityDateTime ge 2024-01-01T00:00:00Z to filter by date. Use to track who changed Intune policies."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/softwareUpdateStatusSummary",
+    "method": "get",
+    "toolName": "get-software-update-summary",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a summary of Windows update statuses across managed devices. Returns counts by status: compliantDeviceCount, nonCompliantDeviceCount, remediatedDeviceCount, errorDeviceCount, conflictDeviceCount, unknownDeviceCount, notApplicableDeviceCount."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/applePushNotificationCertificate",
+    "method": "get",
+    "toolName": "get-apple-push-certificate",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets the Apple Push Notification certificate info. Returns appleIdentifier, topicIdentifier, lastModifiedDateTime, expirationDateTime, and certificateSerialNumber. CRITICAL: monitor expirationDateTime — if it expires, all iOS/macOS device management stops."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/roleDefinitions",
+    "method": "get",
+    "toolName": "list-intune-role-definitions",
+    "appPermissions": ["DeviceManagementRBAC.Read.All"],
+    "llmTip": "Lists Intune RBAC role definitions. Each has displayName, description, isBuiltIn, permissions (actions), and roleAssignments. Built-in roles include Intune Administrator, Help Desk Operator, Read Only Operator, etc."
+  },
+  {
+    "pathPattern": "/deviceManagement/roleAssignments",
+    "method": "get",
+    "toolName": "list-intune-role-assignments",
+    "appPermissions": ["DeviceManagementRBAC.Read.All"],
+    "llmTip": "Lists Intune RBAC role assignments. Each has displayName, description, resourceScopes, and members. Shows who has been granted which Intune admin roles and over which scope."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/termsAndConditions",
+    "method": "get",
+    "toolName": "list-intune-terms-and-conditions",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Intune terms and conditions. Each has displayName, description, title, bodyText, acceptanceStatement, version, createdDateTime, and modifiedDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/termsAndConditions/{termsAndConditions-id}/acceptanceStatuses",
+    "method": "get",
+    "toolName": "list-intune-terms-acceptances",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists acceptance statuses for Intune terms and conditions. Each has userDisplayName, userPrincipalName, acceptedVersion, acceptedDateTime. Useful for compliance reporting."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/conditionalAccessSettings",
+    "method": "get",
+    "toolName": "get-intune-conditional-access-settings",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets Intune on-premises conditional access settings. Returns enabled status and which devices are included/excluded from conditional access to on-premises Exchange."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/mobileThreatDefenseConnectors",
+    "method": "get",
+    "toolName": "list-mtd-connectors",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Mobile Threat Defense (MTD) connectors. Shows which MTD partners are integrated (Microsoft Defender, Lookout, Zimperium, etc.), their state (enabled/disabled), and platform support. Each has partnerState, androidEnabled, iosEnabled, lastHeartbeatDateTime."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/iosUpdateStatuses",
+    "method": "get",
+    "toolName": "list-ios-update-statuses",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists iOS update installation statuses across managed devices. Each has deviceDisplayName, userName, osVersion, installStatus (downloading, installing, idle, available, etc.), lastReportedDateTime, deviceModel, deviceId."
+  },
+
+  {
+    "pathPattern": "/admin/exchange/tracing/messageTraces",
+    "method": "get",
+    "toolName": "list-message-traces",
+    "appPermissions": ["MailboxSettings.Read"],
+    "llmTip": "Lists Exchange message traces for auditing mail flow. Each trace has senderAddress, recipientAddress, subject, messageId, receivedDateTime, status (Delivered, Failed, Quarantined, FilteredAsSpam, Expanded, etc.), and size. Use $filter=receivedDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=senderAddress eq 'user@domain.com' to filter by sender."
+  },
+  {
+    "pathPattern": "/admin/exchange/tracing/messageTraces/{exchangeMessageTrace-id}",
+    "method": "get",
+    "toolName": "get-message-trace",
+    "appPermissions": ["MailboxSettings.Read"],
+    "llmTip": "Gets a specific message trace by ID. Returns full details including senderAddress, recipientAddress, subject, messageId, receivedDateTime, status, size, and additional routing information."
+  },
+
+  {
+    "pathPattern": "/admin/exchange/mailboxes",
+    "method": "get",
+    "toolName": "list-exchange-mailboxes",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "llmTip": "Lists Exchange mailboxes in the tenant via admin API. Each mailbox has displayName, primarySmtpAddress, recipientType (UserMailbox, SharedMailbox, RoomMailbox, EquipmentMailbox), and identity. Useful for auditing mailbox types and finding shared/resource mailboxes."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}",
+    "method": "get",
+    "toolName": "get-exchange-mailbox",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "llmTip": "Gets a specific Exchange mailbox. Returns full details including displayName, primarySmtpAddress, recipientType, and mailbox configuration."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/hosts",
+    "method": "get",
+    "toolName": "list-threat-intel-hosts",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists hosts tracked by Microsoft threat intelligence. Use $filter=id eq 'example.com' to look up a specific host. Returns host details including firstSeenDateTime, lastSeenDateTime, and registrar info."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-host",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets threat intelligence for a specific host (domain or IP). The host-id is the hostname or IP address. Returns firstSeenDateTime, lastSeenDateTime, registrar, registrant info, and reputation data."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}/whois",
+    "method": "get",
+    "toolName": "get-threat-intel-host-whois",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets WHOIS information for a host. Returns registrar, registrant (name, organization, email, phone), nameservers, registrationDateTime, expirationDateTime. Useful for investigating suspicious domains."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}/hostPairs",
+    "method": "get",
+    "toolName": "list-threat-intel-host-pairs",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists host pairs for a given host — relationships between parent and child hosts (redirects, iframes, scripts, etc.). Each has parentHost, childHost, linkKind (redirect, script, etc.), firstSeenDateTime, lastSeenDateTime. Useful for mapping infrastructure."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/articles",
+    "method": "get",
+    "toolName": "list-threat-intel-articles",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists Microsoft threat intelligence articles. Each has title, body, createdDateTime, lastUpdatedDateTime, tags, and indicators. These are curated reports about threat actors, campaigns, and vulnerabilities."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/articles/{article-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-article",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific threat intelligence article by ID. Returns title, body (HTML), summary, tags, indicators, and linked intelligence profiles."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/articles/{article-id}/indicators",
+    "method": "get",
+    "toolName": "list-threat-intel-article-indicators",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists indicators of compromise (IOCs) associated with a threat intelligence article. Each indicator has artifact (hostname, IP, URL, file hash), source, and pattern details."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles",
+    "method": "get",
+    "toolName": "list-threat-intel-profiles",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists threat actor intelligence profiles. Each has title, kind (actor, tool, vulnerability), aliases, countriesOrRegionsOfOrigin, targets (industries, countries), firstActiveDateTime, and description. Profiles represent tracked threat actors and their TTPs."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles/{intelligenceProfile-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-profile",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific threat actor intelligence profile. Returns full details including title, kind, description, aliases, countriesOrRegionsOfOrigin, targets, tradecraft summary, and linked indicators."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles/{intelligenceProfile-id}/indicators",
+    "method": "get",
+    "toolName": "list-threat-intel-profile-indicators",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists indicators of compromise associated with a threat actor profile. Each indicator has artifact (hostname, IP, URL, file hash), source, and firstSeenDateTime."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/vulnerabilities",
+    "method": "get",
+    "toolName": "list-threat-intel-vulnerabilities",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists known vulnerabilities tracked by Microsoft threat intelligence. Each has id (CVE ID), description, severity, publishedDateTime, lastModifiedDateTime, hasChatter, exploitsAvailable, and cvss scores. Use to check if known CVEs are being actively exploited."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/vulnerabilities/{vulnerability-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-vulnerability",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific vulnerability by CVE ID (e.g. CVE-2024-1234). Returns description, severity, cvss scores, publishedDateTime, exploitsAvailable, activeExploitsObserved, hasChatter, priorityScore, and remediation info."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/whoisRecords",
+    "method": "get",
+    "toolName": "list-threat-intel-whois-records",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists WHOIS records from threat intelligence. Use to search WHOIS data across domains. Each record has host, registrar, registrant, nameservers, and dates."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/whoisRecords/{whoisRecord-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-whois-record",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific WHOIS record by ID. Returns full registrant and registrar details, nameservers, registration and expiration dates."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/hostComponents",
+    "method": "get",
+    "toolName": "list-threat-intel-host-components",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists web components detected on hosts (web servers, frameworks, CMS, etc.). Each has host, name, version, category, firstSeenDateTime, lastSeenDateTime. Use to identify vulnerable software versions running on infrastructure."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hostSslCertificates",
+    "method": "get",
+    "toolName": "list-threat-intel-ssl-certs",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists SSL certificates observed on hosts. Each has host, sslCertificate (issuer, subject, serialNumber, sha256, validityPeriod), firstSeenDateTime, lastSeenDateTime. Useful for tracking certificate changes and detecting suspicious certificates."
+  },
+
+  {
+    "pathPattern": "/invitations",
+    "method": "get",
+    "toolName": "list-invitations",
+    "appPermissions": ["User.Invite.All"],
+    "llmTip": "Lists guest user invitations. Each has invitedUserEmailAddress, invitedUserDisplayName, inviteRedeemUrl, status (PendingAcceptance, Completed, InProgress, Error), sendInvitationMessage, and invitedUserType (Guest, Member). Use to audit pending and completed B2B invitations."
+  },
+  {
+    "pathPattern": "/invitations",
+    "method": "post",
+    "toolName": "create-invitation",
+    "appPermissions": ["User.Invite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new guest user invitation. Body must include: invitedUserEmailAddress (required), inviteRedirectUrl (required, URL user lands on after redeeming). Optional: invitedUserDisplayName, sendInvitationMessage (true/false), invitedUserMessageInfo, invitedUserType ('Guest' or 'Member'). Returns inviteRedeemUrl and invitedUser object with the created user ID."
+  },
+
+  {
+    "pathPattern": "/identity/identityProviders",
+    "method": "get",
+    "toolName": "list-identity-providers",
+    "appPermissions": ["IdentityProvider.Read.All"],
+    "llmTip": "Lists identity providers configured for the tenant. Includes social providers (Google, Facebook, Apple), SAML/WS-Fed, and built-in providers (Azure AD, Microsoft Account). Each has displayName, @odata.type, clientId. Useful for auditing which external identity providers are trusted for B2B/B2C."
+  },
+  {
+    "pathPattern": "/identity/identityProviders/{identityProviderBase-id}",
+    "method": "get",
+    "toolName": "get-identity-provider",
+    "appPermissions": ["IdentityProvider.Read.All"],
+    "llmTip": "Gets a specific identity provider. Returns displayName, @odata.type, clientId, and provider-specific configuration."
+  },
+
+  {
+    "pathPattern": "/identity/b2xUserFlows",
+    "method": "get",
+    "toolName": "list-b2x-user-flows",
+    "appPermissions": ["IdentityUserFlow.Read.All"],
+    "llmTip": "Lists B2X (self-service sign-up) user flows. Each has id, userFlowType (signUpOrSignIn), userFlowTypeVersion, and apiConnectorConfiguration. B2X user flows control how external users can sign up as guests through self-service."
+  },
+  {
+    "pathPattern": "/identity/b2xUserFlows/{b2xIdentityUserFlow-id}",
+    "method": "get",
+    "toolName": "get-b2x-user-flow",
+    "appPermissions": ["IdentityUserFlow.Read.All"],
+    "llmTip": "Gets a specific B2X user flow. Returns full configuration including apiConnectorConfiguration, identityProviders, userAttributeAssignments, and languages."
+  },
+
+  {
+    "pathPattern": "/identity/apiConnectors",
+    "method": "get",
+    "toolName": "list-api-connectors",
+    "appPermissions": ["APIConnectors.Read.All"],
+    "llmTip": "Lists API connectors used in self-service sign-up user flows. Each has displayName, targetUrl, and authenticationConfiguration. API connectors call external APIs during sign-up (e.g. for validation, enrichment, or approval). Audit these to ensure no unauthorized external endpoints are called."
+  },
+  {
+    "pathPattern": "/identity/apiConnectors/{identityApiConnector-id}",
+    "method": "get",
+    "toolName": "get-api-connector",
+    "appPermissions": ["APIConnectors.Read.All"],
+    "llmTip": "Gets a specific API connector. Returns displayName, targetUrl, and authenticationConfiguration (basic auth or client certificate)."
+  },
+
+  {
+    "pathPattern": "/identity/customAuthenticationExtensions",
+    "method": "get",
+    "toolName": "list-custom-auth-extensions",
+    "appPermissions": ["CustomAuthenticationExtension.Read.All"],
+    "llmTip": "Lists custom authentication extensions. These are webhook-based extensions that can be called during authentication flows (token issuance, attribute collection). Each has displayName, @odata.type, authenticationConfiguration, endpointConfiguration (targetUrl). Audit these to ensure no unauthorized custom logic in auth flows."
+  },
+  {
+    "pathPattern": "/identity/customAuthenticationExtensions/{customAuthenticationExtension-id}",
+    "method": "get",
+    "toolName": "get-custom-auth-extension",
+    "appPermissions": ["CustomAuthenticationExtension.Read.All"],
+    "llmTip": "Gets a specific custom authentication extension. Returns displayName, authenticationConfiguration, endpointConfiguration, and claimsForTokenConfiguration."
+  },
+
+  {
+    "pathPattern": "/applications/{application-id}",
+    "method": "get",
+    "toolName": "get-application",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Gets a specific app registration by object ID. Use $select=displayName,appId,passwordCredentials,keyCredentials,signInAudience,requiredResourceAccess to audit credentials and permissions. passwordCredentials shows client secrets with displayName, endDateTime, and keyId. keyCredentials shows certificates. CRITICAL: check endDateTime on credentials to find expiring or expired secrets/certs."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/owners",
+    "method": "get",
+    "toolName": "list-application-owners",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists owners of an app registration. Owners can manage the app including adding credentials. Returns user objects. Audit this to ensure apps have appropriate owners and no orphaned apps exist."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials",
+    "method": "get",
+    "toolName": "list-app-federated-credentials",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists federated identity credentials for an app (workload identity federation). Each has name, issuer, subject, audiences, and description. These allow external workloads (GitHub Actions, Kubernetes, etc.) to authenticate as the app without a secret. Audit to ensure only authorized external identities are trusted."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials/{federatedIdentityCredential-id}",
+    "method": "get",
+    "toolName": "get-app-federated-credential",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Gets a specific federated identity credential. Returns name, issuer (e.g. https://token.actions.githubusercontent.com), subject (e.g. repo:org/repo:ref:refs/heads/main), audiences, and description."
+  },
+
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}",
+    "method": "get",
+    "toolName": "get-service-principal",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Gets a specific service principal (enterprise app) by ID. Use $select=displayName,appId,passwordCredentials,keyCredentials,servicePrincipalType,accountEnabled,appOwnerOrganizationId,loginUrl,notificationEmailAddresses. Check passwordCredentials and keyCredentials for credential audit."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/owners",
+    "method": "get",
+    "toolName": "list-service-principal-owners",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists owners of a service principal. Returns user objects. Owners can manage the enterprise app configuration. Audit for orphaned service principals with no owners."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/oauth2PermissionGrants",
+    "method": "get",
+    "toolName": "list-sp-delegated-permissions",
+    "appPermissions": ["Directory.Read.All"],
+    "llmTip": "Lists delegated permission grants for a specific service principal. Shows which delegated permissions have been consented (admin or user). Each has consentType (AllPrincipals for admin consent, Principal for user consent), scope (space-separated permissions), and principalId."
+  },
+
+  {
+    "pathPattern": "/policies/appManagementPolicies",
+    "method": "get",
+    "toolName": "list-app-management-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists app management policies. These policies restrict credential types and lifetimes for app registrations and service principals. Each has displayName, isEnabled, restrictions (passwordCredentials, keyCredentials with restrictForAppsCreatedAfterDateTime and maxLifetime). Useful for enforcing credential hygiene."
+  },
+  {
+    "pathPattern": "/policies/appManagementPolicies/{appManagementPolicy-id}",
+    "method": "get",
+    "toolName": "get-app-management-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets a specific app management policy. Returns displayName, isEnabled, and detailed restrictions on password and key credentials including maxLifetime and restrictForAppsCreatedAfterDateTime."
+  },
+
+  {
+    "pathPattern": "/security/cases/ediscoveryCases",
+    "method": "get",
+    "toolName": "list-ediscovery-cases",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists eDiscovery cases in Microsoft Purview. Each case has displayName, description, status (active, closed, closedWithError), createdBy, createdDateTime, lastModifiedBy, lastModifiedDateTime, and externalId. Use $filter=status eq 'active' to see active cases. Use $top to limit results."
+  },
+
+  {
+    "pathPattern": "/communications/callRecords",
+    "method": "get",
+    "toolName": "list-call-records",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Lists Teams call records. Each record has id, version, type (groupCall, peerToPeer), modalities (audio, video, videoBasedScreenSharing, data), startDateTime, endDateTime, organizer, and participants. Use $filter=startDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $orderby=startDateTime desc. Use $top to limit."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/cloudPCs",
+    "method": "get",
+    "toolName": "list-cloud-pcs",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PCs (Windows 365) provisioned in the tenant. Each has displayName, managedDeviceName, userPrincipalName, status (provisioned, provisioning, failed, notProvisioned), provisioningPolicyId, imageDisplayName, lastModifiedDateTime, gracePeriodEndDateTime, and aadDeviceId. Use $filter=status eq 'provisioned' or status eq 'failed'. Use $top to limit."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/provisioningPolicies",
+    "method": "get",
+    "toolName": "list-cloud-pc-provisioning-policies",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PC provisioning policies. Each has displayName, description, imageId, imageDisplayName, imageType, onPremisesConnectionId, domainJoinConfigurations, windowsSetting, and provisioningType. These define how Cloud PCs are provisioned for users."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/deviceImages",
+    "method": "get",
+    "toolName": "list-cloud-pc-device-images",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists custom OS images uploaded for Cloud PC provisioning. Each has displayName, version, operatingSystem, osBuildNumber, sourceImageResourceId, status (readyForUpload, pending, failed), statusDetails, and lastModifiedDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/galleryImages",
+    "method": "get",
+    "toolName": "list-cloud-pc-gallery-images",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists gallery images available from Microsoft for Cloud PC provisioning. Each has displayName, offerDisplayName, publisherName, skuDisplayName, skuName, status, startDate, endDate, and expirationDate."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/onPremisesConnections",
+    "method": "get",
+    "toolName": "list-cloud-pc-on-premises-connections",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Azure network connections used by Cloud PCs. Each has displayName, type (azureADJoin, hybridAzureADJoin), subscriptionId, resourceGroupId, virtualNetworkId, subnetId, healthCheckStatus (passed, failed, running, warning), and healthCheckStatusDetail."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/userSettings",
+    "method": "get",
+    "toolName": "list-cloud-pc-user-settings",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PC user settings. Each has displayName, selfServiceEnabled, localAdminEnabled, restorePointSetting (frequencyType, userRestoreEnabled), and lastModifiedDateTime. User settings control end-user permissions on their Cloud PCs."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/auditEvents",
+    "method": "get",
+    "toolName": "list-cloud-pc-audit-events",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PC audit events. Each has displayName, componentName, activity, activityDateTime, activityType (create, delete, patch), activityOperationType, activityResult (success, failure), actor, and resources. Use $filter=activityDateTime ge 2024-01-01T00:00:00Z. Use $orderby=activityDateTime desc."
+  },
+
+  {
+    "pathPattern": "/print/printers",
+    "method": "get",
+    "toolName": "list-printers",
+    "appPermissions": ["Printer.Read.All"],
+    "llmTip": "Lists printers registered in Universal Print. Each has displayName, manufacturer, model, status (state: idle, processing, stopped, unknownFutureValue), isShared, isAcceptingJobs, location, defaults, and capabilities. Use $filter to narrow results."
+  },
+  {
+    "pathPattern": "/print/shares",
+    "method": "get",
+    "toolName": "list-print-shares",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists printer shares in Universal Print. Each has displayName, createdDateTime, isAcceptingJobs, status, printer, and allowedUsers/allowedGroups. Printer shares make printers discoverable to users."
+  },
+  {
+    "pathPattern": "/print/connectors",
+    "method": "get",
+    "toolName": "list-print-connectors",
+    "appPermissions": ["PrintConnector.Read.All"],
+    "llmTip": "Lists Universal Print connectors. Each has displayName, fullyQualifiedDomainName, operatingSystem, appVersion, deviceHealth (lastConnectionTime), location, and registeredDateTime. Connectors bridge on-premises printers to Universal Print."
+  },
+  {
+    "pathPattern": "/print/services",
+    "method": "get",
+    "toolName": "list-print-services",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists Universal Print service instances. Each has endpoints with displayName and uri. These represent the service endpoints used by Universal Print."
+  },
+  {
+    "pathPattern": "/print/operations",
+    "method": "get",
+    "toolName": "list-print-operations",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists long-running Universal Print operations. Each has status (state: notStarted, running, succeeded, failed), createdDateTime, and lastActionDateTime."
+  },
+  {
+    "pathPattern": "/print/taskDefinitions",
+    "method": "get",
+    "toolName": "list-print-task-definitions",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists Universal Print task definitions. Task definitions describe tasks that can be triggered on various print events (e.g., jobStarted)."
+  },
+
+  {
+    "pathPattern": "/informationProtection/bitlocker/recoveryKeys",
+    "method": "get",
+    "toolName": "list-bitlocker-recovery-keys",
+    "appPermissions": ["BitlockerKey.Read.All"],
+    "llmTip": "Lists BitLocker recovery keys stored in Entra ID. Each has id, createdDateTime, deviceId, volumeType (operatingSystemVolume, fixedDataVolume, removableDataVolume). The actual key value is NOT returned by default for security; use $select=key to include it (requires BitlockerKey.ReadBasic.All or BitlockerKey.Read.All). Use $filter=deviceId eq 'xxx' to find keys for a specific device."
+  },
+  {
+    "pathPattern": "/informationProtection/threatAssessmentRequests",
+    "method": "get",
+    "toolName": "list-threat-assessment-requests",
+    "appPermissions": ["ThreatAssessment.Read.All"],
+    "llmTip": "Lists threat assessment requests. Each has id, createdDateTime, contentType (mail, url, file), expectedAssessment (block, unblock), category (spam, phishing, malware), status (pending, completed), requestSource, createdBy, and results (with resultType and message). Use $top to limit."
+  },
+
+  {
+    "pathPattern": "/admin/sharepoint/settings",
+    "method": "get",
+    "toolName": "get-sharepoint-settings",
+    "appPermissions": ["SharePointTenantSettings.Read.All"],
+    "llmTip": "Gets SharePoint tenant-level settings. Returns allowedDomainGuidsForSyncApp, availableManagedPathsForSiteCreation, deletedUserPersonalSiteRetentionPeriodInDays, excludedFileExtensionsForSyncApp, idleSessionSignOut, imageTaggingOption, isCommentingOnSitePagesEnabled, isFileActivityNotificationEnabled, isLoopEnabled, isMacSyncAppEnabled, isResharingByExternalUsersEnabled, isSharePointMobileNotificationEnabled, isSharePointNewsfeedEnabled, isSiteCreationEnabled, isSiteCreationUIEnabled, isSitePagesCreationEnabled, isSitesStorageLimitAutomatic, knowledgeIntelligenceEnabled, personalSiteDefaultStorageLimitInMB, sharingAllowedDomainList, sharingBlockedDomainList, sharingCapability, sharingDomainRestrictionMode, siteCreationDefaultManagedPath, siteCreationDefaultStorageLimitInMB, tenantDefaultTimezone."
+  },
+
+  {
+    "pathPattern": "/security/labels/retentionLabels",
+    "method": "get",
+    "toolName": "list-retention-labels",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists retention labels from Microsoft Purview Records Management. Each has displayName, descriptionForAdmins, descriptionForUsers, retentionDuration, retentionTrigger, behaviorDuringRetentionPeriod, actionAfterRetentionPeriod (none, delete, startDispositionReview), isInUse, createdDateTime, lastModifiedDateTime, and labelToBeApplied."
+  },
+  {
+    "pathPattern": "/security/labels/authorities",
+    "method": "get",
+    "toolName": "list-file-plan-authorities",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan authorities used in retention labels. Each has displayName and id. Authorities represent the regulatory body or organizational authority behind a retention policy."
+  },
+  {
+    "pathPattern": "/security/labels/categories",
+    "method": "get",
+    "toolName": "list-file-plan-categories",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan categories used in retention labels. Each has displayName and id. Categories classify the content type for records management."
+  },
+  {
+    "pathPattern": "/security/labels/citations",
+    "method": "get",
+    "toolName": "list-file-plan-citations",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan citations used in retention labels. Each has displayName, citationUrl, citationJurisdiction, and id. Citations reference the regulation or law that requires the retention."
+  },
+  {
+    "pathPattern": "/security/labels/departments",
+    "method": "get",
+    "toolName": "list-file-plan-departments",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan departments used in retention labels. Each has displayName and id. Departments identify which organizational unit owns the retention policy."
+  },
+  {
+    "pathPattern": "/security/labels/filePlanReferences",
+    "method": "get",
+    "toolName": "list-file-plan-references",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan references used in retention labels. Each has displayName and id. File plan references provide a unique identifier or reference number for the retention policy within the organization's file plan."
   }
 ]
