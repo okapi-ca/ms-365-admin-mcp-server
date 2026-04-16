@@ -2255,5 +2255,466 @@
     "toolName": "list-on-premises-sync",
     "appPermissions": ["OnPremDirectorySynchronization.Read.All"],
     "llmTip": "Lists on-premises directory synchronization (Entra Connect) configurations. Returns features enabled (passwordHashSync, passwordWriteback, seamlessSSO, cloudSync), configuration details, and sync status."
+  },
+
+  {
+    "pathPattern": "/teams",
+    "method": "get",
+    "toolName": "list-teams",
+    "appPermissions": ["Team.ReadBasic.All"],
+    "llmTip": "Lists all teams in the tenant. Use $filter=displayName eq 'name' to find specific teams. Use $select=id,displayName,description to limit fields. Returns id, displayName, description, visibility, isArchived."
+  },
+  {
+    "pathPattern": "/teams",
+    "method": "post",
+    "toolName": "create-team",
+    "appPermissions": ["Team.Create"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new team. Body requires template@odata.bind, displayName, description. Example: {\"template@odata.bind\":\"https://graph.microsoft.com/v1.0/teamsTemplates('standard')\",\"displayName\":\"My Team\",\"description\":\"desc\"}."
+  },
+  {
+    "pathPattern": "/teams/{team-id}",
+    "method": "get",
+    "toolName": "get-team",
+    "appPermissions": ["Team.ReadBasic.All"],
+    "llmTip": "Gets a specific team by ID. Returns displayName, description, visibility (public/private), isArchived, memberSettings, guestSettings, messagingSettings, funSettings, discoverySettings."
+  },
+  {
+    "pathPattern": "/teams/{team-id}",
+    "method": "patch",
+    "toolName": "update-team",
+    "appPermissions": ["Team.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a team's settings. Body can include displayName, description, visibility, memberSettings, guestSettings, messagingSettings, funSettings."
+  },
+  {
+    "pathPattern": "/teams/{team-id}",
+    "method": "delete",
+    "toolName": "delete-team",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a team and its associated group. This is irreversible. The team and all its content (channels, messages, files) will be permanently deleted."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/channels",
+    "method": "get",
+    "toolName": "list-team-admin-channels",
+    "appPermissions": ["Channel.ReadBasic.All"],
+    "llmTip": "Lists channels in a team. Returns id, displayName, description, membershipType (standard/private/shared), createdDateTime, email, webUrl."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/channels",
+    "method": "post",
+    "toolName": "create-team-admin-channel",
+    "appPermissions": ["Channel.Create"],
+    "riskLevel": "low",
+    "llmTip": "Creates a new channel in a team. Body requires displayName. Optional: description, membershipType (standard/private/shared)."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/channels/{channel-id}",
+    "method": "get",
+    "toolName": "get-team-admin-channel",
+    "appPermissions": ["Channel.ReadBasic.All"],
+    "llmTip": "Gets a specific channel by ID. Returns displayName, description, membershipType, createdDateTime, email, webUrl, tenantId."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/channels/{channel-id}",
+    "method": "delete",
+    "toolName": "delete-team-admin-channel",
+    "appPermissions": ["Channel.Delete.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a channel from a team. All messages and files in the channel will be deleted."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/members",
+    "method": "get",
+    "toolName": "list-team-admin-members",
+    "appPermissions": ["TeamMember.Read.All"],
+    "llmTip": "Lists members of a team. Returns each member's id, displayName, roles (owner/member/guest), userId, email."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/members/add",
+    "method": "post",
+    "toolName": "add-team-admin-members",
+    "appPermissions": ["TeamMember.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Adds members to a team in bulk. Body: {\"values\":[{\"@odata.type\":\"microsoft.graph.aadUserConversationMember\",\"roles\":[],\"user@odata.bind\":\"https://graph.microsoft.com/v1.0/users('userId')\"}]}."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/members/remove",
+    "method": "post",
+    "toolName": "remove-team-admin-members",
+    "appPermissions": ["TeamMember.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Removes members from a team in bulk. Body: {\"values\":[{\"id\":\"conversationMemberId\"}]}."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/members/{conversationMember-id}",
+    "method": "get",
+    "toolName": "get-team-admin-member",
+    "appPermissions": ["TeamMember.Read.All"],
+    "llmTip": "Gets a specific member of a team. Returns displayName, roles, userId, email, visibleHistoryStartDateTime."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/installedApps",
+    "method": "get",
+    "toolName": "list-team-installed-apps",
+    "appPermissions": ["TeamsAppInstallation.ReadForTeam.All"],
+    "llmTip": "Lists apps installed in a team. Use $expand=teamsAppDefinition to get app details. Returns teamsApp, teamsAppDefinition with displayName, version, description."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/archive",
+    "method": "post",
+    "toolName": "archive-team",
+    "appPermissions": ["Team.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Archives a team. Archived teams become read-only. Optional body: {\"shouldSetSpoSiteReadOnlyForMembers\": true} to also make the SharePoint site read-only."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/unarchive",
+    "method": "post",
+    "toolName": "unarchive-team",
+    "appPermissions": ["Team.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Unarchives a team, restoring it to active state and allowing users to send messages and edit the team again."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/clone",
+    "method": "post",
+    "toolName": "clone-team",
+    "appPermissions": ["Team.Create"],
+    "riskLevel": "medium",
+    "llmTip": "Clones a team. Body requires displayName, description, mailNickname, partsToClone (apps,tabs,settings,channels,members). classification and visibility are optional."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/operations",
+    "method": "get",
+    "toolName": "list-team-operations",
+    "appPermissions": ["Team.ReadBasic.All"],
+    "llmTip": "Lists async operations on a team (archive, clone, etc.). Returns operationType, status (notStarted/running/succeeded/failed), createdDateTime, lastActionDateTime, error."
+  },
+  {
+    "pathPattern": "/teams/{team-id}/permissionGrants",
+    "method": "get",
+    "toolName": "list-team-permission-grants",
+    "appPermissions": ["TeamsAppInstallation.ReadForTeam.All"],
+    "llmTip": "Lists resource-specific permission grants on a team. Shows which apps have been granted specific permissions (e.g., ChannelMessage.Read.Group)."
+  },
+  {
+    "pathPattern": "/teamwork/teamsAppSettings",
+    "method": "get",
+    "toolName": "get-teams-app-settings",
+    "appPermissions": ["TeamworkAppSettings.Read.All"],
+    "llmTip": "Gets tenant-wide Teams app settings. Returns allowUserRequestsForAppAccess (whether users can request admin approval for apps) and isUserPersonalScopeResourceSpecificConsentEnabled."
+  },
+  {
+    "pathPattern": "/teamwork/teamsAppSettings",
+    "method": "patch",
+    "toolName": "update-teams-app-settings",
+    "appPermissions": ["TeamworkAppSettings.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Updates tenant-wide Teams app settings. Body can include allowUserRequestsForAppAccess and isUserPersonalScopeResourceSpecificConsentEnabled."
+  },
+  {
+    "pathPattern": "/teamwork/deletedTeams",
+    "method": "get",
+    "toolName": "list-deleted-teams",
+    "appPermissions": ["Team.ReadBasic.All"],
+    "llmTip": "Lists recently deleted teams. Returns id and displayName. Deleted teams can be restored within 30 days."
+  },
+  {
+    "pathPattern": "/appCatalogs/teamsApps",
+    "method": "get",
+    "toolName": "list-teams-catalog-apps",
+    "appPermissions": ["AppCatalog.Read.All"],
+    "llmTip": "Lists apps in the Teams app catalog (tenant and store). Use $filter=distributionMethod eq 'organization' for tenant-only apps. Returns id, displayName, externalId, distributionMethod."
+  },
+  {
+    "pathPattern": "/appCatalogs/teamsApps/{teamsApp-id}",
+    "method": "get",
+    "toolName": "get-teams-catalog-app",
+    "appPermissions": ["AppCatalog.Read.All"],
+    "llmTip": "Gets a specific app from the Teams app catalog. Use $expand=appDefinitions to get version details."
+  },
+  {
+    "pathPattern": "/appCatalogs/teamsApps/{teamsApp-id}/appDefinitions",
+    "method": "get",
+    "toolName": "list-teams-app-definitions",
+    "appPermissions": ["AppCatalog.Read.All"],
+    "llmTip": "Lists all versions (definitions) of a Teams app. Each definition has displayName, description, version, publishingState, shortDescription, teamsAppId."
+  },
+  {
+    "pathPattern": "/admin/teams",
+    "method": "get",
+    "toolName": "get-teams-admin-settings",
+    "appPermissions": ["TeamworkDevice.Read.All"],
+    "llmTip": "Gets Teams admin settings for the tenant."
+  },
+  {
+    "pathPattern": "/admin/teams/userConfigurations",
+    "method": "get",
+    "toolName": "list-teams-user-configurations",
+    "appPermissions": ["TeamworkDevice.Read.All"],
+    "llmTip": "Lists Teams user configurations in the tenant."
+  },
+  {
+    "pathPattern": "/admin/teams/policy",
+    "method": "get",
+    "toolName": "get-teams-admin-policy",
+    "appPermissions": ["TeamworkDevice.Read.All"],
+    "llmTip": "Gets Teams admin policy settings."
+  },
+  {
+    "pathPattern": "/admin/teams/policy/userAssignments",
+    "method": "get",
+    "toolName": "list-teams-policy-assignments",
+    "appPermissions": ["TeamworkDevice.Read.All"],
+    "llmTip": "Lists Teams policy user assignments."
+  },
+  {
+    "pathPattern": "/admin/teams/telephoneNumberManagement/numberAssignments",
+    "method": "get",
+    "toolName": "list-teams-phone-assignments",
+    "appPermissions": ["TeamworkDevice.Read.All"],
+    "llmTip": "Lists telephone number assignments for Teams. Shows which phone numbers are assigned to which users or resources."
+  },
+
+  {
+    "pathPattern": "/sites",
+    "method": "get",
+    "toolName": "list-sharepoint-sites",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists or searches SharePoint sites. Use $search='keyword' to search by site name/URL. Use $filter to filter. Use $select=id,displayName,webUrl to limit fields. Returns id, displayName, webUrl, createdDateTime, lastModifiedDateTime."
+  },
+  {
+    "pathPattern": "/sites/{site-id}",
+    "method": "get",
+    "toolName": "get-sharepoint-site",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Gets a specific SharePoint site by ID. The site-id format is {hostname}:{server-relative-path} or a GUID. Returns displayName, webUrl, root, siteCollection, createdDateTime."
+  },
+  {
+    "pathPattern": "/sites/{site-id}",
+    "method": "patch",
+    "toolName": "update-sharepoint-site",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a SharePoint site's properties. Body can include displayName and description."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/drives",
+    "method": "get",
+    "toolName": "list-site-drives",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists document libraries (drives) in a SharePoint site. Returns id, name, driveType, webUrl, quota, owner for each drive."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/drive",
+    "method": "get",
+    "toolName": "get-site-default-drive",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Gets the default document library (drive) for a SharePoint site. Returns id, name, driveType, webUrl, quota."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists",
+    "method": "get",
+    "toolName": "list-site-lists",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists SharePoint lists in a site. Returns id, displayName, list (template, contentTypesEnabled, hidden), createdDateTime, webUrl for each list."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}",
+    "method": "get",
+    "toolName": "get-site-list",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Gets a specific SharePoint list by ID. Returns displayName, list settings, columns, contentTypes, webUrl."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items",
+    "method": "get",
+    "toolName": "list-site-list-items",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists items in a SharePoint list. Use $expand=fields to get column values. Use $filter on fields/ColumnName for filtering."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/columns",
+    "method": "get",
+    "toolName": "list-site-list-columns",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists column definitions for a SharePoint list. Returns each column's name, displayName, type (text, number, choice, etc.), description."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/columns",
+    "method": "get",
+    "toolName": "list-site-columns",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists site-level column definitions. Returns each column's name, displayName, type, description."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/contentTypes",
+    "method": "get",
+    "toolName": "list-site-content-types",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists content types defined in a SharePoint site. Returns id, name, description, group, isBuiltIn, parentId."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions",
+    "method": "get",
+    "toolName": "list-site-permissions",
+    "appPermissions": ["Sites.FullControl.All"],
+    "llmTip": "Lists permissions granted on a SharePoint site. Returns each permission's id, roles, grantedToIdentities (application or user)."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions/{permission-id}",
+    "method": "get",
+    "toolName": "get-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "llmTip": "Gets a specific permission on a SharePoint site by ID. Returns id, roles, grantedToIdentities."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/analytics",
+    "method": "get",
+    "toolName": "get-site-analytics",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Gets analytics for a SharePoint site. Returns allTime and lastSevenDays access counts."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/sites",
+    "method": "get",
+    "toolName": "list-site-subsites",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists subsites of a SharePoint site. Returns displayName, webUrl, createdDateTime for each subsite."
+  },
+
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance/sensitivityLabels",
+    "method": "get",
+    "toolName": "list-sensitivity-labels",
+    "appPermissions": ["InformationProtectionPolicy.Read.All"],
+    "llmTip": "Lists sensitivity labels defined in the tenant. Returns id, name, description, tooltip, color, isActive, priority, parent. Labels are used for data classification and protection."
+  },
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance/sensitivityLabels/{sensitivityLabel-id}",
+    "method": "get",
+    "toolName": "get-sensitivity-label",
+    "appPermissions": ["InformationProtectionPolicy.Read.All"],
+    "llmTip": "Gets a specific sensitivity label by ID. Returns name, description, tooltip, color, isActive, priority, parent, contentFormats, autoLabeling settings."
+  },
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance/sensitivityLabels/{sensitivityLabel-id}/sublabels",
+    "method": "get",
+    "toolName": "list-sensitivity-sublabels",
+    "appPermissions": ["InformationProtectionPolicy.Read.All"],
+    "llmTip": "Lists sublabels under a parent sensitivity label. Returns id, name, description, tooltip, color, isActive, priority."
+  },
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance/sensitivityLabels/{sensitivityLabel-id}/rights",
+    "method": "get",
+    "toolName": "get-sensitivity-label-rights",
+    "appPermissions": ["InformationProtectionPolicy.Read.All"],
+    "llmTip": "Gets the rights associated with a sensitivity label, including encryption settings and usage rights."
+  },
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance/protectionScopes",
+    "method": "get",
+    "toolName": "get-protection-scopes",
+    "appPermissions": ["InformationProtectionPolicy.Read.All"],
+    "llmTip": "Gets the data security and governance protection scopes configured for the tenant."
+  },
+
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}/folders",
+    "method": "get",
+    "toolName": "list-exchange-mailbox-folders",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "llmTip": "Lists mailbox folders for an Exchange mailbox (admin). Returns id, displayName, totalItemCount, unreadItemCount, childFolderCount, parentFolderId."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}/folders/{mailboxFolder-id}",
+    "method": "get",
+    "toolName": "get-exchange-mailbox-folder",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "llmTip": "Gets a specific mailbox folder by ID (admin). Returns displayName, totalItemCount, unreadItemCount, childFolderCount."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}/exportItems",
+    "method": "post",
+    "toolName": "export-exchange-mailbox-items",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "riskLevel": "medium",
+    "llmTip": "Exports items from an Exchange mailbox. Body: {\"itemIds\":[\"itemId1\",\"itemId2\"]}. Returns exportedItems with data (base64)."
+  },
+
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}",
+    "method": "get",
+    "toolName": "get-call-record",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Gets a specific call record by ID. Returns type (groupCall/peerToPeer), modalities (audio/video/screenSharing), startDateTime, endDateTime, organizer, participants, version."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/sessions",
+    "method": "get",
+    "toolName": "list-call-record-sessions",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Lists sessions within a call record. Each session represents a participant's connection. Returns caller, callee, startDateTime, endDateTime, modalities, failureInfo."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/sessions/{session-id}",
+    "method": "get",
+    "toolName": "get-call-record-session",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Gets a specific session within a call record. Returns detailed caller/callee info, modalities, startDateTime, endDateTime, failureInfo, isTest."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/sessions/{session-id}/segments",
+    "method": "get",
+    "toolName": "list-call-session-segments",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Lists segments within a call session. Each segment has media streams with detailed quality metrics: jitter, packetLoss, roundTripTime, averageAudioDegradation, etc."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/sessions/{session-id}/segments/{segment-id}",
+    "method": "get",
+    "toolName": "get-call-session-segment",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Gets a specific segment of a call session. Returns detailed media stream quality metrics including jitter, packetLoss, roundTripTime for audio/video/screenSharing."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/participants_v2",
+    "method": "get",
+    "toolName": "list-call-record-participants",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Lists participants in a call record (v2 API). Returns each participant's identity (user, phone, application), and participant details."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/participants_v2/{participant-id}",
+    "method": "get",
+    "toolName": "get-call-record-participant",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Gets a specific participant in a call record (v2 API). Returns participant identity and details."
+  },
+  {
+    "pathPattern": "/communications/callRecords/{callRecord-id}/organizer_v2",
+    "method": "get",
+    "toolName": "get-call-record-organizer",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Gets the organizer of a call record (v2 API). Returns the organizer's identity (user or application)."
+  },
+  {
+    "pathPattern": "/communications/callRecords/microsoft.graph.callRecords.getPstnCalls(fromDateTime={fromDateTime},toDateTime={toDateTime})",
+    "method": "get",
+    "toolName": "get-pstn-calls",
+    "appPermissions": ["CallRecords.Read.All"],
+    "skipEncoding": ["fromDateTime", "toDateTime"],
+    "llmTip": "Gets PSTN (Public Switched Telephone Network) call records for a date range. Parameters are ISO 8601 dates. Returns callId, userId, userPrincipalName, callerNumber, calleeNumber, duration, charge, callType, currency."
+  },
+  {
+    "pathPattern": "/communications/callRecords/microsoft.graph.callRecords.getDirectRoutingCalls(fromDateTime={fromDateTime},toDateTime={toDateTime})",
+    "method": "get",
+    "toolName": "get-direct-routing-calls",
+    "appPermissions": ["CallRecords.Read.All"],
+    "skipEncoding": ["fromDateTime", "toDateTime"],
+    "llmTip": "Gets Direct Routing call records for a date range. Parameters are ISO 8601 dates. Returns callId, correlationId, userId, callerNumber, calleeNumber, duration, startDateTime, failureDateTime, finalSipCode, mediaPathLocation."
   }
 ]
