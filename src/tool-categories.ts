@@ -30,9 +30,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   identity: {
     name: 'identity',
     pattern:
-      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role/i,
+      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role|invitation|identity-provider|b2x|api-connector|custom-auth/i,
     description:
-      'Identity and access management (Entra ID users, groups, roles, devices, PIM, policies)',
+      'Identity and access management (Entra ID users, groups, roles, devices, PIM, guest users, external identities)',
   },
   compliance: {
     name: 'compliance',

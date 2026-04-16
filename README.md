@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **156 tools** covering security, audit, identity, Exchange, Intune, governance, compliance, threat intelligence, reports, and incident response
+- **166 tools** covering security, audit, identity, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -104,7 +104,7 @@ node dist/index.js --preset security,audit,identity
 | `audit`      | Directory audits, sign-ins, provisioning logs, deleted items              |
 | `health`     | Service health and Message Center                                         |
 | `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)    |
-| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains     |
+| `identity`   | Users, groups, roles, devices, PIM, guest users, external identities      |
 | `exchange`   | Exchange administration (message traces, mailboxes)                       |
 | `intune`     | Managed devices, compliance, configurations, Autopilot, apps, RBAC        |
 | `governance` | Access reviews, entitlement management, lifecycle workflows, terms of use |
@@ -118,7 +118,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (156)
+## Available tools (166)
 
 ### Security (8)
 
@@ -274,6 +274,36 @@ node dist/index.js --verify-login
 | `list-auth-strength-policies`    | GET    |
 | `get-cross-tenant-access-policy` | GET    |
 | `list-cross-tenant-partners`     | GET    |
+
+### Guest user invitations (2)
+
+| Tool                | Method | Risk   |
+| ------------------- | ------ | ------ |
+| `list-invitations`  | GET    |        |
+| `create-invitation` | POST   | medium |
+
+### External identity providers (2)
+
+| Tool                      | Method |
+| ------------------------- | ------ |
+| `list-identity-providers` | GET    |
+| `get-identity-provider`   | GET    |
+
+### Self-service sign-up (4)
+
+| Tool                  | Method |
+| --------------------- | ------ |
+| `list-b2x-user-flows` | GET    |
+| `get-b2x-user-flow`   | GET    |
+| `list-api-connectors` | GET    |
+| `get-api-connector`   | GET    |
+
+### Custom authentication extensions (2)
+
+| Tool                          | Method |
+| ----------------------------- | ------ |
+| `list-custom-auth-extensions` | GET    |
+| `get-custom-auth-extension`   | GET    |
 
 ### Exchange message traces (2)
 
@@ -474,6 +504,7 @@ AppRoleAssignment.ReadWrite.All
 AttackSimulation.Read.All
 AuditLog.Read.All
 ConsentRequest.Read.All
+CustomAuthenticationExtension.Read.All
 Device.Read.All
 DeviceManagementApps.Read.All
 DeviceManagementConfiguration.Read.All
@@ -486,7 +517,10 @@ EntitlementManagement.Read.All
 Exchange.ManageAsApp
 Group.Read.All
 GroupMember.Read.All
+APIConnectors.Read.All
+IdentityProvider.Read.All
 IdentityRiskEvent.Read.All
+IdentityUserFlow.Read.All
 IdentityRiskyServicePrincipal.Read.All
 IdentityRiskyUser.Read.All
 LifecycleWorkflows.Read.All
@@ -504,11 +538,12 @@ SecurityIncident.Read.All
 ThreatIntelligence.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
+User.Invite.All
 User.Read.All
 UserAuthenticationMethod.Read.All
 ```
 
-### Write (incident response)
+### Write (incident response + invitations)
 
 ```
 Device.ReadWrite.All

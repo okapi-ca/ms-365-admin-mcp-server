@@ -1157,5 +1157,81 @@
     "toolName": "list-threat-intel-ssl-certs",
     "appPermissions": ["ThreatIntelligence.Read.All"],
     "llmTip": "Lists SSL certificates observed on hosts. Each has host, sslCertificate (issuer, subject, serialNumber, sha256, validityPeriod), firstSeenDateTime, lastSeenDateTime. Useful for tracking certificate changes and detecting suspicious certificates."
+  },
+
+  {
+    "pathPattern": "/invitations",
+    "method": "get",
+    "toolName": "list-invitations",
+    "appPermissions": ["User.Invite.All"],
+    "llmTip": "Lists guest user invitations. Each has invitedUserEmailAddress, invitedUserDisplayName, inviteRedeemUrl, status (PendingAcceptance, Completed, InProgress, Error), sendInvitationMessage, and invitedUserType (Guest, Member). Use to audit pending and completed B2B invitations."
+  },
+  {
+    "pathPattern": "/invitations",
+    "method": "post",
+    "toolName": "create-invitation",
+    "appPermissions": ["User.Invite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new guest user invitation. Body must include: invitedUserEmailAddress (required), inviteRedirectUrl (required, URL user lands on after redeeming). Optional: invitedUserDisplayName, sendInvitationMessage (true/false), invitedUserMessageInfo, invitedUserType ('Guest' or 'Member'). Returns inviteRedeemUrl and invitedUser object with the created user ID."
+  },
+
+  {
+    "pathPattern": "/identity/identityProviders",
+    "method": "get",
+    "toolName": "list-identity-providers",
+    "appPermissions": ["IdentityProvider.Read.All"],
+    "llmTip": "Lists identity providers configured for the tenant. Includes social providers (Google, Facebook, Apple), SAML/WS-Fed, and built-in providers (Azure AD, Microsoft Account). Each has displayName, @odata.type, clientId. Useful for auditing which external identity providers are trusted for B2B/B2C."
+  },
+  {
+    "pathPattern": "/identity/identityProviders/{identityProviderBase-id}",
+    "method": "get",
+    "toolName": "get-identity-provider",
+    "appPermissions": ["IdentityProvider.Read.All"],
+    "llmTip": "Gets a specific identity provider. Returns displayName, @odata.type, clientId, and provider-specific configuration."
+  },
+
+  {
+    "pathPattern": "/identity/b2xUserFlows",
+    "method": "get",
+    "toolName": "list-b2x-user-flows",
+    "appPermissions": ["IdentityUserFlow.Read.All"],
+    "llmTip": "Lists B2X (self-service sign-up) user flows. Each has id, userFlowType (signUpOrSignIn), userFlowTypeVersion, and apiConnectorConfiguration. B2X user flows control how external users can sign up as guests through self-service."
+  },
+  {
+    "pathPattern": "/identity/b2xUserFlows/{b2xIdentityUserFlow-id}",
+    "method": "get",
+    "toolName": "get-b2x-user-flow",
+    "appPermissions": ["IdentityUserFlow.Read.All"],
+    "llmTip": "Gets a specific B2X user flow. Returns full configuration including apiConnectorConfiguration, identityProviders, userAttributeAssignments, and languages."
+  },
+
+  {
+    "pathPattern": "/identity/apiConnectors",
+    "method": "get",
+    "toolName": "list-api-connectors",
+    "appPermissions": ["APIConnectors.Read.All"],
+    "llmTip": "Lists API connectors used in self-service sign-up user flows. Each has displayName, targetUrl, and authenticationConfiguration. API connectors call external APIs during sign-up (e.g. for validation, enrichment, or approval). Audit these to ensure no unauthorized external endpoints are called."
+  },
+  {
+    "pathPattern": "/identity/apiConnectors/{identityApiConnector-id}",
+    "method": "get",
+    "toolName": "get-api-connector",
+    "appPermissions": ["APIConnectors.Read.All"],
+    "llmTip": "Gets a specific API connector. Returns displayName, targetUrl, and authenticationConfiguration (basic auth or client certificate)."
+  },
+
+  {
+    "pathPattern": "/identity/customAuthenticationExtensions",
+    "method": "get",
+    "toolName": "list-custom-auth-extensions",
+    "appPermissions": ["CustomAuthenticationExtension.Read.All"],
+    "llmTip": "Lists custom authentication extensions. These are webhook-based extensions that can be called during authentication flows (token issuance, attribute collection). Each has displayName, @odata.type, authenticationConfiguration, endpointConfiguration (targetUrl). Audit these to ensure no unauthorized custom logic in auth flows."
+  },
+  {
+    "pathPattern": "/identity/customAuthenticationExtensions/{customAuthenticationExtension-id}",
+    "method": "get",
+    "toolName": "get-custom-auth-extension",
+    "appPermissions": ["CustomAuthenticationExtension.Read.All"],
+    "llmTip": "Gets a specific custom authentication extension. Returns displayName, authenticationConfiguration, endpointConfiguration, and claimsForTokenConfiguration."
   }
 ]
