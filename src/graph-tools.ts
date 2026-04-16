@@ -110,7 +110,7 @@ async function executeGraphTool(
             if (shouldSkipEncoding) {
               // SEC-A: Validate skip-encoded params to prevent path traversal
               const raw = paramValue as string;
-              if (/[\/\\?#&]|\.\./.test(raw)) {
+              if (/[/\\?#&]|\.\./.test(raw)) {
                 throw new Error(
                   `Invalid value for path parameter '${paramName}': contains disallowed characters`
                 );
