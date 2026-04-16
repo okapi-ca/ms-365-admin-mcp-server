@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **41 tools** covering security, audit, identity, reports, and incident response
+- **57 tools** covering security, audit, identity, compliance, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -98,15 +98,16 @@ node dist/index.js --preset identity
 node dist/index.js --preset security,audit,identity
 ```
 
-| Preset     | Description                                             |
-| ---------- | ------------------------------------------------------- |
-| `security` | Security alerts and incidents                           |
-| `audit`    | Directory audits, sign-ins, provisioning logs           |
-| `health`   | Service health and Message Center                       |
-| `reports`  | Usage reports (Teams, Email, SharePoint, Active Users)  |
-| `identity` | Users, groups, roles, conditional access, apps, domains |
-| `response` | Incident response write operations                      |
-| `all`      | All available tools                                     |
+| Preset       | Description                                                    |
+| ------------ | -------------------------------------------------------------- |
+| `security`   | Security alerts and incidents                                  |
+| `audit`      | Directory audits, sign-ins, provisioning logs                  |
+| `health`     | Service health and Message Center                              |
+| `reports`    | Usage reports (Teams, Email, SharePoint, Active Users)         |
+| `identity`   | Users, groups, roles, conditional access, apps, domains        |
+| `compliance` | Licenses, Secure Score, Identity Protection, security policies |
+| `response`   | Incident response write operations                             |
+| `all`        | All available tools                                            |
 
 ### Verify credentials
 
@@ -114,7 +115,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (41)
+## Available tools (57)
 
 ### Security (6)
 
@@ -203,6 +204,42 @@ node dist/index.js --verify-login
 | `get-organization` | GET    |
 | `list-domains`     | GET    |
 
+### Licenses (2)
+
+| Tool                   | Method |
+| ---------------------- | ------ |
+| `list-subscribed-skus` | GET    |
+| `get-subscribed-sku`   | GET    |
+
+### Secure Score (4)
+
+| Tool                         | Method |
+| ---------------------------- | ------ |
+| `list-secure-scores`         | GET    |
+| `get-secure-score`           | GET    |
+| `list-secure-score-controls` | GET    |
+| `get-secure-score-control`   | GET    |
+
+### Identity Protection (5)
+
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `list-risky-users`              | GET    |
+| `get-risky-user`                | GET    |
+| `list-risky-user-history`       | GET    |
+| `list-risky-service-principals` | GET    |
+| `get-risky-service-principal`   | GET    |
+
+### Security policies (5)
+
+| Tool                       | Method |
+| -------------------------- | ------ |
+| `get-auth-methods-policy`  | GET    |
+| `list-auth-method-configs` | GET    |
+| `get-auth-method-config`   | GET    |
+| `get-security-defaults`    | GET    |
+| `get-admin-consent-policy` | GET    |
+
 ### Incident response (4) -- requires `--allow-writes`
 
 | Tool                         | Method | Risk     |
@@ -223,11 +260,14 @@ Directory.Read.All
 Domain.Read.All
 Group.Read.All
 GroupMember.Read.All
+IdentityRiskyServicePrincipal.Read.All
+IdentityRiskyUser.Read.All
 Organization.Read.All
 Policy.Read.All
 Reports.Read.All
 RoleManagement.Read.Directory
 SecurityAlert.Read.All
+SecurityEvents.Read.All
 SecurityIncident.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
