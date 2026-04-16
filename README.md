@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **175 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, and incident response
+- **199 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -98,19 +98,26 @@ node dist/index.js --preset identity
 node dist/index.js --preset security,audit,identity
 ```
 
-| Preset       | Description                                                               |
-| ------------ | ------------------------------------------------------------------------- |
-| `security`   | Security alerts, incidents, attack simulations, and threat intelligence   |
-| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items              |
-| `health`     | Service health and Message Center                                         |
-| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)    |
-| `identity`   | Users, groups, roles, devices, PIM, guest users, external identities      |
-| `exchange`   | Exchange administration (message traces, mailboxes)                       |
-| `intune`     | Managed devices, compliance, configurations, Autopilot, apps, RBAC        |
-| `governance` | Access reviews, entitlement management, lifecycle workflows, terms of use |
-| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies    |
-| `response`   | Incident response write operations (disable, revoke, confirm, dismiss)    |
-| `all`        | All available tools                                                       |
+| Preset            | Description                                                                 |
+| ----------------- | --------------------------------------------------------------------------- |
+| `security`        | Security alerts, incidents, attack simulations, and threat intelligence     |
+| `audit`           | Directory audits, sign-ins, provisioning logs, deleted items                |
+| `health`          | Service health and Message Center                                           |
+| `reports`         | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)      |
+| `identity`        | Users, groups, roles, devices, PIM, guest users, external identities        |
+| `exchange`        | Exchange administration (message traces, mailboxes)                         |
+| `intune`          | Managed devices, compliance, configurations, Autopilot, apps, RBAC          |
+| `governance`      | Access reviews, entitlement management, lifecycle workflows, terms of use   |
+| `compliance`      | Licenses, Secure Score, Identity Protection, risk detections, policies      |
+| `response`        | Incident response write operations (disable, revoke, confirm, dismiss)      |
+| `ediscovery`      | eDiscovery cases (Microsoft Purview)                                        |
+| `cloudpc`         | Cloud PC / Windows 365 (provisioning, images, connections, settings, audit) |
+| `callrecords`     | Teams call records                                                          |
+| `print`           | Universal Print (printers, shares, connectors, services, operations, tasks) |
+| `infoprotection`  | Information Protection (BitLocker recovery keys, threat assessment)         |
+| `sharepointadmin` | SharePoint tenant administration settings                                   |
+| `retention`       | Records Management (retention labels, file plan metadata)                   |
+| `all`             | All available tools                                                         |
 
 ### Verify credentials
 
@@ -118,7 +125,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (175)
+## Available tools (199)
 
 ### Security (8)
 
@@ -510,6 +517,65 @@ node dist/index.js --verify-login
 | `dismiss-risky-users`           | POST   | medium   |
 | `delete-user-phone-auth-method` | DELETE | high     |
 
+### eDiscovery (1)
+
+| Tool                    | Method | Risk |
+| ----------------------- | ------ | ---- |
+| `list-ediscovery-cases` | GET    |      |
+
+### Teams call records (1)
+
+| Tool                | Method | Risk |
+| ------------------- | ------ | ---- |
+| `list-call-records` | GET    |      |
+
+### Cloud PC / Windows 365 (7)
+
+| Tool                                    | Method | Risk |
+| --------------------------------------- | ------ | ---- |
+| `list-cloud-pcs`                        | GET    |      |
+| `list-cloud-pc-provisioning-policies`   | GET    |      |
+| `list-cloud-pc-device-images`           | GET    |      |
+| `list-cloud-pc-gallery-images`          | GET    |      |
+| `list-cloud-pc-on-premises-connections` | GET    |      |
+| `list-cloud-pc-user-settings`           | GET    |      |
+| `list-cloud-pc-audit-events`            | GET    |      |
+
+### Universal Print (6)
+
+| Tool                          | Method | Risk |
+| ----------------------------- | ------ | ---- |
+| `list-printers`               | GET    |      |
+| `list-print-shares`           | GET    |      |
+| `list-print-connectors`       | GET    |      |
+| `list-print-services`         | GET    |      |
+| `list-print-operations`       | GET    |      |
+| `list-print-task-definitions` | GET    |      |
+
+### Information Protection (2)
+
+| Tool                              | Method | Risk |
+| --------------------------------- | ------ | ---- |
+| `list-bitlocker-recovery-keys`    | GET    |      |
+| `list-threat-assessment-requests` | GET    |      |
+
+### SharePoint admin (1)
+
+| Tool                      | Method | Risk |
+| ------------------------- | ------ | ---- |
+| `get-sharepoint-settings` | GET    |      |
+
+### Records Management (6)
+
+| Tool                         | Method | Risk |
+| ---------------------------- | ------ | ---- |
+| `list-retention-labels`      | GET    |      |
+| `list-file-plan-authorities` | GET    |      |
+| `list-file-plan-categories`  | GET    |      |
+| `list-file-plan-citations`   | GET    |      |
+| `list-file-plan-departments` | GET    |      |
+| `list-file-plan-references`  | GET    |      |
+
 ## Azure AD permissions
 
 ### Read-only (default)
@@ -551,9 +617,19 @@ Reports.Read.All
 RoleAssignmentSchedule.Read.Directory
 RoleEligibilitySchedule.Read.Directory
 RoleManagement.Read.Directory
+BitlockerKey.Read.All
+CallRecords.Read.All
+CloudPC.Read.All
+eDiscovery.Read.All
+Printer.Read.All
+PrintConnector.Read.All
+PrintJob.Read.All
+RecordsManagement.Read.All
 SecurityAlert.Read.All
 SecurityEvents.Read.All
 SecurityIncident.Read.All
+SharePointTenantSettings.Read.All
+ThreatAssessment.Read.All
 ThreatIntelligence.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All

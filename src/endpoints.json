@@ -1299,5 +1299,180 @@
     "toolName": "get-app-management-policy",
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Gets a specific app management policy. Returns displayName, isEnabled, and detailed restrictions on password and key credentials including maxLifetime and restrictForAppsCreatedAfterDateTime."
+  },
+
+  {
+    "pathPattern": "/security/cases/ediscoveryCases",
+    "method": "get",
+    "toolName": "list-ediscovery-cases",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists eDiscovery cases in Microsoft Purview. Each case has displayName, description, status (active, closed, closedWithError), createdBy, createdDateTime, lastModifiedBy, lastModifiedDateTime, and externalId. Use $filter=status eq 'active' to see active cases. Use $top to limit results."
+  },
+
+  {
+    "pathPattern": "/communications/callRecords",
+    "method": "get",
+    "toolName": "list-call-records",
+    "appPermissions": ["CallRecords.Read.All"],
+    "llmTip": "Lists Teams call records. Each record has id, version, type (groupCall, peerToPeer), modalities (audio, video, videoBasedScreenSharing, data), startDateTime, endDateTime, organizer, and participants. Use $filter=startDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $orderby=startDateTime desc. Use $top to limit."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/cloudPCs",
+    "method": "get",
+    "toolName": "list-cloud-pcs",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PCs (Windows 365) provisioned in the tenant. Each has displayName, managedDeviceName, userPrincipalName, status (provisioned, provisioning, failed, notProvisioned), provisioningPolicyId, imageDisplayName, lastModifiedDateTime, gracePeriodEndDateTime, and aadDeviceId. Use $filter=status eq 'provisioned' or status eq 'failed'. Use $top to limit."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/provisioningPolicies",
+    "method": "get",
+    "toolName": "list-cloud-pc-provisioning-policies",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PC provisioning policies. Each has displayName, description, imageId, imageDisplayName, imageType, onPremisesConnectionId, domainJoinConfigurations, windowsSetting, and provisioningType. These define how Cloud PCs are provisioned for users."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/deviceImages",
+    "method": "get",
+    "toolName": "list-cloud-pc-device-images",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists custom OS images uploaded for Cloud PC provisioning. Each has displayName, version, operatingSystem, osBuildNumber, sourceImageResourceId, status (readyForUpload, pending, failed), statusDetails, and lastModifiedDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/galleryImages",
+    "method": "get",
+    "toolName": "list-cloud-pc-gallery-images",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists gallery images available from Microsoft for Cloud PC provisioning. Each has displayName, offerDisplayName, publisherName, skuDisplayName, skuName, status, startDate, endDate, and expirationDate."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/onPremisesConnections",
+    "method": "get",
+    "toolName": "list-cloud-pc-on-premises-connections",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Azure network connections used by Cloud PCs. Each has displayName, type (azureADJoin, hybridAzureADJoin), subscriptionId, resourceGroupId, virtualNetworkId, subnetId, healthCheckStatus (passed, failed, running, warning), and healthCheckStatusDetail."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/userSettings",
+    "method": "get",
+    "toolName": "list-cloud-pc-user-settings",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PC user settings. Each has displayName, selfServiceEnabled, localAdminEnabled, restorePointSetting (frequencyType, userRestoreEnabled), and lastModifiedDateTime. User settings control end-user permissions on their Cloud PCs."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/auditEvents",
+    "method": "get",
+    "toolName": "list-cloud-pc-audit-events",
+    "appPermissions": ["CloudPC.Read.All"],
+    "llmTip": "Lists Cloud PC audit events. Each has displayName, componentName, activity, activityDateTime, activityType (create, delete, patch), activityOperationType, activityResult (success, failure), actor, and resources. Use $filter=activityDateTime ge 2024-01-01T00:00:00Z. Use $orderby=activityDateTime desc."
+  },
+
+  {
+    "pathPattern": "/print/printers",
+    "method": "get",
+    "toolName": "list-printers",
+    "appPermissions": ["Printer.Read.All"],
+    "llmTip": "Lists printers registered in Universal Print. Each has displayName, manufacturer, model, status (state: idle, processing, stopped, unknownFutureValue), isShared, isAcceptingJobs, location, defaults, and capabilities. Use $filter to narrow results."
+  },
+  {
+    "pathPattern": "/print/shares",
+    "method": "get",
+    "toolName": "list-print-shares",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists printer shares in Universal Print. Each has displayName, createdDateTime, isAcceptingJobs, status, printer, and allowedUsers/allowedGroups. Printer shares make printers discoverable to users."
+  },
+  {
+    "pathPattern": "/print/connectors",
+    "method": "get",
+    "toolName": "list-print-connectors",
+    "appPermissions": ["PrintConnector.Read.All"],
+    "llmTip": "Lists Universal Print connectors. Each has displayName, fullyQualifiedDomainName, operatingSystem, appVersion, deviceHealth (lastConnectionTime), location, and registeredDateTime. Connectors bridge on-premises printers to Universal Print."
+  },
+  {
+    "pathPattern": "/print/services",
+    "method": "get",
+    "toolName": "list-print-services",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists Universal Print service instances. Each has endpoints with displayName and uri. These represent the service endpoints used by Universal Print."
+  },
+  {
+    "pathPattern": "/print/operations",
+    "method": "get",
+    "toolName": "list-print-operations",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists long-running Universal Print operations. Each has status (state: notStarted, running, succeeded, failed), createdDateTime, and lastActionDateTime."
+  },
+  {
+    "pathPattern": "/print/taskDefinitions",
+    "method": "get",
+    "toolName": "list-print-task-definitions",
+    "appPermissions": ["PrintJob.Read.All"],
+    "llmTip": "Lists Universal Print task definitions. Task definitions describe tasks that can be triggered on various print events (e.g., jobStarted)."
+  },
+
+  {
+    "pathPattern": "/informationProtection/bitlocker/recoveryKeys",
+    "method": "get",
+    "toolName": "list-bitlocker-recovery-keys",
+    "appPermissions": ["BitlockerKey.Read.All"],
+    "llmTip": "Lists BitLocker recovery keys stored in Entra ID. Each has id, createdDateTime, deviceId, volumeType (operatingSystemVolume, fixedDataVolume, removableDataVolume). The actual key value is NOT returned by default for security; use $select=key to include it (requires BitlockerKey.ReadBasic.All or BitlockerKey.Read.All). Use $filter=deviceId eq 'xxx' to find keys for a specific device."
+  },
+  {
+    "pathPattern": "/informationProtection/threatAssessmentRequests",
+    "method": "get",
+    "toolName": "list-threat-assessment-requests",
+    "appPermissions": ["ThreatAssessment.Read.All"],
+    "llmTip": "Lists threat assessment requests. Each has id, createdDateTime, contentType (mail, url, file), expectedAssessment (block, unblock), category (spam, phishing, malware), status (pending, completed), requestSource, createdBy, and results (with resultType and message). Use $top to limit."
+  },
+
+  {
+    "pathPattern": "/admin/sharepoint/settings",
+    "method": "get",
+    "toolName": "get-sharepoint-settings",
+    "appPermissions": ["SharePointTenantSettings.Read.All"],
+    "llmTip": "Gets SharePoint tenant-level settings. Returns allowedDomainGuidsForSyncApp, availableManagedPathsForSiteCreation, deletedUserPersonalSiteRetentionPeriodInDays, excludedFileExtensionsForSyncApp, idleSessionSignOut, imageTaggingOption, isCommentingOnSitePagesEnabled, isFileActivityNotificationEnabled, isLoopEnabled, isMacSyncAppEnabled, isResharingByExternalUsersEnabled, isSharePointMobileNotificationEnabled, isSharePointNewsfeedEnabled, isSiteCreationEnabled, isSiteCreationUIEnabled, isSitePagesCreationEnabled, isSitesStorageLimitAutomatic, knowledgeIntelligenceEnabled, personalSiteDefaultStorageLimitInMB, sharingAllowedDomainList, sharingBlockedDomainList, sharingCapability, sharingDomainRestrictionMode, siteCreationDefaultManagedPath, siteCreationDefaultStorageLimitInMB, tenantDefaultTimezone."
+  },
+
+  {
+    "pathPattern": "/security/labels/retentionLabels",
+    "method": "get",
+    "toolName": "list-retention-labels",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists retention labels from Microsoft Purview Records Management. Each has displayName, descriptionForAdmins, descriptionForUsers, retentionDuration, retentionTrigger, behaviorDuringRetentionPeriod, actionAfterRetentionPeriod (none, delete, startDispositionReview), isInUse, createdDateTime, lastModifiedDateTime, and labelToBeApplied."
+  },
+  {
+    "pathPattern": "/security/labels/authorities",
+    "method": "get",
+    "toolName": "list-file-plan-authorities",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan authorities used in retention labels. Each has displayName and id. Authorities represent the regulatory body or organizational authority behind a retention policy."
+  },
+  {
+    "pathPattern": "/security/labels/categories",
+    "method": "get",
+    "toolName": "list-file-plan-categories",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan categories used in retention labels. Each has displayName and id. Categories classify the content type for records management."
+  },
+  {
+    "pathPattern": "/security/labels/citations",
+    "method": "get",
+    "toolName": "list-file-plan-citations",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan citations used in retention labels. Each has displayName, citationUrl, citationJurisdiction, and id. Citations reference the regulation or law that requires the retention."
+  },
+  {
+    "pathPattern": "/security/labels/departments",
+    "method": "get",
+    "toolName": "list-file-plan-departments",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan departments used in retention labels. Each has displayName and id. Departments identify which organizational unit owns the retention policy."
+  },
+  {
+    "pathPattern": "/security/labels/filePlanReferences",
+    "method": "get",
+    "toolName": "list-file-plan-references",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists file plan references used in retention labels. Each has displayName and id. File plan references provide a unique identifier or reference number for the retention policy within the organization's file plan."
   }
 ]

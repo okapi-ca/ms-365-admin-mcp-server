@@ -67,6 +67,44 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
     description:
       'Incident response operations (disable user, revoke sessions, confirm compromised, dismiss risk, update alerts)',
   },
+  ediscovery: {
+    name: 'ediscovery',
+    pattern: /ediscovery/i,
+    description: 'eDiscovery cases (Microsoft Purview)',
+  },
+  cloudpc: {
+    name: 'cloudpc',
+    pattern: /cloud-pc|provisioning-polic/i,
+    description:
+      'Cloud PC / Windows 365 (cloud PCs, provisioning policies, device images, gallery images, network connections, user settings, audit events)',
+  },
+  callrecords: {
+    name: 'callrecords',
+    pattern: /call-record/i,
+    description: 'Teams call records',
+  },
+  print: {
+    name: 'print',
+    pattern: /print/i,
+    description:
+      'Universal Print (printers, shares, connectors, services, operations, task definitions)',
+  },
+  infoprotection: {
+    name: 'infoprotection',
+    pattern: /bitlocker|threat-assessment|recovery-key/i,
+    description: 'Information Protection (BitLocker recovery keys, threat assessment requests)',
+  },
+  sharepointadmin: {
+    name: 'sharepointadmin',
+    pattern: /sharepoint-setting/i,
+    description: 'SharePoint tenant administration settings',
+  },
+  retention: {
+    name: 'retention',
+    pattern: /retention-label|file-plan/i,
+    description:
+      'Records Management (retention labels, file plan authorities, categories, citations, departments, references)',
+  },
   all: {
     name: 'all',
     pattern: /.*/,
