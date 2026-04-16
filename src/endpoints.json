@@ -1474,5 +1474,786 @@
     "toolName": "list-file-plan-references",
     "appPermissions": ["RecordsManagement.Read.All"],
     "llmTip": "Lists file plan references used in retention labels. Each has displayName and id. File plan references provide a unique identifier or reference number for the retention policy within the organization's file plan."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/reports/getDeviceNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-device-noncompliance-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates an Intune device non-compliance report. POST body: {\"name\":\"DeviceNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"ComplianceState\"],\"top\":50}. Returns device-level compliance status."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getCompliancePolicyNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-compliance-policy-noncompliance-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of devices non-compliant with a specific compliance policy. POST body: {\"name\":\"CompliancePolicyNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getCompliancePolicyNonComplianceSummaryReport",
+    "method": "post",
+    "toolName": "intune-compliance-policy-noncompliance-summary",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a summary of non-compliance by compliance policy. POST body: {\"name\":\"CompliancePolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\",\"ErrorDeviceCount\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getComplianceSettingNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-compliance-setting-noncompliance-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of devices non-compliant for a specific compliance setting. POST body: {\"name\":\"ComplianceSettingNonCompliance\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"CurrentValue\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getConfigurationPolicyNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-config-policy-noncompliance-report",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of devices non-compliant with a device configuration policy. POST body: {\"name\":\"ConfigurationPolicyNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getConfigurationPolicyNonComplianceSummaryReport",
+    "method": "post",
+    "toolName": "intune-config-policy-noncompliance-summary",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a summary of non-compliance by device configuration policy. POST body: {\"name\":\"ConfigurationPolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getConfigurationSettingNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-config-setting-noncompliance-report",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of devices non-compliant for a specific configuration setting. POST body: {\"name\":\"ConfigurationSettingNonCompliance\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getDevicesWithoutCompliancePolicyReport",
+    "method": "post",
+    "toolName": "intune-devices-without-compliance-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of managed devices that have no compliance policy assigned. POST body: {\"name\":\"DevicesWithoutCompliancePolicy\",\"select\":[\"DeviceName\",\"UPN\",\"OS\"],\"top\":50}. Useful for identifying compliance coverage gaps."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getNoncompliantDevicesAndSettingsReport",
+    "method": "post",
+    "toolName": "intune-noncompliant-devices-settings-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a combined report of non-compliant devices and the settings they violate. POST body: {\"name\":\"NoncompliantDevicesAndSettings\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getPolicyNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-policy-noncompliance-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a general policy non-compliance report. POST body: {\"name\":\"PolicyNonCompliance\",\"select\":[\"PolicyName\",\"DeviceName\",\"UPN\",\"ComplianceState\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getPolicyNonComplianceSummaryReport",
+    "method": "post",
+    "toolName": "intune-policy-noncompliance-summary",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a summary of non-compliance across all policies. POST body: {\"name\":\"PolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\",\"ErrorDeviceCount\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getPolicyNonComplianceMetadata",
+    "method": "post",
+    "toolName": "intune-policy-noncompliance-metadata",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Gets metadata about policy non-compliance (available columns and filters). POST body: {\"name\":\"PolicyNonComplianceMetadata\"}. Useful before generating other reports to discover available fields."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getSettingNonComplianceReport",
+    "method": "post",
+    "toolName": "intune-setting-noncompliance-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of non-compliance grouped by setting. POST body: {\"name\":\"SettingNonCompliance\",\"select\":[\"SettingName\",\"NonCompliantDeviceCount\"],\"top\":50}."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getReportFilters",
+    "method": "post",
+    "toolName": "intune-report-filters",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Gets available report filters for Intune reports. POST body: {\"name\":\"ReportName\"}. Returns available filter values. Use before other report endpoints to discover filter options."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getHistoricalReport",
+    "method": "post",
+    "toolName": "intune-historical-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a historical Intune report. POST body: {\"name\":\"ReportName\",\"filter\":\"...\",\"select\":[...],\"top\":50}. Provides point-in-time data for trend analysis."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getCachedReport",
+    "method": "post",
+    "toolName": "intune-cached-report",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Retrieves a previously generated cached Intune report by ID. POST body: {\"id\":\"report-id\",\"select\":[...],\"top\":50}. Faster than regenerating reports."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/exportJobs",
+    "method": "get",
+    "toolName": "list-intune-report-export-jobs",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists Intune report export jobs. Each has id, reportName, status (notStarted, inProgress, completed), requestDateTime, and url (download link when completed)."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/retrieveDeviceAppInstallationStatusReport",
+    "method": "post",
+    "toolName": "intune-device-app-install-status-report",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Generates a report of app installation status per device. POST body: {\"name\":\"DeviceAppInstallationStatus\",\"filter\":\"(AppId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"AppName\",\"InstallState\"],\"top\":50}."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/complianceManagementPartners",
+    "method": "get",
+    "toolName": "list-compliance-management-partners",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists compliance management partners integrated with Intune. Each has displayName, partnerState, and supported platforms."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceManagementPartners",
+    "method": "get",
+    "toolName": "list-device-management-partners",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists device management partners (DEP, Jamf, etc.) integrated with Intune. Each has displayName, partnerState, isConfigured, and partnerAppType."
+  },
+  {
+    "pathPattern": "/deviceManagement/exchangeConnectors",
+    "method": "get",
+    "toolName": "list-exchange-connectors",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Exchange connectors for Intune on-premises Exchange integration. Each has connectorName, status, serverName, exchangeConnectorType, and version."
+  },
+  {
+    "pathPattern": "/deviceManagement/remoteAssistancePartners",
+    "method": "get",
+    "toolName": "list-remote-assistance-partners",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists remote assistance partners (TeamViewer, etc.) integrated with Intune. Each has displayName, onboardingStatus, and lastConnectionDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/notificationMessageTemplates",
+    "method": "get",
+    "toolName": "list-notification-message-templates",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Intune notification message templates. These are compliance notification templates sent to users when their devices are non-compliant. Each has displayName, defaultLocale, brandingOptions, and roleScopeTagIds."
+  },
+  {
+    "pathPattern": "/deviceManagement/resourceOperations",
+    "method": "get",
+    "toolName": "list-intune-resource-operations",
+    "appPermissions": ["DeviceManagementRBAC.Read.All"],
+    "llmTip": "Lists Intune RBAC resource operations. Each has resourceName, actionName, and description. Shows all available operations that can be assigned to Intune roles."
+  },
+  {
+    "pathPattern": "/deviceManagement/importedWindowsAutopilotDeviceIdentities",
+    "method": "get",
+    "toolName": "list-imported-autopilot-devices",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists imported Windows Autopilot device identities. Each has serialNumber, productKey, hardwareIdentifier, state (importState), and importedDateTime. Use to track Autopilot device import status."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsMalwareInformation",
+    "method": "get",
+    "toolName": "list-windows-malware-info",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists Windows malware information detected across Intune-managed devices. Each has displayName, category, severity, additionalInformationUrl, and deviceMalwareStates. Use for threat landscape visibility."
+  },
+
+  {
+    "pathPattern": "/deviceAppManagement/mobileApps",
+    "method": "get",
+    "toolName": "list-intune-mobile-apps",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists mobile apps managed by Intune. Each has displayName, publisher, createdDateTime, lastModifiedDateTime, isAssigned, isFeatured, publishingState. Includes Win32, iOS, Android, macOS, and web apps. Use $filter=isAssigned eq true to see assigned apps."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/mobileAppCategories",
+    "method": "get",
+    "toolName": "list-intune-app-categories",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists Intune mobile app categories. Each has displayName and id. Categories help organize apps in the Company Portal."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/mobileAppConfigurations",
+    "method": "get",
+    "toolName": "list-intune-app-configurations",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists Intune app configuration policies. Each has displayName, description, targetedMobileApps, settings, and createdDateTime. Used to push configuration to managed apps."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/managedAppPolicies",
+    "method": "get",
+    "toolName": "list-managed-app-policies",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists Intune managed app protection policies (MAM). Each has displayName, description, createdDateTime, version. Shows all app protection policies across platforms."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/managedAppRegistrations",
+    "method": "get",
+    "toolName": "list-managed-app-registrations",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists managed app registrations. Each registration represents a user+device+app combination where MAM policy applies. Has appIdentifier, createdDateTime, deviceName, managementSdkVersion, and userId."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/managedAppStatuses",
+    "method": "get",
+    "toolName": "list-managed-app-statuses",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists managed app status reports. Returns status summaries for Intune app protection policies including deployment and user status."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/androidManagedAppProtections",
+    "method": "get",
+    "toolName": "list-android-app-protections",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists Android managed app protection policies (MAM). Each has displayName, description, periodOfflineBeforeWipeIsEnforced, pinRequired, minimumPinLength, managedBrowser, allowedDataStorageLocations, and organizationalCredentialsRequired."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/iosManagedAppProtections",
+    "method": "get",
+    "toolName": "list-ios-app-protections",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists iOS managed app protection policies (MAM). Each has displayName, description, periodOfflineBeforeWipeIsEnforced, pinRequired, minimumPinLength, faceIdBlocked, and allowedDataStorageLocations."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/defaultManagedAppProtections",
+    "method": "get",
+    "toolName": "list-default-app-protections",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists default managed app protection policies. These are cross-platform MAM policies that apply when no platform-specific policy exists."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/targetedManagedAppConfigurations",
+    "method": "get",
+    "toolName": "list-targeted-app-configurations",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists targeted managed app configuration policies. Each has displayName, description, targetedMobileApps, customSettings, and isAssigned. These push configuration to specific groups of users."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/mdmWindowsInformationProtectionPolicies",
+    "method": "get",
+    "toolName": "list-mdm-wip-policies",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists MDM Windows Information Protection (WIP) policies. Each has displayName, enforcementLevel, protectedApps, exemptApps, enterpriseNetworkDomainNames, and enterpriseProtectedDomainNames."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/windowsInformationProtectionPolicies",
+    "method": "get",
+    "toolName": "list-mam-wip-policies",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists MAM Windows Information Protection (WIP) policies (without MDM enrollment). Each has displayName, enforcementLevel, protectedApps, exemptApps, and isAssigned."
+  },
+  {
+    "pathPattern": "/deviceAppManagement/vppTokens",
+    "method": "get",
+    "toolName": "list-vpp-tokens",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Apple Volume Purchase Program (VPP) tokens. Each has organizationName, appleId, state (valid, expired, invalid), expirationDateTime, lastSyncDateTime, lastSyncStatus, and automaticallyUpdateApps."
+  },
+
+  {
+    "pathPattern": "/policies/activityBasedTimeoutPolicies",
+    "method": "get",
+    "toolName": "list-activity-timeout-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists activity-based timeout policies. These enforce idle session timeout for web applications. Each has displayName, isOrganizationDefault, and definition (JSON with ActivityBasedTimeoutPolicy settings)."
+  },
+  {
+    "pathPattern": "/policies/authorizationPolicy",
+    "method": "get",
+    "toolName": "get-authorization-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the tenant authorization policy. Returns allowedToSignUpEmailBasedSubscriptions, allowedToUseSSPR, allowEmailVerifiedUsersToJoinOrganization, allowInvitesFrom, blockMsolPowerShell, defaultUserRolePermissions (allowedToCreateApps, allowedToCreateSecurityGroups, allowedToReadBitlockerKeysForOwnedDevice, allowedToReadOtherUsers), and guestUserRoleId."
+  },
+  {
+    "pathPattern": "/policies/authenticationFlowsPolicy",
+    "method": "get",
+    "toolName": "get-auth-flows-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the authentication flows policy. Returns selfServiceSignUp configuration (isEnabled) which controls whether external users can sign up via user flows."
+  },
+  {
+    "pathPattern": "/policies/claimsMappingPolicies",
+    "method": "get",
+    "toolName": "list-claims-mapping-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists claims mapping policies. These customize token claims for specific applications. Each has displayName, isOrganizationDefault, and definition (JSON with ClaimsMappingPolicy including IncludeBasicClaimSet and ClaimsSchema)."
+  },
+  {
+    "pathPattern": "/policies/conditionalAccessPolicies",
+    "method": "get",
+    "toolName": "list-conditional-access-policies-v2",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists all conditional access policies using the policies endpoint. Each has displayName, state (enabled, disabled, enabledForReportingButNotEnforced), conditions, grantControls, and sessionControls. Alternative to list-conditional-access-policies."
+  },
+  {
+    "pathPattern": "/policies/defaultAppManagementPolicy",
+    "method": "get",
+    "toolName": "get-default-app-management-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the default app management policy for the tenant. Returns the default restrictions on password and key credentials for app registrations and service principals when no specific policy is assigned."
+  },
+  {
+    "pathPattern": "/policies/deviceRegistrationPolicy",
+    "method": "get",
+    "toolName": "get-device-registration-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the device registration policy. Returns multiFactorAuthConfiguration, azureADRegistration (allowedToRegister, isAdminConfigurable), azureADJoin (allowedToJoin, isAdminConfigurable), and localAdminPassword settings. Critical for controlling which users can join/register devices."
+  },
+  {
+    "pathPattern": "/policies/featureRolloutPolicies",
+    "method": "get",
+    "toolName": "list-feature-rollout-policies",
+    "appPermissions": ["Directory.Read.All"],
+    "llmTip": "Lists feature rollout policies. These enable staged rollout of Entra ID features (like passwordHashSync, seamlessSSO, passthroughAuthentication) to specific groups before tenant-wide enablement. Each has displayName, feature, isEnabled, and isAppliedToOrganization."
+  },
+  {
+    "pathPattern": "/policies/homeRealmDiscoveryPolicies",
+    "method": "get",
+    "toolName": "list-home-realm-discovery-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists home realm discovery policies. These control authentication behavior for federated domains (auto-acceleration, preferred domain, etc.). Each has displayName, isOrganizationDefault, and definition (JSON with HomeRealmDiscoveryPolicy)."
+  },
+  {
+    "pathPattern": "/policies/permissionGrantPolicies",
+    "method": "get",
+    "toolName": "list-permission-grant-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists permission grant policies. These control which permissions users/admins can consent to. Each has displayName, includes (conditions that match), and excludes (conditions that block). Critical for app consent security."
+  },
+  {
+    "pathPattern": "/policies/roleManagementPolicies",
+    "method": "get",
+    "toolName": "list-role-management-policies",
+    "appPermissions": ["RoleManagementPolicy.Read.Directory"],
+    "llmTip": "Lists PIM role management policies. Each policy defines activation rules (MFA, justification, approval, max duration), assignment rules (permanent eligible/active, expiration), and notification rules for a specific role. Use $expand=rules to see all settings."
+  },
+  {
+    "pathPattern": "/policies/roleManagementPolicyAssignments",
+    "method": "get",
+    "toolName": "list-role-management-policy-assignments",
+    "appPermissions": ["RoleManagementPolicy.Read.Directory"],
+    "llmTip": "Lists PIM role management policy assignments. Links policies to specific roles. Each has policyId, scopeId, scopeType, and roleDefinitionId. Use $expand=policy($expand=rules) to include the full policy details."
+  },
+  {
+    "pathPattern": "/policies/tokenIssuancePolicies",
+    "method": "get",
+    "toolName": "list-token-issuance-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists token issuance policies. These control how SAML tokens are issued (token format, signing algorithm, etc.). Each has displayName, isOrganizationDefault, and definition."
+  },
+  {
+    "pathPattern": "/policies/tokenLifetimePolicies",
+    "method": "get",
+    "toolName": "list-token-lifetime-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists token lifetime policies. These override default token lifetimes for specific applications. Each has displayName, isOrganizationDefault, and definition (JSON with TokenLifetimePolicy including AccessTokenLifetime and MaxAgeSessionSingleFactor)."
+  },
+  {
+    "pathPattern": "/policies/crossTenantAccessPolicy/default",
+    "method": "get",
+    "toolName": "get-cross-tenant-default-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the default cross-tenant access policy. Returns the default inbound/outbound settings (b2bCollaboration, b2bDirectConnect, organizationDefault) that apply to all tenants not covered by a partner-specific policy. Critical for controlling external collaboration defaults."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentPolicies",
+    "method": "get",
+    "toolName": "list-entitlement-assignment-policies",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists entitlement management assignment policies. Each defines who can request an access package, approval requirements, and access review settings. Has displayName, accessPackageId, requestApprovalSettings, requestorSettings, and reviewSettings."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/resources",
+    "method": "get",
+    "toolName": "list-entitlement-resources",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists resources available in entitlement management catalogs. Resources are groups, apps, or SharePoint sites that can be included in access packages."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/resourceEnvironments",
+    "method": "get",
+    "toolName": "list-entitlement-resource-environments",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists resource environments in entitlement management. Environments represent connected systems (like other tenants) that provide resources for access packages."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflowTemplates",
+    "method": "get",
+    "toolName": "list-lifecycle-workflow-templates",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists available lifecycle workflow templates. Templates provide pre-built workflows for common scenarios (onboarding, offboarding, job change). Each has displayName, description, category (joiner, leaver, mover), and executionConditions."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/settings",
+    "method": "get",
+    "toolName": "get-lifecycle-workflow-settings",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Gets lifecycle workflows global settings. Returns workflowScheduleIntervalInHours (how often workflows are evaluated) and emailSettings."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/customTaskExtensions",
+    "method": "get",
+    "toolName": "list-lifecycle-custom-task-extensions",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists custom task extensions for lifecycle workflows. These are Logic App-based custom actions that can be added to workflow steps. Each has displayName, endpointConfiguration, callbackConfiguration, and createdDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/deletedItems/workflows",
+    "method": "get",
+    "toolName": "list-deleted-lifecycle-workflows",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists recently deleted lifecycle workflows. Deleted workflows can be restored within 30 days. Each has displayName, category, deletedDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentScheduleRequests",
+    "method": "get",
+    "toolName": "list-pim-group-assignment-requests",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists PIM for Groups assignment schedule requests. Each request represents an activation or assignment operation. Has action (adminAssign, adminRemove, selfActivate, selfDeactivate), principalId, groupId, accessId (member, owner), scheduleInfo, and status."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentScheduleInstances",
+    "method": "get",
+    "toolName": "list-pim-group-assignment-instances",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests",
+    "method": "get",
+    "toolName": "list-pim-group-eligibility-requests",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists PIM for Groups eligibility schedule requests. Shows requests to make users eligible for group membership/ownership. Has action, principalId, groupId, accessId, scheduleInfo, and status."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleInstances",
+    "method": "get",
+    "toolName": "list-pim-group-eligibility-instances",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/historyDefinitions",
+    "method": "get",
+    "toolName": "list-access-review-history",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists access review history definitions. These are scheduled exports of access review decisions. Each has displayName, reviewHistoryPeriodStartDateTime, reviewHistoryPeriodEndDateTime, status, and decisions (approve, deny, dontKnow, notReviewed)."
+  },
+
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests",
+    "method": "get",
+    "toolName": "list-pim-role-assignment-requests",
+    "appPermissions": ["RoleAssignmentSchedule.Read.Directory"],
+    "llmTip": "Lists PIM role assignment schedule requests. Each request represents an activation or assignment of a directory role. Has action (adminAssign, adminRemove, selfActivate, selfDeactivate), principalId, roleDefinitionId, directoryScopeId, scheduleInfo, and status."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignmentSchedules",
+    "method": "get",
+    "toolName": "list-pim-role-assignment-schedules",
+    "appPermissions": ["RoleAssignmentSchedule.Read.Directory"],
+    "llmTip": "Lists PIM role assignment schedules. Shows the schedule (start/end dates) for active role assignments. Has principalId, roleDefinitionId, directoryScopeId, assignmentType (assigned, activated), scheduleInfo, and memberType."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleEligibilityScheduleRequests",
+    "method": "get",
+    "toolName": "list-pim-role-eligibility-requests",
+    "appPermissions": ["RoleEligibilitySchedule.Read.Directory"],
+    "llmTip": "Lists PIM role eligibility schedule requests. Shows requests to make users eligible for directory roles. Has action, principalId, roleDefinitionId, directoryScopeId, scheduleInfo, and status."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleEligibilitySchedules",
+    "method": "get",
+    "toolName": "list-pim-role-eligibility-schedules",
+    "appPermissions": ["RoleEligibilitySchedule.Read.Directory"],
+    "llmTip": "Lists PIM role eligibility schedules. Shows all users currently eligible to activate directory roles with their schedule details. Has principalId, roleDefinitionId, directoryScopeId, scheduleInfo, and memberType."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/resourceNamespaces",
+    "method": "get",
+    "toolName": "list-role-resource-namespaces",
+    "appPermissions": ["RoleManagement.Read.Directory"],
+    "llmTip": "Lists RBAC resource namespaces for directory roles. Each namespace represents a resource provider (microsoft.directory, microsoft.aad.b2c, etc.) with resourceActions defining available permissions."
+  },
+
+  {
+    "pathPattern": "/identityProtection/riskyServicePrincipals/confirmCompromised",
+    "method": "post",
+    "toolName": "confirm-compromised-service-principals",
+    "appPermissions": ["IdentityRiskyServicePrincipal.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Confirms one or more service principals as compromised. Body: {\"servicePrincipalIds\":[\"sp-id-1\"]}. Sets riskState to confirmedCompromised. Use after investigating a risky service principal and confirming the threat is real."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyServicePrincipals/dismiss",
+    "method": "post",
+    "toolName": "dismiss-risky-service-principals",
+    "appPermissions": ["IdentityRiskyServicePrincipal.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Dismisses risk for one or more service principals. Body: {\"servicePrincipalIds\":[\"sp-id-1\"]}. Sets riskState to dismissed. Use after investigating and determining the risk is a false positive."
+  },
+  {
+    "pathPattern": "/identityProtection/servicePrincipalRiskDetections",
+    "method": "get",
+    "toolName": "list-service-principal-risk-detections",
+    "appPermissions": ["IdentityRiskEvent.Read.All"],
+    "llmTip": "Lists risk detections for service principals. Each has riskEventType, riskLevel, riskState, riskDetail, detectedDateTime, activity, source, servicePrincipalId, and appId. Use $filter=riskState eq 'atRisk' to see active risks."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyUsers/confirmSafe",
+    "method": "post",
+    "toolName": "confirm-safe-users",
+    "appPermissions": ["IdentityRiskyUser.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Confirms one or more users as safe (not compromised). Body: {\"userIds\":[\"user-id-1\"]}. Sets riskState to remediated. Use after investigating a risky user and confirming the account is not compromised."
+  },
+
+  {
+    "pathPattern": "/security/microsoft.graph.security.runHuntingQuery",
+    "method": "post",
+    "toolName": "run-hunting-query",
+    "appPermissions": ["ThreatHunting.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Runs an advanced hunting query using KQL (Kusto Query Language) against Microsoft 365 Defender data. Body: {\"query\":\"DeviceProcessEvents | where Timestamp > ago(1d) | take 10\"}. Tables include DeviceEvents, DeviceProcessEvents, DeviceNetworkEvents, DeviceFileEvents, EmailEvents, AlertEvidence, IdentityLogonEvents, CloudAppEvents. Powerful for threat investigation."
+  },
+  {
+    "pathPattern": "/security/identities/healthIssues",
+    "method": "get",
+    "toolName": "list-identity-health-issues",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Lists Microsoft Defender for Identity health issues. Each has healthIssueType, severity (low, medium, high), displayName, description, recommendedActionCommands, status (open, closed, suppressed), domainName, sensorDNSName, and issueTypeId. Use to monitor Defender for Identity sensor health."
+  },
+  {
+    "pathPattern": "/security/identities/sensors",
+    "method": "get",
+    "toolName": "list-identity-sensors",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Lists Microsoft Defender for Identity sensors. Each has displayName, sensorType (adConnectIntegrated, adcsIntegrated, adfsIntegrated, domainControllerIntegrated), healthStatus (healthy, notHealthy, offline), openHealthIssuesCount, domainName, version, and deploymentStatus."
+  },
+  {
+    "pathPattern": "/security/identities/settings",
+    "method": "get",
+    "toolName": "get-identity-security-settings",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Gets Microsoft Defender for Identity global settings. Returns configuration for identity-based threat detection."
+  },
+  {
+    "pathPattern": "/security/triggers/retentionEvents",
+    "method": "get",
+    "toolName": "list-retention-events",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists retention events that trigger event-based retention labels. Each has displayName, description, eventTriggerDateTime, retentionEventType, createdDateTime, and status. These events start the retention period for event-based labels."
+  },
+  {
+    "pathPattern": "/security/triggerTypes/retentionEventTypes",
+    "method": "get",
+    "toolName": "list-retention-event-types",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Lists retention event types. Each has displayName, description, and createdDateTime. Event types categorize retention events (e.g., 'Employee Departure', 'Contract Expiration')."
+  },
+  {
+    "pathPattern": "/security/subjectRightsRequests",
+    "method": "get",
+    "toolName": "list-subject-rights-requests",
+    "appPermissions": ["SubjectRightsRequest.Read.All"],
+    "llmTip": "Lists data subject rights requests (DSAR) for privacy compliance. Each has displayName, type (access, delete, export, tagForAction), status (active, closed), dataSubjectType, createdDateTime, createdBy, stages, and regulation. Used for GDPR/privacy compliance."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulationAutomations",
+    "method": "get",
+    "toolName": "list-simulation-automations",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists attack simulation automations. Each has displayName, description, status (enabled, disabled, notRunning), createdDateTime, lastRunDateTime, nextRunDateTime, and attackType. These automate recurring phishing simulations."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/trainings",
+    "method": "get",
+    "toolName": "list-simulation-trainings",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists available training content for attack simulations. Each has displayName, description, source (microsoft, global, tenant), type (assigned, notAssigned, unknown), availabilityStatus, durationInMinutes, and supportedLocales."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/payloads",
+    "method": "get",
+    "toolName": "list-simulation-payloads",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists attack simulation payloads. Each has displayName, description, source (microsoft, global, tenant), status, platform, simulationAttackType (social, credential), technique (phishing, malware), language, and complexity."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/endUserNotifications",
+    "method": "get",
+    "toolName": "list-simulation-end-user-notifications",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists end-user notification templates for attack simulations. These are the emails sent to users during/after simulations."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/landingPages",
+    "method": "get",
+    "toolName": "list-simulation-landing-pages",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists landing page templates for attack simulations. These are the phishing pages shown when a user clicks a simulation link."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/loginPages",
+    "method": "get",
+    "toolName": "list-simulation-login-pages",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists login page templates for attack simulations. These are credential harvest pages used in phishing simulations."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/passiveDnsRecords",
+    "method": "get",
+    "toolName": "list-passive-dns-records",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists passive DNS records from Microsoft Defender Threat Intelligence. Each has firstSeenDateTime, lastSeenDateTime, recordType, and associated host/parentHost. Use $filter=host/id eq 'example.com' to find DNS history for a domain."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/sslCertificates",
+    "method": "get",
+    "toolName": "list-ssl-certificates",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists SSL certificates from Microsoft Defender Threat Intelligence. Each has sha1, issuer, subject, serialNumber, firstSeenDateTime, lastSeenDateTime, and relatedHosts. Useful for infrastructure attribution."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/subdomains",
+    "method": "get",
+    "toolName": "list-threat-intel-subdomains",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists subdomains from Threat Intelligence. Each has value (the subdomain), firstSeenDateTime, and host. Use $filter=host/id eq 'example.com' to enumerate subdomains."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hostPorts",
+    "method": "get",
+    "toolName": "list-threat-intel-host-ports",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists open ports observed on hosts from Threat Intelligence. Each has port, protocol, status, firstSeenDateTime, lastSeenDateTime, and associated host/service/banner. Use $filter=host/id eq 'x.x.x.x' for a specific host."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hostTrackers",
+    "method": "get",
+    "toolName": "list-threat-intel-host-trackers",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists web trackers (analytics IDs, etc.) observed on hosts from Threat Intelligence. Each has kind (GoogleAnalyticsID, JarmHash, etc.), value, firstSeenDateTime, lastSeenDateTime, and host. Useful for infrastructure correlation."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hostCookies",
+    "method": "get",
+    "toolName": "list-threat-intel-host-cookies",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists cookies observed on hosts from Threat Intelligence. Each has name, domain, firstSeenDateTime, lastSeenDateTime, and host."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hostPairs",
+    "method": "get",
+    "toolName": "list-threat-intel-host-pairs",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists host pairs (parent-child relationships) from Threat Intelligence. Each has linkKind (redirect, script, img, etc.), firstSeenDateTime, lastSeenDateTime, parentHost, and childHost. Use to trace infrastructure chains."
+  },
+
+  {
+    "pathPattern": "/reports/authenticationMethods/userRegistrationDetails",
+    "method": "get",
+    "toolName": "list-user-registration-details",
+    "appPermissions": ["UserAuthenticationMethod.Read.All"],
+    "llmTip": "Lists MFA/SSPR registration details for all users. Each has userPrincipalName, userDisplayName, isMfaRegistered, isMfaCapable, isSsprRegistered, isSsprEnabled, isSsprCapable, isPasswordlessCapable, methodsRegistered, and defaultMfaMethod. Powerful for MFA adoption reporting."
+  },
+  {
+    "pathPattern": "/reports/dailyPrintUsageByPrinter",
+    "method": "get",
+    "toolName": "list-daily-print-usage-by-printer",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Lists daily Universal Print usage summarized by printer. Each has printerName, printerId, usageDate, completedBlackAndWhiteJobCount, completedColorJobCount, incompleteJobCount, and pagesPrinted."
+  },
+  {
+    "pathPattern": "/reports/dailyPrintUsageByUser",
+    "method": "get",
+    "toolName": "list-daily-print-usage-by-user",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Lists daily Universal Print usage summarized by user. Each has userPrincipalName, usageDate, completedBlackAndWhiteJobCount, completedColorJobCount, incompleteJobCount, and pagesPrinted."
+  },
+  {
+    "pathPattern": "/reports/monthlyPrintUsageByPrinter",
+    "method": "get",
+    "toolName": "list-monthly-print-usage-by-printer",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Lists monthly Universal Print usage summarized by printer. Each has printerName, usageDate, completedBlackAndWhiteJobCount, completedColorJobCount, incompleteJobCount, and pagesPrinted."
+  },
+  {
+    "pathPattern": "/reports/monthlyPrintUsageByUser",
+    "method": "get",
+    "toolName": "list-monthly-print-usage-by-user",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Lists monthly Universal Print usage summarized by user. Each has userPrincipalName, usageDate, completedBlackAndWhiteJobCount, completedColorJobCount, incompleteJobCount, and pagesPrinted."
+  },
+
+  {
+    "pathPattern": "/copilot/admin/settings",
+    "method": "get",
+    "toolName": "get-copilot-admin-settings",
+    "appPermissions": ["CopilotSettings-Internal.ReadWrite.All"],
+    "llmTip": "Gets Microsoft 365 Copilot admin settings for the tenant. Returns configuration controlling Copilot behavior and availability."
+  },
+  {
+    "pathPattern": "/copilot/admin/settings/limitedMode",
+    "method": "get",
+    "toolName": "get-copilot-limited-mode",
+    "appPermissions": ["CopilotSettings-Internal.ReadWrite.All"],
+    "llmTip": "Gets Copilot limited mode configuration. Returns isEnabledForGroup, groupId, and whether Copilot features are restricted for specific user groups."
+  },
+
+  {
+    "pathPattern": "/directory/attributeSets",
+    "method": "get",
+    "toolName": "list-attribute-sets",
+    "appPermissions": ["CustomSecAttributeDefinition.Read.All"],
+    "llmTip": "Lists custom security attribute sets. Each set is a container of custom security attributes. Has displayName, description, id, maxAttributesPerSet, and isLocked."
+  },
+  {
+    "pathPattern": "/directory/customSecurityAttributeDefinitions",
+    "method": "get",
+    "toolName": "list-custom-security-attributes",
+    "appPermissions": ["CustomSecAttributeDefinition.Read.All"],
+    "llmTip": "Lists custom security attribute definitions. Each has attributeSet, name, type (String, Integer, Boolean), isSearchable, isCollection, usePreDefinedValuesOnly, status (Available, Deprecated), and description. Custom security attributes provide flexible tagging for Entra objects."
+  },
+  {
+    "pathPattern": "/directory/deviceLocalCredentials",
+    "method": "get",
+    "toolName": "list-device-local-credentials",
+    "appPermissions": ["DeviceLocalCredential.Read.All"],
+    "llmTip": "Lists device local admin credentials managed by Entra ID (LAPS - Local Admin Password Solution). Each has deviceName, lastBackupDateTime, and refreshDateTime. The actual password requires DeviceLocalCredential.Read.All and a separate GET by ID."
+  },
+  {
+    "pathPattern": "/directory/federationConfigurations",
+    "method": "get",
+    "toolName": "list-federation-configurations",
+    "appPermissions": ["Domain.Read.All"],
+    "llmTip": "Lists federation configurations for the directory. Each has displayName, audiences, issuerUri, metadataExchangeUri, passiveSignInUri, signingCertificateUpdateStatus, and preferredAuthenticationProtocol."
+  },
+  {
+    "pathPattern": "/directory/onPremisesSynchronization",
+    "method": "get",
+    "toolName": "list-on-premises-sync",
+    "appPermissions": ["OnPremDirectorySynchronization.Read.All"],
+    "llmTip": "Lists on-premises directory synchronization (Entra Connect) configurations. Returns features enabled (passwordHashSync, passwordWriteback, seamlessSSO, cloudSync), configuration details, and sync status."
   }
 ]
