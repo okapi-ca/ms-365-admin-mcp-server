@@ -25,6 +25,18 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
     pattern: /report|activity|usage/i,
     description: 'Usage reports (Teams, Email, Active Users, SharePoint)',
   },
+  identity: {
+    name: 'identity',
+    pattern:
+      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location/i,
+    description: 'Identity and access management (Entra ID users, groups, roles, policies)',
+  },
+  response: {
+    name: 'response',
+    pattern:
+      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|update-device|update-user-auth/i,
+    description: 'Incident response operations (disable user, revoke sessions, update alerts)',
+  },
   all: {
     name: 'all',
     pattern: /.*/,
