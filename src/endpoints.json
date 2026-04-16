@@ -417,5 +417,197 @@
     "toolName": "get-admin-consent-policy",
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Gets the admin consent request policy. Shows isEnabled, notifyReviewers, remindersEnabled, and reviewers list. Controls whether users can request admin consent for apps they want to use."
+  },
+
+  {
+    "pathPattern": "/devices",
+    "method": "get",
+    "toolName": "list-devices",
+    "appPermissions": ["Device.Read.All"],
+    "llmTip": "Lists all devices registered in the tenant. Use $filter=isCompliant eq false to find non-compliant devices. Use $filter=isManaged eq true for Intune-managed devices. Use $filter=operatingSystem eq 'Windows' to filter by OS. Use $select=displayName,operatingSystem,operatingSystemVersion,isCompliant,isManaged,accountEnabled,approximateLastSignInDateTime. Use $filter=approximateLastSignInDateTime le 2024-01-01T00:00:00Z to find stale devices."
+  },
+  {
+    "pathPattern": "/devices/{device-id}",
+    "method": "get",
+    "toolName": "get-device",
+    "appPermissions": ["Device.Read.All"],
+    "llmTip": "Gets a specific device by ID. Returns displayName, operatingSystem, operatingSystemVersion, isCompliant, isManaged, accountEnabled, trustType, approximateLastSignInDateTime, and deviceId."
+  },
+
+  {
+    "pathPattern": "/identityProtection/riskDetections",
+    "method": "get",
+    "toolName": "list-risk-detections",
+    "appPermissions": ["IdentityRiskEvent.Read.All"],
+    "llmTip": "Lists individual risk detections from Identity Protection. Use $filter=riskLevel eq 'high' to find high-risk events. Use $filter=detectedDateTime ge 2024-01-01T00:00:00Z to filter by date. Each detection has riskEventType (e.g. anonymizedIPAddress, leakedCredentials, malwareInfectedIPAddress), riskLevel, riskState, userPrincipalName, ipAddress, location, and activityType (signin, user)."
+  },
+  {
+    "pathPattern": "/identityProtection/riskDetections/{riskDetection-id}",
+    "method": "get",
+    "toolName": "get-risk-detection",
+    "appPermissions": ["IdentityRiskEvent.Read.All"],
+    "llmTip": "Gets a specific risk detection by ID. Returns full details including riskEventType, riskLevel, detectionTimingType (realtime, offline), source, ipAddress, location, userPrincipalName, and additionalInfo."
+  },
+
+  {
+    "pathPattern": "/directory/deletedItems/graph.user",
+    "method": "get",
+    "toolName": "list-deleted-users",
+    "appPermissions": ["User.Read.All"],
+    "llmTip": "Lists recently deleted users (recoverable within 30 days). Use $select=displayName,userPrincipalName,deletedDateTime to see when each user was deleted. Useful for auditing account deletions and potential recovery."
+  },
+  {
+    "pathPattern": "/directory/deletedItems/graph.group",
+    "method": "get",
+    "toolName": "list-deleted-groups",
+    "appPermissions": ["Group.Read.All"],
+    "llmTip": "Lists recently deleted groups (recoverable within 30 days). Only Microsoft 365 groups (unified groups) are soft-deleted and recoverable. Use $select=displayName,deletedDateTime,groupTypes."
+  },
+
+  {
+    "pathPattern": "/directory/administrativeUnits",
+    "method": "get",
+    "toolName": "list-administrative-units",
+    "appPermissions": ["AdministrativeUnit.Read.All"],
+    "llmTip": "Lists all administrative units in the tenant. Administrative units scope admin roles to a subset of users/groups/devices. Use $select=displayName,description,membershipType,membershipRule. membershipType can be 'Assigned' or 'Dynamic'."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}",
+    "method": "get",
+    "toolName": "get-administrative-unit",
+    "appPermissions": ["AdministrativeUnit.Read.All"],
+    "llmTip": "Gets a specific administrative unit by ID. Returns displayName, description, membershipType, membershipRule, and visibility."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}/members",
+    "method": "get",
+    "toolName": "list-administrative-unit-members",
+    "appPermissions": ["AdministrativeUnit.Read.All"],
+    "llmTip": "Lists members (users, groups, devices) of an administrative unit. Returns directory objects. Use $select=displayName,userPrincipalName for users."
+  },
+
+  {
+    "pathPattern": "/policies/authenticationStrengthPolicies",
+    "method": "get",
+    "toolName": "list-auth-strength-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists authentication strength policies. These define which MFA method combinations are acceptable (e.g. phishing-resistant MFA, passwordless). Built-in policies include 'MFA', 'Passwordless MFA', and 'Phishing-resistant MFA'. Custom policies can restrict to specific methods. Used by Conditional Access grant controls."
+  },
+  {
+    "pathPattern": "/policies/crossTenantAccessPolicy",
+    "method": "get",
+    "toolName": "get-cross-tenant-access-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the cross-tenant access policy. Controls B2B collaboration and B2B direct connect defaults. Returns allowedCloudEndpoints and default inbound/outbound settings for users, applications, and organizations."
+  },
+  {
+    "pathPattern": "/policies/crossTenantAccessPolicy/partners",
+    "method": "get",
+    "toolName": "list-cross-tenant-partners",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists partner-specific cross-tenant access configurations. Each entry has tenantId and overrides for inbound/outbound B2B collaboration and direct connect settings. Useful for auditing which external organizations have special access."
+  },
+
+  {
+    "pathPattern": "/roleManagement/directory/roleEligibilityScheduleInstances",
+    "method": "get",
+    "toolName": "list-pim-eligible-assignments",
+    "appPermissions": ["RoleEligibilitySchedule.Read.Directory"],
+    "llmTip": "Lists PIM (Privileged Identity Management) eligible role assignments. These are just-in-time assignments that users must activate. Use $filter=principalId eq '{user-id}' to find eligible roles for a specific user. Use $expand=roleDefinition to get role names. Compare with list-role-assignments to distinguish permanent vs eligible assignments."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignmentScheduleInstances",
+    "method": "get",
+    "toolName": "list-pim-active-assignments",
+    "appPermissions": ["RoleAssignmentSchedule.Read.Directory"],
+    "llmTip": "Lists PIM active role assignment schedule instances, including time-bound and activated assignments. Use $filter=principalId eq '{user-id}' to find active assignments for a user. Shows assignmentType (Assigned or Activated), startDateTime, endDateTime. Useful for auditing who currently has active privileged roles."
+  },
+
+  {
+    "pathPattern": "/users/{user-id}/appRoleAssignments",
+    "method": "get",
+    "toolName": "list-user-app-role-assignments",
+    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "llmTip": "Lists app role assignments for a user. Shows which enterprise apps the user has been granted access to and with which roles. Each entry has appRoleId, resourceDisplayName, and principalDisplayName."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo",
+    "method": "get",
+    "toolName": "list-sp-app-role-assignments",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists all users and groups assigned app roles on a service principal. Use to audit who has access to a specific enterprise application. Each entry has principalDisplayName, principalType, appRoleId."
+  },
+
+  {
+    "pathPattern": "/identityProtection/riskyUsers/confirmCompromised",
+    "method": "post",
+    "toolName": "confirm-compromised-users",
+    "appPermissions": ["IdentityRiskyUser.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Confirms one or more users as compromised. Body: {\"userIds\": [\"user-id-1\", \"user-id-2\"]}. This sets riskState to confirmedCompromised and riskLevel to high, which triggers any Conditional Access policies targeting risky users. Use after confirming a breach."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyUsers/dismiss",
+    "method": "post",
+    "toolName": "dismiss-risky-users",
+    "appPermissions": ["IdentityRiskyUser.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Dismisses risk for one or more users. Body: {\"userIds\": [\"user-id-1\", \"user-id-2\"]}. Sets riskState to dismissed. Use after investigating a risk detection and determining it is a false positive or has been remediated."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/phoneMethods/{phoneAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-phone-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a phone authentication method for a user. Use list-user-auth-methods first to get the phoneAuthenticationMethod ID. Useful for removing a compromised phone number during incident response. Cannot delete if it is the user's only MFA method and MFA is required."
+  },
+
+  {
+    "pathPattern": "/reports/getOneDriveUsageAccountDetail(period='{period}')",
+    "method": "get",
+    "toolName": "get-onedrive-usage-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets OneDrive usage details per account. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with ownerDisplayName, ownerPrincipalName, siteUrl, storageUsedInBytes, fileCount, activeFileCount, lastActivityDate."
+  },
+  {
+    "pathPattern": "/reports/getOffice365ActiveUserCounts(period='{period}')",
+    "method": "get",
+    "toolName": "get-active-user-counts-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets daily active user counts across Microsoft 365 services. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with daily counts per service: office365, exchange, oneDrive, sharePoint, skypeForBusiness, yammer, teams."
+  },
+  {
+    "pathPattern": "/reports/getMailboxUsageDetail(period='{period}')",
+    "method": "get",
+    "toolName": "get-mailbox-usage-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets mailbox usage details per user. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with userPrincipalName, displayName, storageUsedInBytes, issueWarningQuotaInBytes, prohibitSendQuotaInBytes, itemCount, lastActivityDate."
+  },
+  {
+    "pathPattern": "/reports/getM365AppUserDetail(period='{period}')",
+    "method": "get",
+    "toolName": "get-m365-apps-usage-report",
+    "appPermissions": ["Reports.Read.All"],
+    "skipEncoding": ["period"],
+    "llmTip": "Gets Microsoft 365 Apps usage details per user. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data showing which apps each user used (Outlook, Word, Excel, PowerPoint, OneNote, Teams) and on which platforms (Windows, Mac, Web, Mobile)."
+  },
+
+  {
+    "pathPattern": "/security/attackSimulation/simulations",
+    "method": "get",
+    "toolName": "list-attack-simulations",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists attack simulation campaigns (phishing simulations). Each simulation has displayName, status, attackType (social, credential harvest, etc.), launchDateTime, completionDateTime, report with overview (resolvedTargetsCount, compromisedRate). Useful for tracking security awareness training effectiveness."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulations/{simulation-id}",
+    "method": "get",
+    "toolName": "get-attack-simulation",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Gets a specific attack simulation by ID. Returns full details including report with simulationEventsContent (users who clicked, reported, etc.) and trainingsContent."
   }
 ]

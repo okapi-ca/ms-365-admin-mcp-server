@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **57 tools** covering security, audit, identity, compliance, reports, and incident response
+- **82 tools** covering security, audit, identity, compliance, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -100,14 +100,14 @@ node dist/index.js --preset security,audit,identity
 
 | Preset       | Description                                                    |
 | ------------ | -------------------------------------------------------------- |
-| `security`   | Security alerts and incidents                                  |
-| `audit`      | Directory audits, sign-ins, provisioning logs                  |
-| `health`     | Service health and Message Center                              |
-| `reports`    | Usage reports (Teams, Email, SharePoint, Active Users)         |
-| `identity`   | Users, groups, roles, conditional access, apps, domains        |
-| `compliance` | Licenses, Secure Score, Identity Protection, security policies |
-| `response`   | Incident response write operations                             |
-| `all`        | All available tools                                            |
+| `security`   | Security alerts, incidents, and attack simulations                          |
+| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items                |
+| `health`     | Service health and Message Center                                           |
+| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)      |
+| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains       |
+| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies      |
+| `response`   | Incident response write operations (disable, revoke, confirm, dismiss)      |
+| `all`        | All available tools                                                         |
 
 ### Verify credentials
 
@@ -115,9 +115,9 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (57)
+## Available tools (82)
 
-### Security (6)
+### Security (8)
 
 | Tool                       | Method | Risk   |
 | -------------------------- | ------ | ------ |
@@ -127,14 +127,18 @@ node dist/index.js --verify-login
 | `list-security-incidents`  | GET    |        |
 | `get-security-incident`    | GET    |        |
 | `update-security-incident` | PATCH  | medium |
+| `list-attack-simulations`  | GET    |        |
+| `get-attack-simulation`    | GET    |        |
 
-### Audit logs (3)
+### Audit logs & deleted items (5)
 
 | Tool                     | Method |
 | ------------------------ | ------ |
 | `list-directory-audits`  | GET    |
 | `list-sign-ins`          | GET    |
 | `list-provisioning-logs` | GET    |
+| `list-deleted-users`     | GET    |
+| `list-deleted-groups`    | GET    |
 
 ### Service health (3)
 
@@ -144,14 +148,18 @@ node dist/index.js --verify-login
 | `list-service-issues`   | GET    |
 | `list-service-messages` | GET    |
 
-### Usage reports (4)
+### Usage reports (8)
 
-| Tool                          | Method |
-| ----------------------------- | ------ |
-| `get-teams-activity-report`   | GET    |
-| `get-email-activity-report`   | GET    |
-| `get-active-users-report`     | GET    |
-| `get-sharepoint-usage-report` | GET    |
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `get-teams-activity-report`     | GET    |
+| `get-email-activity-report`     | GET    |
+| `get-active-users-report`       | GET    |
+| `get-sharepoint-usage-report`   | GET    |
+| `get-onedrive-usage-report`     | GET    |
+| `get-active-user-counts-report` | GET    |
+| `get-mailbox-usage-report`      | GET    |
+| `get-m365-apps-usage-report`    | GET    |
 
 ### Users (5)
 
@@ -163,6 +171,13 @@ node dist/index.js --verify-login
 | `list-user-auth-methods` | GET    |
 | `list-user-devices`      | GET    |
 
+### Devices (2)
+
+| Tool           | Method |
+| -------------- | ------ |
+| `list-devices` | GET    |
+| `get-device`   | GET    |
+
 ### Groups (4)
 
 | Tool                 | Method |
@@ -172,14 +187,24 @@ node dist/index.js --verify-login
 | `list-group-members` | GET    |
 | `list-group-owners`  | GET    |
 
-### Directory roles & PIM (4)
+### Directory roles & PIM (6)
 
-| Tool                    | Method |
-| ----------------------- | ------ |
-| `list-directory-roles`  | GET    |
-| `list-role-members`     | GET    |
-| `list-role-assignments` | GET    |
-| `list-role-definitions` | GET    |
+| Tool                           | Method |
+| ------------------------------ | ------ |
+| `list-directory-roles`         | GET    |
+| `list-role-members`            | GET    |
+| `list-role-assignments`        | GET    |
+| `list-role-definitions`        | GET    |
+| `list-pim-eligible-assignments`| GET    |
+| `list-pim-active-assignments`  | GET    |
+
+### Administrative units (3)
+
+| Tool                                | Method |
+| ----------------------------------- | ------ |
+| `list-administrative-units`         | GET    |
+| `get-administrative-unit`           | GET    |
+| `list-administrative-unit-members`  | GET    |
 
 ### Conditional access (3)
 
@@ -189,13 +214,15 @@ node dist/index.js --verify-login
 | `get-conditional-access-policy`    | GET    |
 | `list-named-locations`             | GET    |
 
-### Applications (3)
+### Applications & app roles (5)
 
-| Tool                      | Method |
-| ------------------------- | ------ |
-| `list-applications`       | GET    |
-| `list-service-principals` | GET    |
-| `list-oauth2-grants`      | GET    |
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `list-applications`             | GET    |
+| `list-service-principals`       | GET    |
+| `list-oauth2-grants`            | GET    |
+| `list-user-app-role-assignments`| GET    |
+| `list-sp-app-role-assignments`  | GET    |
 
 ### Organization (2)
 
@@ -220,7 +247,7 @@ node dist/index.js --verify-login
 | `list-secure-score-controls` | GET    |
 | `get-secure-score-control`   | GET    |
 
-### Identity Protection (5)
+### Identity Protection & risk detections (7)
 
 | Tool                            | Method |
 | ------------------------------- | ------ |
@@ -229,42 +256,57 @@ node dist/index.js --verify-login
 | `list-risky-user-history`       | GET    |
 | `list-risky-service-principals` | GET    |
 | `get-risky-service-principal`   | GET    |
+| `list-risk-detections`          | GET    |
+| `get-risk-detection`            | GET    |
 
-### Security policies (5)
+### Security & access policies (8)
 
-| Tool                       | Method |
-| -------------------------- | ------ |
-| `get-auth-methods-policy`  | GET    |
-| `list-auth-method-configs` | GET    |
-| `get-auth-method-config`   | GET    |
-| `get-security-defaults`    | GET    |
-| `get-admin-consent-policy` | GET    |
+| Tool                              | Method |
+| --------------------------------- | ------ |
+| `get-auth-methods-policy`         | GET    |
+| `list-auth-method-configs`        | GET    |
+| `get-auth-method-config`          | GET    |
+| `get-security-defaults`           | GET    |
+| `get-admin-consent-policy`        | GET    |
+| `list-auth-strength-policies`     | GET    |
+| `get-cross-tenant-access-policy`  | GET    |
+| `list-cross-tenant-partners`      | GET    |
 
-### Incident response (4) -- requires `--allow-writes`
+### Incident response (7) -- requires `--allow-writes`
 
-| Tool                         | Method | Risk     |
-| ---------------------------- | ------ | -------- |
-| `disable-user-account`       | PATCH  | critical |
-| `revoke-user-sessions`       | POST   | high     |
-| `add-security-alert-comment` | POST   | low      |
-| `update-device`              | PATCH  | high     |
+| Tool                             | Method | Risk     |
+| -------------------------------- | ------ | -------- |
+| `disable-user-account`           | PATCH  | critical |
+| `revoke-user-sessions`           | POST   | high     |
+| `add-security-alert-comment`     | POST   | low      |
+| `update-device`                  | PATCH  | high     |
+| `confirm-compromised-users`      | POST   | high     |
+| `dismiss-risky-users`            | POST   | medium   |
+| `delete-user-phone-auth-method`  | DELETE | high     |
 
 ## Azure AD permissions
 
 ### Read-only (default)
 
 ```
+AdministrativeUnit.Read.All
 Application.Read.All
+AppRoleAssignment.ReadWrite.All
+AttackSimulation.Read.All
 AuditLog.Read.All
+Device.Read.All
 Directory.Read.All
 Domain.Read.All
 Group.Read.All
 GroupMember.Read.All
+IdentityRiskEvent.Read.All
 IdentityRiskyServicePrincipal.Read.All
 IdentityRiskyUser.Read.All
 Organization.Read.All
 Policy.Read.All
 Reports.Read.All
+RoleAssignmentSchedule.Read.Directory
+RoleEligibilitySchedule.Read.Directory
 RoleManagement.Read.Directory
 SecurityAlert.Read.All
 SecurityEvents.Read.All
@@ -279,9 +321,11 @@ UserAuthenticationMethod.Read.All
 
 ```
 Device.ReadWrite.All
+IdentityRiskyUser.ReadWrite.All
 SecurityAlert.ReadWrite.All
 SecurityIncident.ReadWrite.All
 User.ReadWrite.All
+UserAuthenticationMethod.ReadWrite.All
 ```
 
 ## Remote HTTP deployment
