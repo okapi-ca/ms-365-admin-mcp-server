@@ -1233,5 +1233,71 @@
     "toolName": "get-custom-auth-extension",
     "appPermissions": ["CustomAuthenticationExtension.Read.All"],
     "llmTip": "Gets a specific custom authentication extension. Returns displayName, authenticationConfiguration, endpointConfiguration, and claimsForTokenConfiguration."
+  },
+
+  {
+    "pathPattern": "/applications/{application-id}",
+    "method": "get",
+    "toolName": "get-application",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Gets a specific app registration by object ID. Use $select=displayName,appId,passwordCredentials,keyCredentials,signInAudience,requiredResourceAccess to audit credentials and permissions. passwordCredentials shows client secrets with displayName, endDateTime, and keyId. keyCredentials shows certificates. CRITICAL: check endDateTime on credentials to find expiring or expired secrets/certs."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/owners",
+    "method": "get",
+    "toolName": "list-application-owners",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists owners of an app registration. Owners can manage the app including adding credentials. Returns user objects. Audit this to ensure apps have appropriate owners and no orphaned apps exist."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials",
+    "method": "get",
+    "toolName": "list-app-federated-credentials",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists federated identity credentials for an app (workload identity federation). Each has name, issuer, subject, audiences, and description. These allow external workloads (GitHub Actions, Kubernetes, etc.) to authenticate as the app without a secret. Audit to ensure only authorized external identities are trusted."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials/{federatedIdentityCredential-id}",
+    "method": "get",
+    "toolName": "get-app-federated-credential",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Gets a specific federated identity credential. Returns name, issuer (e.g. https://token.actions.githubusercontent.com), subject (e.g. repo:org/repo:ref:refs/heads/main), audiences, and description."
+  },
+
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}",
+    "method": "get",
+    "toolName": "get-service-principal",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Gets a specific service principal (enterprise app) by ID. Use $select=displayName,appId,passwordCredentials,keyCredentials,servicePrincipalType,accountEnabled,appOwnerOrganizationId,loginUrl,notificationEmailAddresses. Check passwordCredentials and keyCredentials for credential audit."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/owners",
+    "method": "get",
+    "toolName": "list-service-principal-owners",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists owners of a service principal. Returns user objects. Owners can manage the enterprise app configuration. Audit for orphaned service principals with no owners."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/oauth2PermissionGrants",
+    "method": "get",
+    "toolName": "list-sp-delegated-permissions",
+    "appPermissions": ["Directory.Read.All"],
+    "llmTip": "Lists delegated permission grants for a specific service principal. Shows which delegated permissions have been consented (admin or user). Each has consentType (AllPrincipals for admin consent, Principal for user consent), scope (space-separated permissions), and principalId."
+  },
+
+  {
+    "pathPattern": "/policies/appManagementPolicies",
+    "method": "get",
+    "toolName": "list-app-management-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists app management policies. These policies restrict credential types and lifetimes for app registrations and service principals. Each has displayName, isEnabled, restrictions (passwordCredentials, keyCredentials with restrictForAppsCreatedAfterDateTime and maxLifetime). Useful for enforcing credential hygiene."
+  },
+  {
+    "pathPattern": "/policies/appManagementPolicies/{appManagementPolicy-id}",
+    "method": "get",
+    "toolName": "get-app-management-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets a specific app management policy. Returns displayName, isEnabled, and detailed restrictions on password and key credentials including maxLifetime and restrictForAppsCreatedAfterDateTime."
   }
 ]

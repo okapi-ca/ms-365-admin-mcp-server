@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **166 tools** covering security, audit, identity, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, and incident response
+- **175 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -118,7 +118,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (166)
+## Available tools (175)
 
 ### Security (8)
 
@@ -226,6 +226,25 @@ node dist/index.js --verify-login
 | `list-oauth2-grants`             | GET    |
 | `list-user-app-role-assignments` | GET    |
 | `list-sp-app-role-assignments`   | GET    |
+
+### App credentials & owners (7)
+
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `get-application`                | GET    |
+| `list-application-owners`        | GET    |
+| `list-app-federated-credentials` | GET    |
+| `get-app-federated-credential`   | GET    |
+| `get-service-principal`          | GET    |
+| `list-service-principal-owners`  | GET    |
+| `list-sp-delegated-permissions`  | GET    |
+
+### App management policies (2)
+
+| Tool                           | Method |
+| ------------------------------ | ------ |
+| `list-app-management-policies` | GET    |
+| `get-app-management-policy`    | GET    |
 
 ### Organization (2)
 
