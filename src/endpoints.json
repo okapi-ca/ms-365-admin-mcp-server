@@ -527,7 +527,7 @@
     "pathPattern": "/users/{user-id}/appRoleAssignments",
     "method": "get",
     "toolName": "list-user-app-role-assignments",
-    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "appPermissions": ["AppRoleAssignment.Read.All"],
     "llmTip": "Lists app role assignments for a user. Shows which enterprise apps the user has been granted access to and with which roles. Each entry has appRoleId, resourceDisplayName, and principalDisplayName."
   },
   {
@@ -551,7 +551,7 @@
     "method": "post",
     "toolName": "dismiss-risky-users",
     "appPermissions": ["IdentityRiskyUser.ReadWrite.All"],
-    "riskLevel": "medium",
+    "riskLevel": "high",
     "llmTip": "Dismisses risk for one or more users. Body: {\"userIds\": [\"user-id-1\", \"user-id-2\"]}. Sets riskState to dismissed. Use after investigating a risk detection and determining it is a false positive or has been remediated."
   },
   {
