@@ -125,7 +125,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (306)
+## Available tools (369)
 
 ### Security (8)
 
@@ -338,12 +338,15 @@ node dist/index.js --verify-login
 | `list-message-traces` | GET    |
 | `get-message-trace`   | GET    |
 
-### Exchange mailboxes (2)
+### Exchange mailboxes (5)
 
-| Tool                      | Method |
-| ------------------------- | ------ |
-| `list-exchange-mailboxes` | GET    |
-| `get-exchange-mailbox`    | GET    |
+| Tool                            | Method | Risk   |
+| ------------------------------- | ------ | ------ |
+| `list-exchange-mailboxes`       | GET    |        |
+| `get-exchange-mailbox`          | GET    |        |
+| `list-exchange-mailbox-folders` | GET    |        |
+| `get-exchange-mailbox-folder`   | GET    |        |
+| `export-exchange-mailbox-items` | POST   | medium |
 
 ### Threat intelligence - hosts (4)
 
@@ -527,11 +530,21 @@ node dist/index.js --verify-login
 | ----------------------- | ------ | ---- |
 | `list-ediscovery-cases` | GET    |      |
 
-### Teams call records (1)
+### Teams call records (11)
 
-| Tool                | Method | Risk |
-| ------------------- | ------ | ---- |
-| `list-call-records` | GET    |      |
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `list-call-records`             | GET    |
+| `get-call-record`               | GET    |
+| `list-call-record-sessions`     | GET    |
+| `get-call-record-session`       | GET    |
+| `list-call-session-segments`    | GET    |
+| `get-call-session-segment`      | GET    |
+| `list-call-record-participants` | GET    |
+| `get-call-record-participant`   | GET    |
+| `get-call-record-organizer`     | GET    |
+| `get-pstn-calls`                | GET    |
+| `get-direct-routing-calls`      | GET    |
 
 ### Cloud PC / Windows 365 (7)
 
@@ -556,18 +569,38 @@ node dist/index.js --verify-login
 | `list-print-operations`       | GET    |      |
 | `list-print-task-definitions` | GET    |      |
 
-### Information Protection (2)
+### Information Protection & Sensitivity Labels (7)
 
-| Tool                              | Method | Risk |
-| --------------------------------- | ------ | ---- |
-| `list-bitlocker-recovery-keys`    | GET    |      |
-| `list-threat-assessment-requests` | GET    |      |
+| Tool                              | Method |
+| --------------------------------- | ------ |
+| `list-bitlocker-recovery-keys`    | GET    |
+| `list-threat-assessment-requests` | GET    |
+| `list-sensitivity-labels`         | GET    |
+| `get-sensitivity-label`           | GET    |
+| `list-sensitivity-sublabels`      | GET    |
+| `get-sensitivity-label-rights`    | GET    |
+| `get-protection-scopes`           | GET    |
 
-### SharePoint admin (1)
+### SharePoint administration (16)
 
-| Tool                      | Method | Risk |
-| ------------------------- | ------ | ---- |
-| `get-sharepoint-settings` | GET    |      |
+| Tool                      | Method | Risk   |
+| ------------------------- | ------ | ------ |
+| `get-sharepoint-settings` | GET    |        |
+| `list-sharepoint-sites`   | GET    |        |
+| `get-sharepoint-site`     | GET    |        |
+| `update-sharepoint-site`  | PATCH  | medium |
+| `list-site-drives`        | GET    |        |
+| `get-site-default-drive`  | GET    |        |
+| `list-site-lists`         | GET    |        |
+| `get-site-list`           | GET    |        |
+| `list-site-list-items`    | GET    |        |
+| `list-site-list-columns`  | GET    |        |
+| `list-site-columns`       | GET    |        |
+| `list-site-content-types` | GET    |        |
+| `list-site-permissions`   | GET    |        |
+| `get-site-permission`     | GET    |        |
+| `get-site-analytics`      | GET    |        |
+| `list-site-subsites`      | GET    |        |
 
 ### Records Management (6)
 
@@ -579,6 +612,41 @@ node dist/index.js --verify-login
 | `list-file-plan-citations`   | GET    |      |
 | `list-file-plan-departments` | GET    |      |
 | `list-file-plan-references`  | GET    |      |
+
+### Teams administration (30)
+
+| Tool                             | Method | Risk     |
+| -------------------------------- | ------ | -------- |
+| `list-teams`                     | GET    |          |
+| `create-team`                    | POST   | medium   |
+| `get-team`                       | GET    |          |
+| `update-team`                    | PATCH  | medium   |
+| `delete-team`                    | DELETE | critical |
+| `list-team-admin-channels`       | GET    |          |
+| `create-team-admin-channel`      | POST   | low      |
+| `get-team-admin-channel`         | GET    |          |
+| `delete-team-admin-channel`      | DELETE | high     |
+| `list-team-admin-members`        | GET    |          |
+| `add-team-admin-members`         | POST   | medium   |
+| `remove-team-admin-members`      | POST   | medium   |
+| `get-team-admin-member`          | GET    |          |
+| `list-team-installed-apps`       | GET    |          |
+| `archive-team`                   | POST   | medium   |
+| `unarchive-team`                 | POST   | low      |
+| `clone-team`                     | POST   | medium   |
+| `list-team-operations`           | GET    |          |
+| `list-team-permission-grants`    | GET    |          |
+| `get-teams-app-settings`         | GET    |          |
+| `update-teams-app-settings`      | PATCH  | high     |
+| `list-deleted-teams`             | GET    |          |
+| `list-teams-catalog-apps`        | GET    |          |
+| `get-teams-catalog-app`          | GET    |          |
+| `list-teams-app-definitions`     | GET    |          |
+| `get-teams-admin-settings`       | GET    |          |
+| `list-teams-user-configurations` | GET    |          |
+| `get-teams-admin-policy`         | GET    |          |
+| `list-teams-policy-assignments`  | GET    |          |
+| `list-teams-phone-assignments`   | GET    |          |
 
 ### Intune reports (18) -- requires `--allow-writes` (POST endpoints)
 
@@ -751,13 +819,22 @@ node dist/index.js --verify-login
 AccessReview.Read.All
 AdministrativeUnit.Read.All
 Agreement.Read.All
+APIConnectors.Read.All
+AppCatalog.Read.All
 Application.Read.All
 AppRoleAssignment.Read.All
 AttackSimulation.Read.All
 AuditLog.Read.All
+BitlockerKey.Read.All
+CallRecords.Read.All
+Channel.ReadBasic.All
+CloudPC.Read.All
 ConsentRequest.Read.All
+CopilotSettings-Internal.ReadWrite.All
 CustomAuthenticationExtension.Read.All
+CustomSecAttributeDefinition.Read.All
 Device.Read.All
+DeviceLocalCredential.Read.All
 DeviceManagementApps.Read.All
 DeviceManagementConfiguration.Read.All
 DeviceManagementManagedDevices.Read.All
@@ -765,62 +842,71 @@ DeviceManagementRBAC.Read.All
 DeviceManagementServiceConfig.Read.All
 Directory.Read.All
 Domain.Read.All
+eDiscovery.Read.All
 EntitlementManagement.Read.All
 Exchange.ManageAsApp
 Group.Read.All
 GroupMember.Read.All
-APIConnectors.Read.All
 IdentityProvider.Read.All
 IdentityRiskEvent.Read.All
-IdentityUserFlow.Read.All
 IdentityRiskyServicePrincipal.Read.All
 IdentityRiskyUser.Read.All
+IdentityUserFlow.Read.All
+InformationProtectionPolicy.Read.All
 LifecycleWorkflows.Read.All
+MailboxSettings.Read
+OnPremDirectorySynchronization.Read.All
 Organization.Read.All
 Policy.Read.All
-MailboxSettings.Read
+Printer.Read.All
+PrintConnector.Read.All
+PrintJob.Read.All
 PrivilegedAccess.Read.AzureADGroup
+RecordsManagement.Read.All
 Reports.Read.All
 RoleAssignmentSchedule.Read.Directory
 RoleEligibilitySchedule.Read.Directory
 RoleManagement.Read.Directory
-BitlockerKey.Read.All
-CallRecords.Read.All
-CloudPC.Read.All
-CopilotSettings-Internal.ReadWrite.All
-CustomSecAttributeDefinition.Read.All
-DeviceLocalCredential.Read.All
-eDiscovery.Read.All
-OnPremDirectorySynchronization.Read.All
-Printer.Read.All
-PrintConnector.Read.All
-PrintJob.Read.All
-RecordsManagement.Read.All
 RoleManagementPolicy.Read.Directory
 SecurityAlert.Read.All
 SecurityEvents.Read.All
 SecurityIdentitiesHealth.Read.All
 SecurityIncident.Read.All
+ServiceHealth.Read.All
+ServiceMessage.Read.All
 SharePointTenantSettings.Read.All
+Sites.Read.All
+Sites.FullControl.All
 SubjectRightsRequest.Read.All
+Team.ReadBasic.All
+TeamMember.Read.All
+TeamsAppInstallation.ReadForTeam.All
+TeamworkAppSettings.Read.All
+TeamworkDevice.Read.All
 ThreatAssessment.Read.All
 ThreatHunting.Read.All
 ThreatIntelligence.Read.All
-ServiceHealth.Read.All
-ServiceMessage.Read.All
 User.Invite.All
 User.Read.All
 UserAuthenticationMethod.Read.All
 ```
 
-### Write (incident response + invitations)
+### Write (incident response, Teams admin, SharePoint, invitations)
 
 ```
+Channel.Create
+Channel.Delete.All
 Device.ReadWrite.All
+Group.ReadWrite.All
 IdentityRiskyServicePrincipal.ReadWrite.All
 IdentityRiskyUser.ReadWrite.All
 SecurityAlert.ReadWrite.All
 SecurityIncident.ReadWrite.All
+Sites.ReadWrite.All
+Team.Create
+Team.ReadWrite.All
+TeamMember.ReadWrite.All
+TeamworkAppSettings.ReadWrite.All
 User.ReadWrite.All
 UserAuthenticationMethod.ReadWrite.All
 ```

@@ -43,8 +43,8 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   },
   exchange: {
     name: 'exchange',
-    pattern: /message-trace|exchange-mailbox|mailbox-usage/i,
-    description: 'Exchange administration (message traces, mailboxes)',
+    pattern: /message-trace|exchange-mailbox|mailbox-usage|mailbox-folder|export-exchange/i,
+    description: 'Exchange administration (message traces, mailboxes, folders, export)',
   },
   intune: {
     name: 'intune',
@@ -80,8 +80,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   },
   callrecords: {
     name: 'callrecords',
-    pattern: /call-record/i,
-    description: 'Teams call records',
+    pattern: /call-record|call-session|pstn-call|direct-routing/i,
+    description:
+      'Teams call records (sessions, segments, participants, PSTN calls, Direct Routing)',
   },
   print: {
     name: 'print',
@@ -91,19 +92,30 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   },
   infoprotection: {
     name: 'infoprotection',
-    pattern: /bitlocker|threat-assessment|recovery-key/i,
-    description: 'Information Protection (BitLocker recovery keys, threat assessment requests)',
+    pattern:
+      /bitlocker|threat-assessment|recovery-key|sensitivity-label|sensitivity-sublabel|protection-scope/i,
+    description:
+      'Information Protection (BitLocker recovery keys, threat assessment requests, sensitivity labels)',
   },
   sharepointadmin: {
     name: 'sharepointadmin',
-    pattern: /sharepoint-setting/i,
-    description: 'SharePoint tenant administration settings',
+    pattern:
+      /sharepoint-setting|sharepoint-site|site-drive|site-list|site-column|site-content-type|site-permission|site-analytic|site-subsite/i,
+    description:
+      'SharePoint administration (tenant settings, sites, drives, lists, columns, content types, permissions, analytics)',
   },
   retention: {
     name: 'retention',
     pattern: /retention-label|file-plan/i,
     description:
       'Records Management (retention labels, file plan authorities, categories, citations, departments, references)',
+  },
+  teamsadmin: {
+    name: 'teamsadmin',
+    pattern:
+      /list-teams$|get-team$|create-team$|update-team$|delete-team$|team-admin|team-installed|archive-team|unarchive-team|clone-team|team-operation|team-permission|teams-app|teams-catalog|deleted-team|teams-user-config|teams-admin|teams-policy|teams-phone/i,
+    description:
+      'Teams administration (teams, channels, members, apps, archive/clone, policies, phone assignments)',
   },
   all: {
     name: 'all',
