@@ -40,6 +40,13 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
     description:
       'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
   },
+  governance: {
+    name: 'governance',
+    pattern:
+      /access-review|access-package|entitlement|connected-org|lifecycle|pim-group|terms-of-use|app-consent|user-consent/i,
+    description:
+      'Identity Governance (access reviews, entitlement management, lifecycle workflows, PIM for Groups, terms of use, app consent)',
+  },
   response: {
     name: 'response',
     pattern:

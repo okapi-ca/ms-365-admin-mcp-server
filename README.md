@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **82 tools** covering security, audit, identity, compliance, reports, and incident response
+- **105 tools** covering security, audit, identity, governance, compliance, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -98,16 +98,17 @@ node dist/index.js --preset identity
 node dist/index.js --preset security,audit,identity
 ```
 
-| Preset       | Description                                                            |
-| ------------ | ---------------------------------------------------------------------- |
-| `security`   | Security alerts, incidents, and attack simulations                     |
-| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items           |
-| `health`     | Service health and Message Center                                      |
-| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps) |
-| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains  |
-| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies |
-| `response`   | Incident response write operations (disable, revoke, confirm, dismiss) |
-| `all`        | All available tools                                                    |
+| Preset       | Description                                                               |
+| ------------ | ------------------------------------------------------------------------- |
+| `security`   | Security alerts, incidents, and attack simulations                        |
+| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items              |
+| `health`     | Service health and Message Center                                         |
+| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)    |
+| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains     |
+| `governance` | Access reviews, entitlement management, lifecycle workflows, terms of use |
+| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies    |
+| `response`   | Incident response write operations (disable, revoke, confirm, dismiss)    |
+| `all`        | All available tools                                                       |
 
 ### Verify credentials
 
@@ -115,7 +116,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (82)
+## Available tools (105)
 
 ### Security (8)
 
@@ -272,6 +273,59 @@ node dist/index.js --verify-login
 | `get-cross-tenant-access-policy` | GET    |
 | `list-cross-tenant-partners`     | GET    |
 
+### Access reviews (5)
+
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `list-access-review-definitions` | GET    |
+| `get-access-review-definition`   | GET    |
+| `list-access-review-instances`   | GET    |
+| `get-access-review-instance`     | GET    |
+| `list-access-review-decisions`   | GET    |
+
+### Entitlement management (7)
+
+| Tool                                  | Method |
+| ------------------------------------- | ------ |
+| `list-access-packages`                | GET    |
+| `get-access-package`                  | GET    |
+| `list-access-package-assignments`     | GET    |
+| `list-access-package-requests`        | GET    |
+| `list-access-package-catalogs`        | GET    |
+| `list-connected-organizations`        | GET    |
+| `get-entitlement-management-settings` | GET    |
+
+### Lifecycle workflows (3)
+
+| Tool                              | Method |
+| --------------------------------- | ------ |
+| `list-lifecycle-workflows`        | GET    |
+| `get-lifecycle-workflow`          | GET    |
+| `list-lifecycle-task-definitions` | GET    |
+
+### PIM for Groups (2)
+
+| Tool                                   | Method |
+| -------------------------------------- | ------ |
+| `list-pim-group-assignment-schedules`  | GET    |
+| `list-pim-group-eligibility-schedules` | GET    |
+
+### Terms of use (3)
+
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `list-terms-of-use-agreements`  | GET    |
+| `get-terms-of-use-agreement`    | GET    |
+| `list-terms-of-use-acceptances` | GET    |
+
+### App consent requests (3)
+
+| Tool                         | Method |
+| ---------------------------- | ------ |
+| `list-app-consent-requests`  | GET    |
+| `get-app-consent-request`    | GET    |
+| `list-user-consent-requests` | GET    |
+
 ### Incident response (7) -- requires `--allow-writes`
 
 | Tool                            | Method | Risk     |
@@ -289,21 +343,27 @@ node dist/index.js --verify-login
 ### Read-only (default)
 
 ```
+AccessReview.Read.All
 AdministrativeUnit.Read.All
+Agreement.Read.All
 Application.Read.All
 AppRoleAssignment.ReadWrite.All
 AttackSimulation.Read.All
 AuditLog.Read.All
+ConsentRequest.Read.All
 Device.Read.All
 Directory.Read.All
 Domain.Read.All
+EntitlementManagement.Read.All
 Group.Read.All
 GroupMember.Read.All
 IdentityRiskEvent.Read.All
 IdentityRiskyServicePrincipal.Read.All
 IdentityRiskyUser.Read.All
+LifecycleWorkflows.Read.All
 Organization.Read.All
 Policy.Read.All
+PrivilegedAccess.Read.AzureADGroup
 Reports.Read.All
 RoleAssignmentSchedule.Read.Directory
 RoleEligibilitySchedule.Read.Directory

@@ -609,5 +609,172 @@
     "toolName": "get-attack-simulation",
     "appPermissions": ["AttackSimulation.Read.All"],
     "llmTip": "Gets a specific attack simulation by ID. Returns full details including report with simulationEventsContent (users who clicked, reported, etc.) and trainingsContent."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions",
+    "method": "get",
+    "toolName": "list-access-review-definitions",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists all access review schedule definitions. Each definition has displayName, status (NotStarted, InProgress, Completed, Applied), scope (what is being reviewed: group members, app role assignments, etc.), reviewers, and settings (autoApplyDecisions, mailNotificationsEnabled, recurrence). Use $filter=status eq 'InProgress' to find active reviews."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}",
+    "method": "get",
+    "toolName": "get-access-review-definition",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Gets a specific access review schedule definition by ID. Returns full configuration including scope, reviewers, fallbackReviewers, settings, stageSettings, and instances."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances",
+    "method": "get",
+    "toolName": "list-access-review-instances",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists instances of an access review definition. Each recurring review creates instances. Each instance has status, startDateTime, endDateTime, and scope. Use to track review progress over time."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}",
+    "method": "get",
+    "toolName": "get-access-review-instance",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Gets a specific access review instance. Returns status, startDateTime, endDateTime, scope, and reviewers for this particular execution of the review."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/decisions",
+    "method": "get",
+    "toolName": "list-access-review-decisions",
+    "appPermissions": ["AccessReview.Read.All"],
+    "llmTip": "Lists decisions made during an access review instance. Each decision has target (user/group), decision (Approve, Deny, NotReviewed, DontKnow), reviewedBy, justification, and appliedDateTime. Use to audit review outcomes and ensure decisions were applied."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages",
+    "method": "get",
+    "toolName": "list-access-packages",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists all access packages in entitlement management. Each package bundles resources (group memberships, app roles, SharePoint sites) that can be requested. Use $select=displayName,description,isHidden,createdDateTime,modifiedDateTime. Use $expand=catalog to see which catalog each package belongs to."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages/{accessPackage-id}",
+    "method": "get",
+    "toolName": "get-access-package",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Gets a specific access package by ID. Use $expand=resourceRoleScopes($expand=role,scope) to see what resources the package grants access to."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignments",
+    "method": "get",
+    "toolName": "list-access-package-assignments",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists access package assignments — who has been granted which access packages. Use $filter=state eq 'Delivered' to find active assignments. Use $filter=targetId eq '{user-id}' to find all packages assigned to a user. Use $expand=target,accessPackage to get user and package details. Each assignment has state (Delivering, Delivered, Expired, DeliveryFailed), schedule, and targetId."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests",
+    "method": "get",
+    "toolName": "list-access-package-requests",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists access package assignment requests. Use $filter=state eq 'submitted' to find pending requests. Each request has requestType (UserAdd, AdminAdd, AdminRemove), state (submitted, approved, denied, delivering, delivered, deliveryFailed), createdDateTime, and schedule."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/catalogs",
+    "method": "get",
+    "toolName": "list-access-package-catalogs",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists access package catalogs. Catalogs are containers for access packages and their resources. Each has displayName, description, catalogType (UserManaged, ServiceDefault), state (published, unpublished), isExternallyVisible, and createdDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/connectedOrganizations",
+    "method": "get",
+    "toolName": "list-connected-organizations",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Lists connected organizations in entitlement management. Connected organizations represent external organizations whose users can request access packages. Each has displayName, description, state (configured, proposed), identitySources (tenant IDs, domains), and createdDateTime."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/settings",
+    "method": "get",
+    "toolName": "get-entitlement-management-settings",
+    "appPermissions": ["EntitlementManagement.Read.All"],
+    "llmTip": "Gets entitlement management settings for the tenant. Returns externalUserLifecycleAction (None, BlockSignIn, BlockSignInAndDelete), daysUntilExternalUserDeletedAfterBlocked, and isB2BExternalCollab settings."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows",
+    "method": "get",
+    "toolName": "list-lifecycle-workflows",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists lifecycle workflows (joiner, mover, leaver). Each workflow has displayName, description, category (joiner, mover, leaver), isEnabled, isSchedulingEnabled, executionConditions (scope, trigger), and tasks. Useful for auditing automated onboarding/offboarding processes."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}",
+    "method": "get",
+    "toolName": "get-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Gets a specific lifecycle workflow by ID. Returns full details including tasks, executionConditions, lastModifiedDateTime, and version. Use $expand=tasks to see all tasks in the workflow."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/taskDefinitions",
+    "method": "get",
+    "toolName": "list-lifecycle-task-definitions",
+    "appPermissions": ["LifecycleWorkflows.Read.All"],
+    "llmTip": "Lists available task definitions for lifecycle workflows. Each has displayName, description, category (joiner, leaver), and parameters. Examples: Send welcome email, Add user to group, Remove user from group, Disable user account, Delete user."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentSchedules",
+    "method": "get",
+    "toolName": "list-pim-group-assignment-schedules",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilitySchedules",
+    "method": "get",
+    "toolName": "list-pim-group-eligibility-schedules",
+    "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
+    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/termsOfUse/agreements",
+    "method": "get",
+    "toolName": "list-terms-of-use-agreements",
+    "appPermissions": ["Agreement.Read.All"],
+    "llmTip": "Lists terms of use agreements. Each agreement has displayName, isPerDeviceAcceptanceRequired, isViewingBeforeAcceptanceRequired, userReexpireFrequency, and termsExpiration. Useful for auditing compliance with organizational policies."
+  },
+  {
+    "pathPattern": "/identityGovernance/termsOfUse/agreements/{agreement-id}",
+    "method": "get",
+    "toolName": "get-terms-of-use-agreement",
+    "appPermissions": ["Agreement.Read.All"],
+    "llmTip": "Gets a specific terms of use agreement. Returns full details including acceptance status configuration and file content."
+  },
+  {
+    "pathPattern": "/identityGovernance/termsOfUse/agreements/{agreement-id}/acceptances",
+    "method": "get",
+    "toolName": "list-terms-of-use-acceptances",
+    "appPermissions": ["Agreement.Read.All"],
+    "llmTip": "Lists acceptances for a terms of use agreement. Each acceptance has userId, userDisplayName, userPrincipalName, state (accepted, declined), recordedDateTime, and expirationDateTime. Useful for compliance reporting on who has accepted terms."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/appConsent/appConsentRequests",
+    "method": "get",
+    "toolName": "list-app-consent-requests",
+    "appPermissions": ["ConsentRequest.Read.All"],
+    "llmTip": "Lists app consent requests. When users request access to apps that require admin consent, those requests appear here. Each has appId, appDisplayName, and pendingScopes. Use to review and manage pending consent requests."
+  },
+  {
+    "pathPattern": "/identityGovernance/appConsent/appConsentRequests/{appConsentRequest-id}",
+    "method": "get",
+    "toolName": "get-app-consent-request",
+    "appPermissions": ["ConsentRequest.Read.All"],
+    "llmTip": "Gets a specific app consent request. Returns appId, appDisplayName, pendingScopes, and linked userConsentRequests showing which users requested access."
+  },
+  {
+    "pathPattern": "/identityGovernance/appConsent/appConsentRequests/{appConsentRequest-id}/userConsentRequests",
+    "method": "get",
+    "toolName": "list-user-consent-requests",
+    "appPermissions": ["ConsentRequest.Read.All"],
+    "llmTip": "Lists user consent requests for a specific app consent request. Each has createdBy, status (Submitted, InProgress, Completed), and reason. Shows which individual users requested consent for the app."
   }
 ]
