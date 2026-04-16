@@ -37,9 +37,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   compliance: {
     name: 'compliance',
     pattern:
-      /secure-score|subscribed-sku|license|risky-user|risky-service|risk-detection|security-defaults|auth-method-config|auth-strength|admin-consent/i,
+      /secure-score|subscribed-sku|license|risky-user|risky-service|risk-detection|security-defaults|auth-method-config|auth-strength|admin-consent|service-principal-risk|subject-rights|copilot|attribute-set|custom-security-attribute|device-local-credential|federation-config|on-premises-sync|user-registration-detail/i,
     description:
-      'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
+      'Compliance, licenses, Secure Score, Identity Protection, risk detections, security policies, Copilot admin, custom security attributes, LAPS, DSAR',
   },
   exchange: {
     name: 'exchange',
@@ -49,23 +49,23 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   intune: {
     name: 'intune',
     pattern:
-      /managed-device|compliance-policy|compliance-state|device-configuration|enrollment|autopilot|detected-app|device-overview|intune|software-update|apple-push|mtd-connector|ios-update|device-categor/i,
+      /managed-device|compliance-policy|compliance-state|device-configuration|enrollment|autopilot|detected-app|device-overview|intune|software-update|apple-push|mtd-connector|ios-update|device-categor|compliance-management|device-management-partner|exchange-connector|remote-assistance|notification-message|resource-operation|imported-autopilot|malware|mobile-app|app-categor|app-configuration|managed-app|app-protection|wip-polic|vpp-token|targeted-app/i,
     description:
-      'Intune device management (managed devices, compliance, configurations, Autopilot, apps, RBAC)',
+      'Intune device management (managed devices, compliance, configurations, Autopilot, apps, MAM, RBAC, reports)',
   },
   governance: {
     name: 'governance',
     pattern:
-      /access-review|access-package|entitlement|connected-org|lifecycle|pim-group|terms-of-use|app-consent|user-consent/i,
+      /access-review|access-package|entitlement|connected-org|lifecycle|pim-group|terms-of-use|app-consent|user-consent|pim-role|role-management-polic|role-resource-namespace/i,
     description:
-      'Identity Governance (access reviews, entitlement management, lifecycle workflows, PIM for Groups, terms of use, app consent)',
+      'Identity Governance (access reviews, entitlement management, lifecycle workflows, PIM for Groups/Roles, terms of use, app consent)',
   },
   response: {
     name: 'response',
     pattern:
-      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky/i,
+      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query/i,
     description:
-      'Incident response operations (disable user, revoke sessions, confirm compromised, dismiss risk, update alerts)',
+      'Incident response operations (disable user, revoke sessions, confirm compromised/safe, dismiss risk, hunting queries)',
   },
   ediscovery: {
     name: 'ediscovery',

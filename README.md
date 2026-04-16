@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **199 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune, governance, compliance, threat intelligence, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **306 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -125,7 +125,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (199)
+## Available tools (306)
 
 ### Security (8)
 
@@ -505,17 +505,21 @@ node dist/index.js --verify-login
 | `get-app-consent-request`    | GET    |
 | `list-user-consent-requests` | GET    |
 
-### Incident response (7) -- requires `--allow-writes`
+### Incident response (11) -- requires `--allow-writes`
 
-| Tool                            | Method | Risk     |
-| ------------------------------- | ------ | -------- |
-| `disable-user-account`          | PATCH  | critical |
-| `revoke-user-sessions`          | POST   | high     |
-| `add-security-alert-comment`    | POST   | low      |
-| `update-device`                 | PATCH  | high     |
-| `confirm-compromised-users`     | POST   | high     |
-| `dismiss-risky-users`           | POST   | high     |
-| `delete-user-phone-auth-method` | DELETE | high     |
+| Tool                                     | Method | Risk     |
+| ---------------------------------------- | ------ | -------- |
+| `disable-user-account`                   | PATCH  | critical |
+| `revoke-user-sessions`                   | POST   | high     |
+| `add-security-alert-comment`             | POST   | low      |
+| `update-device`                          | PATCH  | high     |
+| `confirm-compromised-users`              | POST   | high     |
+| `dismiss-risky-users`                    | POST   | high     |
+| `delete-user-phone-auth-method`          | DELETE | high     |
+| `confirm-compromised-service-principals` | POST   | high     |
+| `dismiss-risky-service-principals`       | POST   | high     |
+| `confirm-safe-users`                     | POST   | high     |
+| `run-hunting-query`                      | POST   | low      |
 
 ### eDiscovery (1)
 
@@ -576,6 +580,169 @@ node dist/index.js --verify-login
 | `list-file-plan-departments` | GET    |      |
 | `list-file-plan-references`  | GET    |      |
 
+### Intune reports (18) -- requires `--allow-writes` (POST endpoints)
+
+| Tool                                             | Method | Risk |
+| ------------------------------------------------ | ------ | ---- |
+| `intune-device-noncompliance-report`             | POST   | low  |
+| `intune-compliance-policy-noncompliance-report`  | POST   | low  |
+| `intune-compliance-policy-noncompliance-summary` | POST   | low  |
+| `intune-compliance-setting-noncompliance-report` | POST   | low  |
+| `intune-config-policy-noncompliance-report`      | POST   | low  |
+| `intune-config-policy-noncompliance-summary`     | POST   | low  |
+| `intune-config-setting-noncompliance-report`     | POST   | low  |
+| `intune-devices-without-compliance-report`       | POST   | low  |
+| `intune-noncompliant-devices-settings-report`    | POST   | low  |
+| `intune-policy-noncompliance-report`             | POST   | low  |
+| `intune-policy-noncompliance-summary`            | POST   | low  |
+| `intune-policy-noncompliance-metadata`           | POST   | low  |
+| `intune-setting-noncompliance-report`            | POST   | low  |
+| `intune-report-filters`                          | POST   | low  |
+| `intune-historical-report`                       | POST   | low  |
+| `intune-cached-report`                           | POST   | low  |
+| `list-intune-report-export-jobs`                 | GET    |      |
+| `intune-device-app-install-status-report`        | POST   | low  |
+
+### Intune partners & infrastructure (10)
+
+| Tool                                  | Method | Risk |
+| ------------------------------------- | ------ | ---- |
+| `list-compliance-management-partners` | GET    |      |
+| `list-device-management-partners`     | GET    |      |
+| `list-exchange-connectors`            | GET    |      |
+| `list-remote-assistance-partners`     | GET    |      |
+| `list-notification-message-templates` | GET    |      |
+| `list-intune-resource-operations`     | GET    |      |
+| `list-imported-autopilot-devices`     | GET    |      |
+| `list-windows-malware-info`           | GET    |      |
+| `list-intune-mobile-apps`             | GET    |      |
+| `list-intune-app-categories`          | GET    |      |
+
+### Intune app management (11)
+
+| Tool                               | Method | Risk |
+| ---------------------------------- | ------ | ---- |
+| `list-intune-app-configurations`   | GET    |      |
+| `list-managed-app-policies`        | GET    |      |
+| `list-managed-app-registrations`   | GET    |      |
+| `list-managed-app-statuses`        | GET    |      |
+| `list-android-app-protections`     | GET    |      |
+| `list-ios-app-protections`         | GET    |      |
+| `list-default-app-protections`     | GET    |      |
+| `list-targeted-app-configurations` | GET    |      |
+| `list-mdm-wip-policies`            | GET    |      |
+| `list-mam-wip-policies`            | GET    |      |
+| `list-vpp-tokens`                  | GET    |      |
+
+### Advanced policies (15)
+
+| Tool                                      | Method | Risk |
+| ----------------------------------------- | ------ | ---- |
+| `list-activity-timeout-policies`          | GET    |      |
+| `get-authorization-policy`                | GET    |      |
+| `get-auth-flows-policy`                   | GET    |      |
+| `list-claims-mapping-policies`            | GET    |      |
+| `list-conditional-access-policies-v2`     | GET    |      |
+| `get-default-app-management-policy`       | GET    |      |
+| `get-device-registration-policy`          | GET    |      |
+| `list-feature-rollout-policies`           | GET    |      |
+| `list-home-realm-discovery-policies`      | GET    |      |
+| `list-permission-grant-policies`          | GET    |      |
+| `list-role-management-policies`           | GET    |      |
+| `list-role-management-policy-assignments` | GET    |      |
+| `list-token-issuance-policies`            | GET    |      |
+| `list-token-lifetime-policies`            | GET    |      |
+| `get-cross-tenant-default-policy`         | GET    |      |
+
+### Identity Governance+ (11)
+
+| Tool                                     | Method | Risk |
+| ---------------------------------------- | ------ | ---- |
+| `list-entitlement-assignment-policies`   | GET    |      |
+| `list-entitlement-resources`             | GET    |      |
+| `list-entitlement-resource-environments` | GET    |      |
+| `list-lifecycle-workflow-templates`      | GET    |      |
+| `get-lifecycle-workflow-settings`        | GET    |      |
+| `list-lifecycle-custom-task-extensions`  | GET    |      |
+| `list-deleted-lifecycle-workflows`       | GET    |      |
+| `list-pim-group-assignment-requests`     | GET    |      |
+| `list-pim-group-assignment-instances`    | GET    |      |
+| `list-pim-group-eligibility-requests`    | GET    |      |
+| `list-pim-group-eligibility-instances`   | GET    |      |
+
+### PIM role management (6)
+
+| Tool                                  | Method | Risk |
+| ------------------------------------- | ------ | ---- |
+| `list-access-review-history`          | GET    |      |
+| `list-pim-role-assignment-requests`   | GET    |      |
+| `list-pim-role-assignment-schedules`  | GET    |      |
+| `list-pim-role-eligibility-requests`  | GET    |      |
+| `list-pim-role-eligibility-schedules` | GET    |      |
+| `list-role-resource-namespaces`       | GET    |      |
+
+### Identity Protection+ (2)
+
+| Tool                                     | Method | Risk |
+| ---------------------------------------- | ------ | ---- |
+| `list-service-principal-risk-detections` | GET    |      |
+
+### Security advanced (14)
+
+| Tool                                     | Method | Risk |
+| ---------------------------------------- | ------ | ---- |
+| `list-identity-health-issues`            | GET    |      |
+| `list-identity-sensors`                  | GET    |      |
+| `get-identity-security-settings`         | GET    |      |
+| `list-retention-events`                  | GET    |      |
+| `list-retention-event-types`             | GET    |      |
+| `list-subject-rights-requests`           | GET    |      |
+| `list-simulation-automations`            | GET    |      |
+| `list-simulation-trainings`              | GET    |      |
+| `list-simulation-payloads`               | GET    |      |
+| `list-simulation-end-user-notifications` | GET    |      |
+| `list-simulation-landing-pages`          | GET    |      |
+| `list-simulation-login-pages`            | GET    |      |
+
+### Threat intelligence+ (7)
+
+| Tool                              | Method | Risk |
+| --------------------------------- | ------ | ---- |
+| `list-passive-dns-records`        | GET    |      |
+| `list-ssl-certificates`           | GET    |      |
+| `list-threat-intel-subdomains`    | GET    |      |
+| `list-threat-intel-host-ports`    | GET    |      |
+| `list-threat-intel-host-trackers` | GET    |      |
+| `list-threat-intel-host-cookies`  | GET    |      |
+| `list-threat-intel-host-pairs`    | GET    |      |
+
+### Reports+ (5)
+
+| Tool                                  | Method | Risk |
+| ------------------------------------- | ------ | ---- |
+| `list-user-registration-details`      | GET    |      |
+| `list-daily-print-usage-by-printer`   | GET    |      |
+| `list-daily-print-usage-by-user`      | GET    |      |
+| `list-monthly-print-usage-by-printer` | GET    |      |
+| `list-monthly-print-usage-by-user`    | GET    |      |
+
+### Copilot admin (2)
+
+| Tool                         | Method | Risk |
+| ---------------------------- | ------ | ---- |
+| `get-copilot-admin-settings` | GET    |      |
+| `get-copilot-limited-mode`   | GET    |      |
+
+### Directory+ (5)
+
+| Tool                              | Method | Risk |
+| --------------------------------- | ------ | ---- |
+| `list-attribute-sets`             | GET    |      |
+| `list-custom-security-attributes` | GET    |      |
+| `list-device-local-credentials`   | GET    |      |
+| `list-federation-configurations`  | GET    |      |
+| `list-on-premises-sync`           | GET    |      |
+
 ## Azure AD permissions
 
 ### Read-only (default)
@@ -620,16 +787,24 @@ RoleManagement.Read.Directory
 BitlockerKey.Read.All
 CallRecords.Read.All
 CloudPC.Read.All
+CopilotSettings-Internal.ReadWrite.All
+CustomSecAttributeDefinition.Read.All
+DeviceLocalCredential.Read.All
 eDiscovery.Read.All
+OnPremDirectorySynchronization.Read.All
 Printer.Read.All
 PrintConnector.Read.All
 PrintJob.Read.All
 RecordsManagement.Read.All
+RoleManagementPolicy.Read.Directory
 SecurityAlert.Read.All
 SecurityEvents.Read.All
+SecurityIdentitiesHealth.Read.All
 SecurityIncident.Read.All
 SharePointTenantSettings.Read.All
+SubjectRightsRequest.Read.All
 ThreatAssessment.Read.All
+ThreatHunting.Read.All
 ThreatIntelligence.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
@@ -642,6 +817,7 @@ UserAuthenticationMethod.Read.All
 
 ```
 Device.ReadWrite.All
+IdentityRiskyServicePrincipal.ReadWrite.All
 IdentityRiskyUser.ReadWrite.All
 SecurityAlert.ReadWrite.All
 SecurityIncident.ReadWrite.All
