@@ -23,25 +23,29 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   reports: {
     name: 'reports',
     pattern: /report|activity|usage/i,
-    description: 'Usage reports (Teams, Email, Active Users, SharePoint, OneDrive, Mailbox, M365 Apps)',
+    description:
+      'Usage reports (Teams, Email, Active Users, SharePoint, OneDrive, Mailbox, M365 Apps)',
   },
   identity: {
     name: 'identity',
     pattern:
       /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role/i,
-    description: 'Identity and access management (Entra ID users, groups, roles, devices, PIM, policies)',
+    description:
+      'Identity and access management (Entra ID users, groups, roles, devices, PIM, policies)',
   },
   compliance: {
     name: 'compliance',
     pattern:
       /secure-score|subscribed-sku|license|risky-user|risky-service|risk-detection|security-defaults|auth-method-config|auth-strength|admin-consent/i,
-    description: 'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
+    description:
+      'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
   },
   response: {
     name: 'response',
     pattern:
       /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky/i,
-    description: 'Incident response operations (disable user, revoke sessions, confirm compromised, dismiss risk, update alerts)',
+    description:
+      'Incident response operations (disable user, revoke sessions, confirm compromised, dismiss risk, update alerts)',
   },
   all: {
     name: 'all',

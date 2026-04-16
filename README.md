@@ -98,16 +98,16 @@ node dist/index.js --preset identity
 node dist/index.js --preset security,audit,identity
 ```
 
-| Preset       | Description                                                    |
-| ------------ | -------------------------------------------------------------- |
-| `security`   | Security alerts, incidents, and attack simulations                          |
-| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items                |
-| `health`     | Service health and Message Center                                           |
-| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)      |
-| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains       |
-| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies      |
-| `response`   | Incident response write operations (disable, revoke, confirm, dismiss)      |
-| `all`        | All available tools                                                         |
+| Preset       | Description                                                            |
+| ------------ | ---------------------------------------------------------------------- |
+| `security`   | Security alerts, incidents, and attack simulations                     |
+| `audit`      | Directory audits, sign-ins, provisioning logs, deleted items           |
+| `health`     | Service health and Message Center                                      |
+| `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps) |
+| `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains  |
+| `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies |
+| `response`   | Incident response write operations (disable, revoke, confirm, dismiss) |
+| `all`        | All available tools                                                    |
 
 ### Verify credentials
 
@@ -189,22 +189,22 @@ node dist/index.js --verify-login
 
 ### Directory roles & PIM (6)
 
-| Tool                           | Method |
-| ------------------------------ | ------ |
-| `list-directory-roles`         | GET    |
-| `list-role-members`            | GET    |
-| `list-role-assignments`        | GET    |
-| `list-role-definitions`        | GET    |
-| `list-pim-eligible-assignments`| GET    |
-| `list-pim-active-assignments`  | GET    |
+| Tool                            | Method |
+| ------------------------------- | ------ |
+| `list-directory-roles`          | GET    |
+| `list-role-members`             | GET    |
+| `list-role-assignments`         | GET    |
+| `list-role-definitions`         | GET    |
+| `list-pim-eligible-assignments` | GET    |
+| `list-pim-active-assignments`   | GET    |
 
 ### Administrative units (3)
 
-| Tool                                | Method |
-| ----------------------------------- | ------ |
-| `list-administrative-units`         | GET    |
-| `get-administrative-unit`           | GET    |
-| `list-administrative-unit-members`  | GET    |
+| Tool                               | Method |
+| ---------------------------------- | ------ |
+| `list-administrative-units`        | GET    |
+| `get-administrative-unit`          | GET    |
+| `list-administrative-unit-members` | GET    |
 
 ### Conditional access (3)
 
@@ -216,13 +216,13 @@ node dist/index.js --verify-login
 
 ### Applications & app roles (5)
 
-| Tool                            | Method |
-| ------------------------------- | ------ |
-| `list-applications`             | GET    |
-| `list-service-principals`       | GET    |
-| `list-oauth2-grants`            | GET    |
-| `list-user-app-role-assignments`| GET    |
-| `list-sp-app-role-assignments`  | GET    |
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `list-applications`              | GET    |
+| `list-service-principals`        | GET    |
+| `list-oauth2-grants`             | GET    |
+| `list-user-app-role-assignments` | GET    |
+| `list-sp-app-role-assignments`   | GET    |
 
 ### Organization (2)
 
@@ -261,28 +261,28 @@ node dist/index.js --verify-login
 
 ### Security & access policies (8)
 
-| Tool                              | Method |
-| --------------------------------- | ------ |
-| `get-auth-methods-policy`         | GET    |
-| `list-auth-method-configs`        | GET    |
-| `get-auth-method-config`          | GET    |
-| `get-security-defaults`           | GET    |
-| `get-admin-consent-policy`        | GET    |
-| `list-auth-strength-policies`     | GET    |
-| `get-cross-tenant-access-policy`  | GET    |
-| `list-cross-tenant-partners`      | GET    |
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `get-auth-methods-policy`        | GET    |
+| `list-auth-method-configs`       | GET    |
+| `get-auth-method-config`         | GET    |
+| `get-security-defaults`          | GET    |
+| `get-admin-consent-policy`       | GET    |
+| `list-auth-strength-policies`    | GET    |
+| `get-cross-tenant-access-policy` | GET    |
+| `list-cross-tenant-partners`     | GET    |
 
 ### Incident response (7) -- requires `--allow-writes`
 
-| Tool                             | Method | Risk     |
-| -------------------------------- | ------ | -------- |
-| `disable-user-account`           | PATCH  | critical |
-| `revoke-user-sessions`           | POST   | high     |
-| `add-security-alert-comment`     | POST   | low      |
-| `update-device`                  | PATCH  | high     |
-| `confirm-compromised-users`      | POST   | high     |
-| `dismiss-risky-users`            | POST   | medium   |
-| `delete-user-phone-auth-method`  | DELETE | high     |
+| Tool                            | Method | Risk     |
+| ------------------------------- | ------ | -------- |
+| `disable-user-account`          | PATCH  | critical |
+| `revoke-user-sessions`          | POST   | high     |
+| `add-security-alert-comment`    | POST   | low      |
+| `update-device`                 | PATCH  | high     |
+| `confirm-compromised-users`     | POST   | high     |
+| `dismiss-risky-users`           | POST   | medium   |
+| `delete-user-phone-auth-method` | DELETE | high     |
 
 ## Azure AD permissions
 
