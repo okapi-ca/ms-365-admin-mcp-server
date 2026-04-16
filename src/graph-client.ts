@@ -35,7 +35,7 @@ class GraphClient {
 
   async graphRequest(endpoint: string, options: GraphRequestOptions = {}): Promise<McpResponse> {
     try {
-      logger.info(`Calling ${endpoint}`);
+      logger.info(`Calling Graph API endpoint: ${endpoint.split('?')[0]}`);
       const result = await this.makeRequest(endpoint, options);
       return this.formatResponse(result, options.rawResponse, options.excludeResponse);
     } catch (error) {
@@ -52,7 +52,7 @@ class GraphClient {
     const cloudEndpoints = getCloudEndpoints(this.secrets.cloudType);
     const url = `${cloudEndpoints.graphApi}/v1.0${endpoint}`;
 
-    logger.info(`[GRAPH CLIENT] Final URL: ${url}`);
+    logger.debug(`[GRAPH CLIENT] Final URL: ${url}`);
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${accessToken}`,

@@ -33,9 +33,10 @@ program
   .option('--cloud <type>', 'Microsoft cloud environment: global (default) or china (21Vianet)')
   .option('--transport <type>', 'Transport mode: stdio (default) or http', 'stdio')
   .option('--port <number>', 'HTTP server port (only with --transport http)', '8080')
+  .option('--host <address>', 'HTTP bind address (default: 127.0.0.1)', '127.0.0.1')
   .option(
     '--allowed-clients <ids>',
-    'Comma-separated Entra app IDs allowed to connect (HTTP mode)'
+    'Comma-separated Entra app IDs allowed to connect (required for HTTP mode)'
   );
 
 export interface CommandOptions {
@@ -51,6 +52,7 @@ export interface CommandOptions {
   cloud?: string;
   transport?: string;
   port?: string;
+  host?: string;
   allowedClients?: string;
   [key: string]: unknown;
 }
@@ -88,8 +90,12 @@ export function parseArgs(): CommandOptions {
     options.enabledTools = process.env.ENABLED_TOOLS;
   }
 
-  // Validate regex early so invalid patterns fail at startup, not silently
+  // SEC-11: Validate regex early and limit complexity to prevent ReDoS
   if (options.enabledTools) {
+    if (options.enabledTools.length > 500) {
+      console.error('Error: --enabled-tools pattern too long (max 500 characters)');
+      process.exit(1);
+    }
     try {
       new RegExp(options.enabledTools, 'i');
     } catch {
