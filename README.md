@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **306 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **447 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -125,9 +125,9 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (369)
+## Available tools (447)
 
-### Security (8)
+### Security (11)
 
 | Tool                       | Method | Risk   |
 | -------------------------- | ------ | ------ |
@@ -139,6 +139,9 @@ node dist/index.js --verify-login
 | `update-security-incident` | PATCH  | medium |
 | `list-attack-simulations`  | GET    |        |
 | `get-attack-simulation`    | GET    |        |
+| `create-attack-simulation` | POST   | high   |
+| `update-attack-simulation` | PATCH  | medium |
+| `delete-attack-simulation` | DELETE | medium |
 
 ### Audit logs & deleted items (5)
 
@@ -171,15 +174,20 @@ node dist/index.js --verify-login
 | `get-mailbox-usage-report`      | GET    |
 | `get-m365-apps-usage-report`    | GET    |
 
-### Users (5)
+### Users (10)
 
-| Tool                     | Method |
-| ------------------------ | ------ |
-| `list-users`             | GET    |
-| `get-user`               | GET    |
-| `list-user-memberships`  | GET    |
-| `list-user-auth-methods` | GET    |
-| `list-user-devices`      | GET    |
+| Tool                     | Method | Risk     |
+| ------------------------ | ------ | -------- |
+| `list-users`             | GET    |          |
+| `get-user`               | GET    |          |
+| `list-user-memberships`  | GET    |          |
+| `list-user-auth-methods` | GET    |          |
+| `list-user-devices`      | GET    |          |
+| `create-user`            | POST   | high     |
+| `update-user`            | PATCH  | medium   |
+| `delete-user`            | DELETE | critical |
+| `assign-user-license`    | POST   | medium   |
+| `reprocess-user-license` | POST   | low      |
 
 ### Devices (2)
 
@@ -188,33 +196,42 @@ node dist/index.js --verify-login
 | `list-devices` | GET    |
 | `get-device`   | GET    |
 
-### Groups (4)
+### Groups (8)
 
-| Tool                 | Method |
-| -------------------- | ------ |
-| `list-groups`        | GET    |
-| `get-group`          | GET    |
-| `list-group-members` | GET    |
-| `list-group-owners`  | GET    |
+| Tool                 | Method | Risk     |
+| -------------------- | ------ | -------- |
+| `list-groups`        | GET    |          |
+| `get-group`          | GET    |          |
+| `list-group-members` | GET    |          |
+| `list-group-owners`  | GET    |          |
+| `create-group`       | POST   | medium   |
+| `update-group`       | PATCH  | medium   |
+| `delete-group`       | DELETE | critical |
+| `add-group-member`   | POST   | medium   |
 
-### Directory roles & PIM (6)
+### Directory roles & PIM (7)
 
-| Tool                            | Method |
-| ------------------------------- | ------ |
-| `list-directory-roles`          | GET    |
-| `list-role-members`             | GET    |
-| `list-role-assignments`         | GET    |
-| `list-role-definitions`         | GET    |
-| `list-pim-eligible-assignments` | GET    |
-| `list-pim-active-assignments`   | GET    |
+| Tool                            | Method | Risk     |
+| ------------------------------- | ------ | -------- |
+| `list-directory-roles`          | GET    |          |
+| `list-role-members`             | GET    |          |
+| `list-role-assignments`         | GET    |          |
+| `list-role-definitions`         | GET    |          |
+| `list-pim-eligible-assignments` | GET    |          |
+| `list-pim-active-assignments`   | GET    |          |
+| `add-directory-role-member`     | POST   | critical |
 
-### Administrative units (3)
+### Administrative units (7)
 
-| Tool                               | Method |
-| ---------------------------------- | ------ |
-| `list-administrative-units`        | GET    |
-| `get-administrative-unit`          | GET    |
-| `list-administrative-unit-members` | GET    |
+| Tool                               | Method | Risk   |
+| ---------------------------------- | ------ | ------ |
+| `list-administrative-units`        | GET    |        |
+| `get-administrative-unit`          | GET    |        |
+| `list-administrative-unit-members` | GET    |        |
+| `create-administrative-unit`       | POST   | medium |
+| `update-administrative-unit`       | PATCH  | medium |
+| `delete-administrative-unit`       | DELETE | high   |
+| `add-administrative-unit-member`   | POST   | medium |
 
 ### Conditional access (3)
 
@@ -224,15 +241,18 @@ node dist/index.js --verify-login
 | `get-conditional-access-policy`    | GET    |
 | `list-named-locations`             | GET    |
 
-### Applications & app roles (5)
+### Applications & app roles (8)
 
-| Tool                             | Method |
-| -------------------------------- | ------ |
-| `list-applications`              | GET    |
-| `list-service-principals`        | GET    |
-| `list-oauth2-grants`             | GET    |
-| `list-user-app-role-assignments` | GET    |
-| `list-sp-app-role-assignments`   | GET    |
+| Tool                             | Method | Risk     |
+| -------------------------------- | ------ | -------- |
+| `list-applications`              | GET    |          |
+| `list-service-principals`        | GET    |          |
+| `list-oauth2-grants`             | GET    |          |
+| `list-user-app-role-assignments` | GET    |          |
+| `list-sp-app-role-assignments`   | GET    |          |
+| `update-application`             | PATCH  | high     |
+| `delete-application`             | DELETE | critical |
+| `update-service-principal`       | PATCH  | high     |
 
 ### App credentials & owners (7)
 
@@ -253,12 +273,14 @@ node dist/index.js --verify-login
 | `list-app-management-policies` | GET    |
 | `get-app-management-policy`    | GET    |
 
-### Organization (2)
+### Organization & domains (4)
 
-| Tool               | Method |
-| ------------------ | ------ |
-| `get-organization` | GET    |
-| `list-domains`     | GET    |
+| Tool               | Method | Risk   |
+| ------------------ | ------ | ------ |
+| `get-organization` | GET    |        |
+| `list-domains`     | GET    |        |
+| `create-domain`    | POST   | high   |
+| `verify-domain`    | POST   | medium |
 
 ### Licenses (2)
 
@@ -288,18 +310,23 @@ node dist/index.js --verify-login
 | `list-risk-detections`          | GET    |
 | `get-risk-detection`            | GET    |
 
-### Security & access policies (8)
+### Security & access policies (13)
 
-| Tool                             | Method |
-| -------------------------------- | ------ |
-| `get-auth-methods-policy`        | GET    |
-| `list-auth-method-configs`       | GET    |
-| `get-auth-method-config`         | GET    |
-| `get-security-defaults`          | GET    |
-| `get-admin-consent-policy`       | GET    |
-| `list-auth-strength-policies`    | GET    |
-| `get-cross-tenant-access-policy` | GET    |
-| `list-cross-tenant-partners`     | GET    |
+| Tool                             | Method | Risk |
+| -------------------------------- | ------ | ---- |
+| `get-auth-methods-policy`        | GET    |      |
+| `list-auth-method-configs`       | GET    |      |
+| `get-auth-method-config`         | GET    |      |
+| `get-security-defaults`          | GET    |      |
+| `get-admin-consent-policy`       | GET    |      |
+| `list-auth-strength-policies`    | GET    |      |
+| `get-auth-strength-policy`       | GET    |      |
+| `create-auth-strength-policy`    | POST   | high |
+| `update-auth-strength-policy`    | PATCH  | high |
+| `delete-auth-strength-policy`    | DELETE | high |
+| `get-cross-tenant-access-policy` | GET    |      |
+| `list-cross-tenant-partners`     | GET    |      |
+| `change-user-password`           | POST   | high |
 
 ### Guest user invitations (2)
 
@@ -338,15 +365,17 @@ node dist/index.js --verify-login
 | `list-message-traces` | GET    |
 | `get-message-trace`   | GET    |
 
-### Exchange mailboxes (5)
+### Exchange mailboxes (7)
 
-| Tool                            | Method | Risk   |
-| ------------------------------- | ------ | ------ |
-| `list-exchange-mailboxes`       | GET    |        |
-| `get-exchange-mailbox`          | GET    |        |
-| `list-exchange-mailbox-folders` | GET    |        |
-| `get-exchange-mailbox-folder`   | GET    |        |
-| `export-exchange-mailbox-items` | POST   | medium |
+| Tool                            | Method | Risk     |
+| ------------------------------- | ------ | -------- |
+| `list-exchange-mailboxes`       | GET    |          |
+| `get-exchange-mailbox`          | GET    |          |
+| `list-exchange-mailbox-folders` | GET    |          |
+| `get-exchange-mailbox-folder`   | GET    |          |
+| `export-exchange-mailbox-items` | POST   | medium   |
+| `update-exchange-mailbox`       | PATCH  | medium   |
+| `delete-exchange-mailbox`       | DELETE | critical |
 
 ### Threat intelligence - hosts (4)
 
@@ -384,15 +413,16 @@ node dist/index.js --verify-login
 | `list-threat-intel-host-components` | GET    |
 | `list-threat-intel-ssl-certs`       | GET    |
 
-### Managed devices (5)
+### Managed devices (6)
 
-| Tool                               | Method |
-| ---------------------------------- | ------ |
-| `list-managed-devices`             | GET    |
-| `get-managed-device`               | GET    |
-| `list-device-compliance-states`    | GET    |
-| `list-device-configuration-states` | GET    |
-| `get-managed-device-overview`      | GET    |
+| Tool                               | Method | Risk     |
+| ---------------------------------- | ------ | -------- |
+| `list-managed-devices`             | GET    |          |
+| `get-managed-device`               | GET    |          |
+| `list-device-compliance-states`    | GET    |          |
+| `list-device-configuration-states` | GET    |          |
+| `get-managed-device-overview`      | GET    |          |
+| `delete-managed-device`            | DELETE | critical |
 
 ### Compliance policies (5)
 
@@ -412,14 +442,20 @@ node dist/index.js --verify-login
 | `get-device-configuration`                 | GET    |
 | `get-device-configuration-status-overview` | GET    |
 
-### Enrollment & Autopilot (4)
+### Enrollment & Autopilot (10)
 
-| Tool                             | Method |
-| -------------------------------- | ------ |
-| `list-enrollment-configurations` | GET    |
-| `get-enrollment-configuration`   | GET    |
-| `list-autopilot-devices`         | GET    |
-| `get-autopilot-device`           | GET    |
+| Tool                              | Method | Risk   |
+| --------------------------------- | ------ | ------ |
+| `list-enrollment-configurations`  | GET    |        |
+| `get-enrollment-configuration`    | GET    |        |
+| `list-autopilot-devices`          | GET    |        |
+| `get-autopilot-device`            | GET    |        |
+| `create-enrollment-configuration` | POST   | medium |
+| `update-enrollment-configuration` | PATCH  | medium |
+| `delete-enrollment-configuration` | DELETE | high   |
+| `update-autopilot-device`         | PATCH  | medium |
+| `delete-autopilot-device`         | DELETE | high   |
+| `import-autopilot-device`         | POST   | medium |
 
 ### Detected apps (3)
 
@@ -524,6 +560,51 @@ node dist/index.js --verify-login
 | `confirm-safe-users`                     | POST   | high     |
 | `run-hunting-query`                      | POST   | low      |
 
+### Intune device remote actions (16) -- requires `--allow-writes`
+
+| Tool                            | Method | Risk     |
+| ------------------------------- | ------ | -------- |
+| `wipe-managed-device`           | POST   | critical |
+| `retire-managed-device`         | POST   | high     |
+| `sync-managed-device`           | POST   | low      |
+| `reboot-managed-device`         | POST   | high     |
+| `remote-lock-device`            | POST   | medium   |
+| `reset-device-passcode`         | POST   | high     |
+| `shutdown-managed-device`       | POST   | high     |
+| `disable-lost-mode`             | POST   | low      |
+| `locate-managed-device`         | POST   | low      |
+| `bypass-activation-lock`        | POST   | high     |
+| `trigger-defender-scan`         | POST   | low      |
+| `update-defender-signatures`    | POST   | low      |
+| `clean-windows-device`          | POST   | critical |
+| `logout-shared-apple-user`      | POST   | medium   |
+| `delete-shared-apple-user`      | POST   | high     |
+| `update-windows-device-account` | POST   | medium   |
+
+### Conditional Access CRUD (8) -- requires `--allow-writes`
+
+| Tool                                | Method | Risk     |
+| ----------------------------------- | ------ | -------- |
+| `list-conditional-access-templates` | GET    |          |
+| `get-conditional-access-policy`     | GET    |          |
+| `create-conditional-access-policy`  | POST   | high     |
+| `update-conditional-access-policy`  | PATCH  | high     |
+| `delete-conditional-access-policy`  | DELETE | critical |
+| `create-named-location`             | POST   | medium   |
+| `update-named-location`             | PATCH  | medium   |
+| `delete-named-location`             | DELETE | high     |
+
+### Intune policies CRUD (6) -- requires `--allow-writes`
+
+| Tool                          | Method | Risk   |
+| ----------------------------- | ------ | ------ |
+| `create-compliance-policy`    | POST   | medium |
+| `update-compliance-policy`    | PATCH  | medium |
+| `delete-compliance-policy`    | DELETE | high   |
+| `create-device-configuration` | POST   | medium |
+| `update-device-configuration` | PATCH  | medium |
+| `delete-device-configuration` | DELETE | high   |
+
 ### eDiscovery (1)
 
 | Tool                    | Method | Risk |
@@ -546,17 +627,20 @@ node dist/index.js --verify-login
 | `get-pstn-calls`                | GET    |
 | `get-direct-routing-calls`      | GET    |
 
-### Cloud PC / Windows 365 (7)
+### Cloud PC / Windows 365 (10)
 
-| Tool                                    | Method | Risk |
-| --------------------------------------- | ------ | ---- |
-| `list-cloud-pcs`                        | GET    |      |
-| `list-cloud-pc-provisioning-policies`   | GET    |      |
-| `list-cloud-pc-device-images`           | GET    |      |
-| `list-cloud-pc-gallery-images`          | GET    |      |
-| `list-cloud-pc-on-premises-connections` | GET    |      |
-| `list-cloud-pc-user-settings`           | GET    |      |
-| `list-cloud-pc-audit-events`            | GET    |      |
+| Tool                                    | Method | Risk   |
+| --------------------------------------- | ------ | ------ |
+| `list-cloud-pcs`                        | GET    |        |
+| `list-cloud-pc-provisioning-policies`   | GET    |        |
+| `list-cloud-pc-device-images`           | GET    |        |
+| `list-cloud-pc-gallery-images`          | GET    |        |
+| `list-cloud-pc-on-premises-connections` | GET    |        |
+| `list-cloud-pc-user-settings`           | GET    |        |
+| `list-cloud-pc-audit-events`            | GET    |        |
+| `create-cloud-pc-provisioning-policy`   | POST   | medium |
+| `update-cloud-pc-provisioning-policy`   | PATCH  | medium |
+| `delete-cloud-pc-provisioning-policy`   | DELETE | high   |
 
 ### Universal Print (6)
 
@@ -581,7 +665,7 @@ node dist/index.js --verify-login
 | `get-sensitivity-label-rights`    | GET    |
 | `get-protection-scopes`           | GET    |
 
-### SharePoint administration (16)
+### SharePoint administration (25)
 
 | Tool                      | Method | Risk   |
 | ------------------------- | ------ | ------ |
@@ -593,12 +677,21 @@ node dist/index.js --verify-login
 | `get-site-default-drive`  | GET    |        |
 | `list-site-lists`         | GET    |        |
 | `get-site-list`           | GET    |        |
+| `create-site-list`        | POST   | low    |
+| `update-site-list`        | PATCH  | low    |
+| `delete-site-list`        | DELETE | high   |
 | `list-site-list-items`    | GET    |        |
+| `create-site-list-item`   | POST   | low    |
+| `update-site-list-item`   | PATCH  | low    |
+| `delete-site-list-item`   | DELETE | medium |
 | `list-site-list-columns`  | GET    |        |
 | `list-site-columns`       | GET    |        |
 | `list-site-content-types` | GET    |        |
 | `list-site-permissions`   | GET    |        |
 | `get-site-permission`     | GET    |        |
+| `create-site-permission`  | POST   | medium |
+| `update-site-permission`  | PATCH  | medium |
+| `delete-site-permission`  | DELETE | high   |
 | `get-site-analytics`      | GET    |        |
 | `list-site-subsites`      | GET    |        |
 
@@ -891,15 +984,29 @@ User.Read.All
 UserAuthenticationMethod.Read.All
 ```
 
-### Write (incident response, Teams admin, SharePoint, invitations)
+### Write (incident response, device actions, CA policies, Teams, SharePoint, identity management)
 
 ```
+AdministrativeUnit.ReadWrite.All
+Application.ReadWrite.All
+AttackSimulation.ReadWrite.All
 Channel.Create
 Channel.Delete.All
+CloudPC.ReadWrite.All
 Device.ReadWrite.All
+DeviceManagementConfiguration.ReadWrite.All
+DeviceManagementManagedDevices.PrivilegedOperations.All
+DeviceManagementManagedDevices.ReadWrite.All
+DeviceManagementServiceConfig.ReadWrite.All
+Directory.AccessAsUser.All
+Domain.ReadWrite.All
 Group.ReadWrite.All
+GroupMember.ReadWrite.All
 IdentityRiskyServicePrincipal.ReadWrite.All
 IdentityRiskyUser.ReadWrite.All
+Policy.ReadWrite.AuthenticationMethod
+Policy.ReadWrite.ConditionalAccess
+RoleManagement.ReadWrite.Directory
 SecurityAlert.ReadWrite.All
 SecurityIncident.ReadWrite.All
 Sites.ReadWrite.All

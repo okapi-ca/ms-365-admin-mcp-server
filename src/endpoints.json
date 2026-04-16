@@ -117,7 +117,6 @@
     "skipEncoding": ["period"],
     "llmTip": "Gets SharePoint site usage details. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with per-site details: siteUrl, ownerDisplayName, storageUsedInBytes, fileCount, activeFileCount, pageViewCount, lastActivityDate."
   },
-
   {
     "pathPattern": "/users",
     "method": "get",
@@ -153,7 +152,6 @@
     "appPermissions": ["Directory.Read.All"],
     "llmTip": "Lists devices registered to a user. Returns device objects with displayName, operatingSystem, operatingSystemVersion, isCompliant, isManaged, approximateLastSignInDateTime."
   },
-
   {
     "pathPattern": "/groups",
     "method": "get",
@@ -182,7 +180,6 @@
     "appPermissions": ["GroupMember.Read.All"],
     "llmTip": "Lists owners of a group. Useful for auditing ownerless groups. Returns user objects."
   },
-
   {
     "pathPattern": "/directoryRoles",
     "method": "get",
@@ -211,7 +208,6 @@
     "appPermissions": ["RoleManagement.Read.Directory"],
     "llmTip": "Lists all role definitions (built-in and custom). Each has displayName, description, isBuiltIn, rolePermissions. Useful for understanding what each role can do."
   },
-
   {
     "pathPattern": "/identity/conditionalAccess/policies",
     "method": "get",
@@ -233,7 +229,6 @@
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Lists named locations used in Conditional Access policies. Shows trusted IP ranges and country-based locations. Useful for auditing geographic access controls."
   },
-
   {
     "pathPattern": "/applications",
     "method": "get",
@@ -255,7 +250,6 @@
     "appPermissions": ["Directory.Read.All"],
     "llmTip": "Lists all delegated permission grants (OAuth2 consent). Shows which apps have been granted what permissions by whom (admin consent vs user consent). Use $filter=consentType eq 'AllPrincipals' to find admin-consented grants. Critical for auditing overpermissioned apps."
   },
-
   {
     "pathPattern": "/organization",
     "method": "get",
@@ -270,14 +264,13 @@
     "appPermissions": ["Domain.Read.All"],
     "llmTip": "Lists all domains registered in the tenant. Shows isVerified, isDefault, authenticationType (Managed vs Federated). Useful for auditing federated domains and finding unverified domains."
   },
-
   {
     "pathPattern": "/users/{user-id}",
     "method": "patch",
     "toolName": "disable-user-account",
     "appPermissions": ["User.ReadWrite.All"],
     "riskLevel": "critical",
-    "llmTip": "Disables a user account by setting accountEnabled to false. Body MUST be: {\"accountEnabled\": false}. This blocks all sign-ins immediately. Use for compromised accounts. CRITICAL: verify the user-id carefully — disabling the wrong account locks out a legitimate user. To re-enable, send {\"accountEnabled\": true}."
+    "llmTip": "Disables a user account by setting accountEnabled to false. Body MUST be: {\"accountEnabled\": false}. This blocks all sign-ins immediately. Use for compromised accounts. CRITICAL: verify the user-id carefully \u2014 disabling the wrong account locks out a legitimate user. To re-enable, send {\"accountEnabled\": true}."
   },
   {
     "pathPattern": "/users/{user-id}/revokeSignInSessions",
@@ -285,7 +278,7 @@
     "toolName": "revoke-user-sessions",
     "appPermissions": ["User.ReadWrite.All"],
     "riskLevel": "high",
-    "llmTip": "Revokes all refresh tokens and session cookies for a user, forcing re-authentication everywhere. No request body needed. Use after password reset or account compromise. Effect is not instant — cached tokens may remain valid for up to 1 hour. Combine with disable-user-account for immediate containment."
+    "llmTip": "Revokes all refresh tokens and session cookies for a user, forcing re-authentication everywhere. No request body needed. Use after password reset or account compromise. Effect is not instant \u2014 cached tokens may remain valid for up to 1 hour. Combine with disable-user-account for immediate containment."
   },
   {
     "pathPattern": "/security/alerts_v2/{alert-id}/comments",
@@ -303,7 +296,6 @@
     "riskLevel": "high",
     "llmTip": "Updates device properties. Use {\"accountEnabled\": false} to disable a device in Entra ID. This prevents the device from authenticating. Useful for lost/stolen devices or compromised endpoints."
   },
-
   {
     "pathPattern": "/subscribedSkus",
     "method": "get",
@@ -346,7 +338,6 @@
     "appPermissions": ["SecurityEvents.Read.All"],
     "llmTip": "Gets a specific Secure Score control profile. Returns remediation impact, implementation cost, threats addressed, and compliance information."
   },
-
   {
     "pathPattern": "/identityProtection/riskyUsers",
     "method": "get",
@@ -382,7 +373,6 @@
     "appPermissions": ["IdentityRiskyServicePrincipal.Read.All"],
     "llmTip": "Gets details for a specific risky service principal. Returns riskLevel, riskState, and riskDetail."
   },
-
   {
     "pathPattern": "/policies/authenticationMethodsPolicy",
     "method": "get",
@@ -418,7 +408,6 @@
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Gets the admin consent request policy. Shows isEnabled, notifyReviewers, remindersEnabled, and reviewers list. Controls whether users can request admin consent for apps they want to use."
   },
-
   {
     "pathPattern": "/devices",
     "method": "get",
@@ -433,7 +422,6 @@
     "appPermissions": ["Device.Read.All"],
     "llmTip": "Gets a specific device by ID. Returns displayName, operatingSystem, operatingSystemVersion, isCompliant, isManaged, accountEnabled, trustType, approximateLastSignInDateTime, and deviceId."
   },
-
   {
     "pathPattern": "/identityProtection/riskDetections",
     "method": "get",
@@ -448,7 +436,6 @@
     "appPermissions": ["IdentityRiskEvent.Read.All"],
     "llmTip": "Gets a specific risk detection by ID. Returns full details including riskEventType, riskLevel, detectionTimingType (realtime, offline), source, ipAddress, location, userPrincipalName, and additionalInfo."
   },
-
   {
     "pathPattern": "/directory/deletedItems/graph.user",
     "method": "get",
@@ -463,7 +450,6 @@
     "appPermissions": ["Group.Read.All"],
     "llmTip": "Lists recently deleted groups (recoverable within 30 days). Only Microsoft 365 groups (unified groups) are soft-deleted and recoverable. Use $select=displayName,deletedDateTime,groupTypes."
   },
-
   {
     "pathPattern": "/directory/administrativeUnits",
     "method": "get",
@@ -485,7 +471,6 @@
     "appPermissions": ["AdministrativeUnit.Read.All"],
     "llmTip": "Lists members (users, groups, devices) of an administrative unit. Returns directory objects. Use $select=displayName,userPrincipalName for users."
   },
-
   {
     "pathPattern": "/policies/authenticationStrengthPolicies",
     "method": "get",
@@ -507,7 +492,6 @@
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Lists partner-specific cross-tenant access configurations. Each entry has tenantId and overrides for inbound/outbound B2B collaboration and direct connect settings. Useful for auditing which external organizations have special access."
   },
-
   {
     "pathPattern": "/roleManagement/directory/roleEligibilityScheduleInstances",
     "method": "get",
@@ -522,7 +506,6 @@
     "appPermissions": ["RoleAssignmentSchedule.Read.Directory"],
     "llmTip": "Lists PIM active role assignment schedule instances, including time-bound and activated assignments. Use $filter=principalId eq '{user-id}' to find active assignments for a user. Shows assignmentType (Assigned or Activated), startDateTime, endDateTime. Useful for auditing who currently has active privileged roles."
   },
-
   {
     "pathPattern": "/users/{user-id}/appRoleAssignments",
     "method": "get",
@@ -537,7 +520,6 @@
     "appPermissions": ["Application.Read.All"],
     "llmTip": "Lists all users and groups assigned app roles on a service principal. Use to audit who has access to a specific enterprise application. Each entry has principalDisplayName, principalType, appRoleId."
   },
-
   {
     "pathPattern": "/identityProtection/riskyUsers/confirmCompromised",
     "method": "post",
@@ -562,7 +544,6 @@
     "riskLevel": "high",
     "llmTip": "Deletes a phone authentication method for a user. Use list-user-auth-methods first to get the phoneAuthenticationMethod ID. Useful for removing a compromised phone number during incident response. Cannot delete if it is the user's only MFA method and MFA is required."
   },
-
   {
     "pathPattern": "/reports/getOneDriveUsageAccountDetail(period='{period}')",
     "method": "get",
@@ -595,7 +576,6 @@
     "skipEncoding": ["period"],
     "llmTip": "Gets Microsoft 365 Apps usage details per user. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data showing which apps each user used (Outlook, Word, Excel, PowerPoint, OneNote, Teams) and on which platforms (Windows, Mac, Web, Mobile)."
   },
-
   {
     "pathPattern": "/security/attackSimulation/simulations",
     "method": "get",
@@ -610,7 +590,6 @@
     "appPermissions": ["AttackSimulation.Read.All"],
     "llmTip": "Gets a specific attack simulation by ID. Returns full details including report with simulationEventsContent (users who clicked, reported, etc.) and trainingsContent."
   },
-
   {
     "pathPattern": "/identityGovernance/accessReviews/definitions",
     "method": "get",
@@ -646,7 +625,6 @@
     "appPermissions": ["AccessReview.Read.All"],
     "llmTip": "Lists decisions made during an access review instance. Each decision has target (user/group), decision (Approve, Deny, NotReviewed, DontKnow), reviewedBy, justification, and appliedDateTime. Use to audit review outcomes and ensure decisions were applied."
   },
-
   {
     "pathPattern": "/identityGovernance/entitlementManagement/accessPackages",
     "method": "get",
@@ -666,7 +644,7 @@
     "method": "get",
     "toolName": "list-access-package-assignments",
     "appPermissions": ["EntitlementManagement.Read.All"],
-    "llmTip": "Lists access package assignments — who has been granted which access packages. Use $filter=state eq 'Delivered' to find active assignments. Use $filter=targetId eq '{user-id}' to find all packages assigned to a user. Use $expand=target,accessPackage to get user and package details. Each assignment has state (Delivering, Delivered, Expired, DeliveryFailed), schedule, and targetId."
+    "llmTip": "Lists access package assignments \u2014 who has been granted which access packages. Use $filter=state eq 'Delivered' to find active assignments. Use $filter=targetId eq '{user-id}' to find all packages assigned to a user. Use $expand=target,accessPackage to get user and package details. Each assignment has state (Delivering, Delivered, Expired, DeliveryFailed), schedule, and targetId."
   },
   {
     "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests",
@@ -696,7 +674,6 @@
     "appPermissions": ["EntitlementManagement.Read.All"],
     "llmTip": "Gets entitlement management settings for the tenant. Returns externalUserLifecycleAction (None, BlockSignIn, BlockSignInAndDelete), daysUntilExternalUserDeletedAfterBlocked, and isB2BExternalCollab settings."
   },
-
   {
     "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows",
     "method": "get",
@@ -718,7 +695,6 @@
     "appPermissions": ["LifecycleWorkflows.Read.All"],
     "llmTip": "Lists available task definitions for lifecycle workflows. Each has displayName, description, category (joiner, leaver), and parameters. Examples: Send welcome email, Add user to group, Remove user from group, Disable user account, Delete user."
   },
-
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentSchedules",
     "method": "get",
@@ -733,7 +709,6 @@
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
     "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active."
   },
-
   {
     "pathPattern": "/identityGovernance/termsOfUse/agreements",
     "method": "get",
@@ -755,7 +730,6 @@
     "appPermissions": ["Agreement.Read.All"],
     "llmTip": "Lists acceptances for a terms of use agreement. Each acceptance has userId, userDisplayName, userPrincipalName, state (accepted, declined), recordedDateTime, and expirationDateTime. Useful for compliance reporting on who has accepted terms."
   },
-
   {
     "pathPattern": "/identityGovernance/appConsent/appConsentRequests",
     "method": "get",
@@ -777,7 +751,6 @@
     "appPermissions": ["ConsentRequest.Read.All"],
     "llmTip": "Lists user consent requests for a specific app consent request. Each has createdBy, status (Submitted, InProgress, Completed), and reason. Shows which individual users requested consent for the app."
   },
-
   {
     "pathPattern": "/deviceManagement/managedDevices",
     "method": "get",
@@ -806,7 +779,6 @@
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "llmTip": "Lists configuration profile states for a specific managed device. Shows which configuration profiles apply and their state (notApplicable, success, error, conflict). Each has displayName, state, settingCount."
   },
-
   {
     "pathPattern": "/deviceManagement/deviceCompliancePolicies",
     "method": "get",
@@ -842,7 +814,6 @@
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "llmTip": "Gets the tenant-wide device compliance state summary. Returns aggregate counts: inGracePeriodCount, compliantDeviceCount, nonCompliantDeviceCount, remediatedDeviceCount, errorDeviceCount, conflictDeviceCount, unknownDeviceCount, notApplicableDeviceCount."
   },
-
   {
     "pathPattern": "/deviceManagement/deviceConfigurations",
     "method": "get",
@@ -864,7 +835,6 @@
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "llmTip": "Gets device status overview for a configuration profile. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
   },
-
   {
     "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
     "method": "get",
@@ -879,7 +849,6 @@
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
     "llmTip": "Gets a specific enrollment configuration. Returns full details including platform restrictions, device limits, or Autopilot profile settings depending on the type."
   },
-
   {
     "pathPattern": "/deviceManagement/deviceCategories",
     "method": "get",
@@ -887,7 +856,6 @@
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "llmTip": "Lists Intune device categories. Categories allow organizing devices for dynamic group targeting. Each has displayName and description."
   },
-
   {
     "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities",
     "method": "get",
@@ -902,7 +870,6 @@
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
     "llmTip": "Gets a specific Autopilot device identity. Returns serialNumber, model, manufacturer, groupTag, enrollmentState, deploymentProfileAssignmentStatus, and assignedDeploymentProfile."
   },
-
   {
     "pathPattern": "/deviceManagement/detectedApps",
     "method": "get",
@@ -924,7 +891,6 @@
     "appPermissions": ["DeviceManagementApps.Read.All"],
     "llmTip": "Lists managed devices that have a specific application installed. Useful for finding all devices with a particular app version (e.g., outdated or unauthorized software)."
   },
-
   {
     "pathPattern": "/deviceManagement/managedDeviceOverview",
     "method": "get",
@@ -932,7 +898,6 @@
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "llmTip": "Gets a high-level overview of all managed devices. Returns aggregate counts by enrolledDeviceCount, mdmEnrolledCount, dualEnrolledDeviceCount, deviceOperatingSystemSummary (android, iOS, macOS, windows, windowsMobile), and deviceExchangeAccessStateSummary."
   },
-
   {
     "pathPattern": "/deviceManagement/auditEvents",
     "method": "get",
@@ -940,7 +905,6 @@
     "appPermissions": ["DeviceManagementApps.Read.All"],
     "llmTip": "Lists Intune audit events. Each has displayName, componentName, activity, activityDateTime, activityType, actor (userPrincipalName, applicationDisplayName), and resources (displayName, type). Use $filter=activityDateTime ge 2024-01-01T00:00:00Z to filter by date. Use to track who changed Intune policies."
   },
-
   {
     "pathPattern": "/deviceManagement/softwareUpdateStatusSummary",
     "method": "get",
@@ -948,15 +912,13 @@
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "llmTip": "Gets a summary of Windows update statuses across managed devices. Returns counts by status: compliantDeviceCount, nonCompliantDeviceCount, remediatedDeviceCount, errorDeviceCount, conflictDeviceCount, unknownDeviceCount, notApplicableDeviceCount."
   },
-
   {
     "pathPattern": "/deviceManagement/applePushNotificationCertificate",
     "method": "get",
     "toolName": "get-apple-push-certificate",
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
-    "llmTip": "Gets the Apple Push Notification certificate info. Returns appleIdentifier, topicIdentifier, lastModifiedDateTime, expirationDateTime, and certificateSerialNumber. CRITICAL: monitor expirationDateTime — if it expires, all iOS/macOS device management stops."
+    "llmTip": "Gets the Apple Push Notification certificate info. Returns appleIdentifier, topicIdentifier, lastModifiedDateTime, expirationDateTime, and certificateSerialNumber. CRITICAL: monitor expirationDateTime \u2014 if it expires, all iOS/macOS device management stops."
   },
-
   {
     "pathPattern": "/deviceManagement/roleDefinitions",
     "method": "get",
@@ -971,7 +933,6 @@
     "appPermissions": ["DeviceManagementRBAC.Read.All"],
     "llmTip": "Lists Intune RBAC role assignments. Each has displayName, description, resourceScopes, and members. Shows who has been granted which Intune admin roles and over which scope."
   },
-
   {
     "pathPattern": "/deviceManagement/termsAndConditions",
     "method": "get",
@@ -986,7 +947,6 @@
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
     "llmTip": "Lists acceptance statuses for Intune terms and conditions. Each has userDisplayName, userPrincipalName, acceptedVersion, acceptedDateTime. Useful for compliance reporting."
   },
-
   {
     "pathPattern": "/deviceManagement/conditionalAccessSettings",
     "method": "get",
@@ -994,7 +954,6 @@
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
     "llmTip": "Gets Intune on-premises conditional access settings. Returns enabled status and which devices are included/excluded from conditional access to on-premises Exchange."
   },
-
   {
     "pathPattern": "/deviceManagement/mobileThreatDefenseConnectors",
     "method": "get",
@@ -1002,7 +961,6 @@
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
     "llmTip": "Lists Mobile Threat Defense (MTD) connectors. Shows which MTD partners are integrated (Microsoft Defender, Lookout, Zimperium, etc.), their state (enabled/disabled), and platform support. Each has partnerState, androidEnabled, iosEnabled, lastHeartbeatDateTime."
   },
-
   {
     "pathPattern": "/deviceManagement/iosUpdateStatuses",
     "method": "get",
@@ -1010,7 +968,6 @@
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "llmTip": "Lists iOS update installation statuses across managed devices. Each has deviceDisplayName, userName, osVersion, installStatus (downloading, installing, idle, available, etc.), lastReportedDateTime, deviceModel, deviceId."
   },
-
   {
     "pathPattern": "/admin/exchange/tracing/messageTraces",
     "method": "get",
@@ -1025,7 +982,6 @@
     "appPermissions": ["MailboxSettings.Read"],
     "llmTip": "Gets a specific message trace by ID. Returns full details including senderAddress, recipientAddress, subject, messageId, receivedDateTime, status, size, and additional routing information."
   },
-
   {
     "pathPattern": "/admin/exchange/mailboxes",
     "method": "get",
@@ -1040,7 +996,6 @@
     "appPermissions": ["Exchange.ManageAsApp"],
     "llmTip": "Gets a specific Exchange mailbox. Returns full details including displayName, primarySmtpAddress, recipientType, and mailbox configuration."
   },
-
   {
     "pathPattern": "/security/threatIntelligence/hosts",
     "method": "get",
@@ -1067,9 +1022,8 @@
     "method": "get",
     "toolName": "list-threat-intel-host-pairs",
     "appPermissions": ["ThreatIntelligence.Read.All"],
-    "llmTip": "Lists host pairs for a given host — relationships between parent and child hosts (redirects, iframes, scripts, etc.). Each has parentHost, childHost, linkKind (redirect, script, etc.), firstSeenDateTime, lastSeenDateTime. Useful for mapping infrastructure."
+    "llmTip": "Lists host pairs for a given host \u2014 relationships between parent and child hosts (redirects, iframes, scripts, etc.). Each has parentHost, childHost, linkKind (redirect, script, etc.), firstSeenDateTime, lastSeenDateTime. Useful for mapping infrastructure."
   },
-
   {
     "pathPattern": "/security/threatIntelligence/articles",
     "method": "get",
@@ -1091,7 +1045,6 @@
     "appPermissions": ["ThreatIntelligence.Read.All"],
     "llmTip": "Lists indicators of compromise (IOCs) associated with a threat intelligence article. Each indicator has artifact (hostname, IP, URL, file hash), source, and pattern details."
   },
-
   {
     "pathPattern": "/security/threatIntelligence/intelProfiles",
     "method": "get",
@@ -1113,7 +1066,6 @@
     "appPermissions": ["ThreatIntelligence.Read.All"],
     "llmTip": "Lists indicators of compromise associated with a threat actor profile. Each indicator has artifact (hostname, IP, URL, file hash), source, and firstSeenDateTime."
   },
-
   {
     "pathPattern": "/security/threatIntelligence/vulnerabilities",
     "method": "get",
@@ -1128,7 +1080,6 @@
     "appPermissions": ["ThreatIntelligence.Read.All"],
     "llmTip": "Gets a specific vulnerability by CVE ID (e.g. CVE-2024-1234). Returns description, severity, cvss scores, publishedDateTime, exploitsAvailable, activeExploitsObserved, hasChatter, priorityScore, and remediation info."
   },
-
   {
     "pathPattern": "/security/threatIntelligence/whoisRecords",
     "method": "get",
@@ -1143,7 +1094,6 @@
     "appPermissions": ["ThreatIntelligence.Read.All"],
     "llmTip": "Gets a specific WHOIS record by ID. Returns full registrant and registrar details, nameservers, registration and expiration dates."
   },
-
   {
     "pathPattern": "/security/threatIntelligence/hostComponents",
     "method": "get",
@@ -1158,7 +1108,6 @@
     "appPermissions": ["ThreatIntelligence.Read.All"],
     "llmTip": "Lists SSL certificates observed on hosts. Each has host, sslCertificate (issuer, subject, serialNumber, sha256, validityPeriod), firstSeenDateTime, lastSeenDateTime. Useful for tracking certificate changes and detecting suspicious certificates."
   },
-
   {
     "pathPattern": "/invitations",
     "method": "get",
@@ -1174,7 +1123,6 @@
     "riskLevel": "medium",
     "llmTip": "Creates a new guest user invitation. Body must include: invitedUserEmailAddress (required), inviteRedirectUrl (required, URL user lands on after redeeming). Optional: invitedUserDisplayName, sendInvitationMessage (true/false), invitedUserMessageInfo, invitedUserType ('Guest' or 'Member'). Returns inviteRedeemUrl and invitedUser object with the created user ID."
   },
-
   {
     "pathPattern": "/identity/identityProviders",
     "method": "get",
@@ -1189,7 +1137,6 @@
     "appPermissions": ["IdentityProvider.Read.All"],
     "llmTip": "Gets a specific identity provider. Returns displayName, @odata.type, clientId, and provider-specific configuration."
   },
-
   {
     "pathPattern": "/identity/b2xUserFlows",
     "method": "get",
@@ -1204,7 +1151,6 @@
     "appPermissions": ["IdentityUserFlow.Read.All"],
     "llmTip": "Gets a specific B2X user flow. Returns full configuration including apiConnectorConfiguration, identityProviders, userAttributeAssignments, and languages."
   },
-
   {
     "pathPattern": "/identity/apiConnectors",
     "method": "get",
@@ -1219,7 +1165,6 @@
     "appPermissions": ["APIConnectors.Read.All"],
     "llmTip": "Gets a specific API connector. Returns displayName, targetUrl, and authenticationConfiguration (basic auth or client certificate)."
   },
-
   {
     "pathPattern": "/identity/customAuthenticationExtensions",
     "method": "get",
@@ -1234,7 +1179,6 @@
     "appPermissions": ["CustomAuthenticationExtension.Read.All"],
     "llmTip": "Gets a specific custom authentication extension. Returns displayName, authenticationConfiguration, endpointConfiguration, and claimsForTokenConfiguration."
   },
-
   {
     "pathPattern": "/applications/{application-id}",
     "method": "get",
@@ -1263,7 +1207,6 @@
     "appPermissions": ["Application.Read.All"],
     "llmTip": "Gets a specific federated identity credential. Returns name, issuer (e.g. https://token.actions.githubusercontent.com), subject (e.g. repo:org/repo:ref:refs/heads/main), audiences, and description."
   },
-
   {
     "pathPattern": "/servicePrincipals/{servicePrincipal-id}",
     "method": "get",
@@ -1285,7 +1228,6 @@
     "appPermissions": ["Directory.Read.All"],
     "llmTip": "Lists delegated permission grants for a specific service principal. Shows which delegated permissions have been consented (admin or user). Each has consentType (AllPrincipals for admin consent, Principal for user consent), scope (space-separated permissions), and principalId."
   },
-
   {
     "pathPattern": "/policies/appManagementPolicies",
     "method": "get",
@@ -1300,7 +1242,6 @@
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Gets a specific app management policy. Returns displayName, isEnabled, and detailed restrictions on password and key credentials including maxLifetime and restrictForAppsCreatedAfterDateTime."
   },
-
   {
     "pathPattern": "/security/cases/ediscoveryCases",
     "method": "get",
@@ -1308,7 +1249,6 @@
     "appPermissions": ["eDiscovery.Read.All"],
     "llmTip": "Lists eDiscovery cases in Microsoft Purview. Each case has displayName, description, status (active, closed, closedWithError), createdBy, createdDateTime, lastModifiedBy, lastModifiedDateTime, and externalId. Use $filter=status eq 'active' to see active cases. Use $top to limit results."
   },
-
   {
     "pathPattern": "/communications/callRecords",
     "method": "get",
@@ -1316,7 +1256,6 @@
     "appPermissions": ["CallRecords.Read.All"],
     "llmTip": "Lists Teams call records. Each record has id, version, type (groupCall, peerToPeer), modalities (audio, video, videoBasedScreenSharing, data), startDateTime, endDateTime, organizer, and participants. Use $filter=startDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $orderby=startDateTime desc. Use $top to limit."
   },
-
   {
     "pathPattern": "/deviceManagement/virtualEndpoint/cloudPCs",
     "method": "get",
@@ -1366,7 +1305,6 @@
     "appPermissions": ["CloudPC.Read.All"],
     "llmTip": "Lists Cloud PC audit events. Each has displayName, componentName, activity, activityDateTime, activityType (create, delete, patch), activityOperationType, activityResult (success, failure), actor, and resources. Use $filter=activityDateTime ge 2024-01-01T00:00:00Z. Use $orderby=activityDateTime desc."
   },
-
   {
     "pathPattern": "/print/printers",
     "method": "get",
@@ -1409,7 +1347,6 @@
     "appPermissions": ["PrintJob.Read.All"],
     "llmTip": "Lists Universal Print task definitions. Task definitions describe tasks that can be triggered on various print events (e.g., jobStarted)."
   },
-
   {
     "pathPattern": "/informationProtection/bitlocker/recoveryKeys",
     "method": "get",
@@ -1424,7 +1361,6 @@
     "appPermissions": ["ThreatAssessment.Read.All"],
     "llmTip": "Lists threat assessment requests. Each has id, createdDateTime, contentType (mail, url, file), expectedAssessment (block, unblock), category (spam, phishing, malware), status (pending, completed), requestSource, createdBy, and results (with resultType and message). Use $top to limit."
   },
-
   {
     "pathPattern": "/admin/sharepoint/settings",
     "method": "get",
@@ -1432,7 +1368,6 @@
     "appPermissions": ["SharePointTenantSettings.Read.All"],
     "llmTip": "Gets SharePoint tenant-level settings. Returns allowedDomainGuidsForSyncApp, availableManagedPathsForSiteCreation, deletedUserPersonalSiteRetentionPeriodInDays, excludedFileExtensionsForSyncApp, idleSessionSignOut, imageTaggingOption, isCommentingOnSitePagesEnabled, isFileActivityNotificationEnabled, isLoopEnabled, isMacSyncAppEnabled, isResharingByExternalUsersEnabled, isSharePointMobileNotificationEnabled, isSharePointNewsfeedEnabled, isSiteCreationEnabled, isSiteCreationUIEnabled, isSitePagesCreationEnabled, isSitesStorageLimitAutomatic, knowledgeIntelligenceEnabled, personalSiteDefaultStorageLimitInMB, sharingAllowedDomainList, sharingBlockedDomainList, sharingCapability, sharingDomainRestrictionMode, siteCreationDefaultManagedPath, siteCreationDefaultStorageLimitInMB, tenantDefaultTimezone."
   },
-
   {
     "pathPattern": "/security/labels/retentionLabels",
     "method": "get",
@@ -1475,7 +1410,6 @@
     "appPermissions": ["RecordsManagement.Read.All"],
     "llmTip": "Lists file plan references used in retention labels. Each has displayName and id. File plan references provide a unique identifier or reference number for the retention policy within the organization's file plan."
   },
-
   {
     "pathPattern": "/deviceManagement/reports/getDeviceNonComplianceReport",
     "method": "post",
@@ -1619,7 +1553,6 @@
     "riskLevel": "low",
     "llmTip": "Generates a report of app installation status per device. POST body: {\"name\":\"DeviceAppInstallationStatus\",\"filter\":\"(AppId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"AppName\",\"InstallState\"],\"top\":50}."
   },
-
   {
     "pathPattern": "/deviceManagement/complianceManagementPartners",
     "method": "get",
@@ -1676,7 +1609,6 @@
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "llmTip": "Lists Windows malware information detected across Intune-managed devices. Each has displayName, category, severity, additionalInformationUrl, and deviceMalwareStates. Use for threat landscape visibility."
   },
-
   {
     "pathPattern": "/deviceAppManagement/mobileApps",
     "method": "get",
@@ -1768,7 +1700,6 @@
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
     "llmTip": "Lists Apple Volume Purchase Program (VPP) tokens. Each has organizationName, appleId, state (valid, expired, invalid), expirationDateTime, lastSyncDateTime, lastSyncStatus, and automaticallyUpdateApps."
   },
-
   {
     "pathPattern": "/policies/activityBasedTimeoutPolicies",
     "method": "get",
@@ -1874,7 +1805,6 @@
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Gets the default cross-tenant access policy. Returns the default inbound/outbound settings (b2bCollaboration, b2bDirectConnect, organizationDefault) that apply to all tenants not covered by a partner-specific policy. Critical for controlling external collaboration defaults."
   },
-
   {
     "pathPattern": "/identityGovernance/entitlementManagement/assignmentPolicies",
     "method": "get",
@@ -1959,7 +1889,6 @@
     "appPermissions": ["AccessReview.Read.All"],
     "llmTip": "Lists access review history definitions. These are scheduled exports of access review decisions. Each has displayName, reviewHistoryPeriodStartDateTime, reviewHistoryPeriodEndDateTime, status, and decisions (approve, deny, dontKnow, notReviewed)."
   },
-
   {
     "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests",
     "method": "get",
@@ -1995,7 +1924,6 @@
     "appPermissions": ["RoleManagement.Read.Directory"],
     "llmTip": "Lists RBAC resource namespaces for directory roles. Each namespace represents a resource provider (microsoft.directory, microsoft.aad.b2c, etc.) with resourceActions defining available permissions."
   },
-
   {
     "pathPattern": "/identityProtection/riskyServicePrincipals/confirmCompromised",
     "method": "post",
@@ -2027,7 +1955,6 @@
     "riskLevel": "high",
     "llmTip": "Confirms one or more users as safe (not compromised). Body: {\"userIds\":[\"user-id-1\"]}. Sets riskState to remediated. Use after investigating a risky user and confirming the account is not compromised."
   },
-
   {
     "pathPattern": "/security/microsoft.graph.security.runHuntingQuery",
     "method": "post",
@@ -2163,14 +2090,6 @@
     "llmTip": "Lists cookies observed on hosts from Threat Intelligence. Each has name, domain, firstSeenDateTime, lastSeenDateTime, and host."
   },
   {
-    "pathPattern": "/security/threatIntelligence/hostPairs",
-    "method": "get",
-    "toolName": "list-threat-intel-host-pairs",
-    "appPermissions": ["ThreatIntelligence.Read.All"],
-    "llmTip": "Lists host pairs (parent-child relationships) from Threat Intelligence. Each has linkKind (redirect, script, img, etc.), firstSeenDateTime, lastSeenDateTime, parentHost, and childHost. Use to trace infrastructure chains."
-  },
-
-  {
     "pathPattern": "/reports/authenticationMethods/userRegistrationDetails",
     "method": "get",
     "toolName": "list-user-registration-details",
@@ -2205,7 +2124,6 @@
     "appPermissions": ["Reports.Read.All"],
     "llmTip": "Lists monthly Universal Print usage summarized by user. Each has userPrincipalName, usageDate, completedBlackAndWhiteJobCount, completedColorJobCount, incompleteJobCount, and pagesPrinted."
   },
-
   {
     "pathPattern": "/copilot/admin/settings",
     "method": "get",
@@ -2220,7 +2138,6 @@
     "appPermissions": ["CopilotSettings-Internal.ReadWrite.All"],
     "llmTip": "Gets Copilot limited mode configuration. Returns isEnabledForGroup, groupId, and whether Copilot features are restricted for specific user groups."
   },
-
   {
     "pathPattern": "/directory/attributeSets",
     "method": "get",
@@ -2256,7 +2173,6 @@
     "appPermissions": ["OnPremDirectorySynchronization.Read.All"],
     "llmTip": "Lists on-premises directory synchronization (Entra Connect) configurations. Returns features enabled (passwordHashSync, passwordWriteback, seamlessSSO, cloudSync), configuration details, and sync status."
   },
-
   {
     "pathPattern": "/teams",
     "method": "get",
@@ -2478,7 +2394,6 @@
     "appPermissions": ["TeamworkDevice.Read.All"],
     "llmTip": "Lists telephone number assignments for Teams. Shows which phone numbers are assigned to which users or resources."
   },
-
   {
     "pathPattern": "/sites",
     "method": "get",
@@ -2585,7 +2500,6 @@
     "appPermissions": ["Sites.Read.All"],
     "llmTip": "Lists subsites of a SharePoint site. Returns displayName, webUrl, createdDateTime for each subsite."
   },
-
   {
     "pathPattern": "/security/dataSecurityAndGovernance/sensitivityLabels",
     "method": "get",
@@ -2621,7 +2535,6 @@
     "appPermissions": ["InformationProtectionPolicy.Read.All"],
     "llmTip": "Gets the data security and governance protection scopes configured for the tenant."
   },
-
   {
     "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}/folders",
     "method": "get",
@@ -2644,7 +2557,6 @@
     "riskLevel": "medium",
     "llmTip": "Exports items from an Exchange mailbox. Body: {\"itemIds\":[\"itemId1\",\"itemId2\"]}. Returns exportedItems with data (base64)."
   },
-
   {
     "pathPattern": "/communications/callRecords/{callRecord-id}",
     "method": "get",
@@ -2716,5 +2628,612 @@
     "appPermissions": ["CallRecords.Read.All"],
     "skipEncoding": ["fromDateTime", "toDateTime"],
     "llmTip": "Gets Direct Routing call records for a date range. Parameters are ISO 8601 dates. Returns callId, correlationId, userId, callerNumber, calleeNumber, duration, startDateTime, failureDateTime, finalSipCode, mediaPathLocation."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/wipe",
+    "method": "post",
+    "toolName": "wipe-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "critical",
+    "llmTip": "Wipes a managed device (factory reset). IRREVERSIBLE \u2014 all data on the device will be erased. Optional body: {\"keepEnrollmentData\":false,\"keepUserData\":false,\"macOsUnlockCode\":\"pin\"}. Always confirm with operator before executing."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/retire",
+    "method": "post",
+    "toolName": "retire-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Retires a managed device. Removes company data (apps, email, Wi-Fi, VPN profiles) but keeps personal data. The device is unenrolled from Intune management."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/syncDevice",
+    "method": "post",
+    "toolName": "sync-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Triggers an immediate sync of the managed device with Intune. Forces the device to check in and apply any pending policies, apps, or configurations."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/rebootNow",
+    "method": "post",
+    "toolName": "reboot-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Reboots a managed device immediately. The user will lose unsaved work. Windows devices only."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/remoteLock",
+    "method": "post",
+    "toolName": "remote-lock-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "medium",
+    "llmTip": "Remotely locks a managed device. The device owner must use their passcode/PIN to unlock. Useful for lost/stolen devices."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/resetPasscode",
+    "method": "post",
+    "toolName": "reset-device-passcode",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Resets the passcode on a managed device. Behavior varies by platform: Android generates a new passcode, iOS removes the passcode."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/shutDown",
+    "method": "post",
+    "toolName": "shutdown-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Shuts down a managed device. The user will lose unsaved work."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/disableLostMode",
+    "method": "post",
+    "toolName": "disable-lost-mode",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Disables Lost Mode on a supervised iOS device. The device returns to normal operation."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/locateDevice",
+    "method": "post",
+    "toolName": "locate-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Locates a managed device (iOS supervised). Returns the device's GPS coordinates. Use get-managed-device after to read deviceActionResults for the location."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/bypassActivationLock",
+    "method": "post",
+    "toolName": "bypass-activation-lock",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Bypasses the Activation Lock on a supervised iOS device. Used when a device needs to be reactivated without the original Apple ID credentials."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/windowsDefenderScan",
+    "method": "post",
+    "toolName": "trigger-defender-scan",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Triggers a Windows Defender antivirus scan on the device. Body: {\"quickScan\": true} for quick scan, or {\"quickScan\": false} for full scan."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/windowsDefenderUpdateSignatures",
+    "method": "post",
+    "toolName": "update-defender-signatures",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Forces a Windows Defender signature update on the device. Ensures the latest antivirus definitions are installed."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/cleanWindowsDevice",
+    "method": "post",
+    "toolName": "clean-windows-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "critical",
+    "llmTip": "Cleans a Windows device (fresh start). Body: {\"keepUserData\": false}. Removes all installed apps and resets to default Windows. IRREVERSIBLE."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/logoutSharedAppleDeviceActiveUser",
+    "method": "post",
+    "toolName": "logout-shared-apple-user",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "medium",
+    "llmTip": "Logs out the active user from a shared Apple device (iPad). The device returns to the login screen."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deleteUserFromSharedAppleDevice",
+    "method": "post",
+    "toolName": "delete-shared-apple-user",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a user and their data from a shared Apple device. Body: {\"userPrincipalName\": \"user@contoso.com\"}."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/updateWindowsDeviceAccount",
+    "method": "post",
+    "toolName": "update-windows-device-account",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates the account on a Windows device (Surface Hub). Body: {\"updateWindowsDeviceAccountActionParameter\": {\"deviceAccount\": {\"email\": \"room@contoso.com\"}, \"passwordRotationEnabled\": true}}."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies",
+    "method": "post",
+    "toolName": "create-conditional-access-policy",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "high",
+    "llmTip": "Creates a new Conditional Access policy. Body requires displayName, state (enabled/disabled/enabledForReportingButNotEnforced), conditions (users, applications, locations, platforms, signInRiskLevels), grantControls or sessionControls. Start with state='disabled' or 'enabledForReportingButNotEnforced' for safety."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+    "method": "patch",
+    "toolName": "update-conditional-access-policy",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "high",
+    "llmTip": "Updates a Conditional Access policy. Body can include displayName, state, conditions, grantControls, sessionControls. Changing state to 'enabled' activates enforcement \u2014 verify conditions before enabling."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+    "method": "delete",
+    "toolName": "delete-conditional-access-policy",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a Conditional Access policy. IRREVERSIBLE. Consider disabling (state='disabled') instead of deleting."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations",
+    "method": "post",
+    "toolName": "create-named-location",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a named location for Conditional Access. For IP ranges: {\"@odata.type\":\"#microsoft.graph.ipNamedLocation\",\"displayName\":\"Corp IPs\",\"isTrusted\":true,\"ipRanges\":[{\"@odata.type\":\"#microsoft.graph.iPv4CidrRange\",\"cidrAddress\":\"10.0.0.0/8\"}]}."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations/{namedLocation-id}",
+    "method": "patch",
+    "toolName": "update-named-location",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a named location. Body can include displayName, isTrusted, ipRanges (for IP locations) or countriesAndRegions, includeUnknownCountriesAndRegions (for country locations)."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations/{namedLocation-id}",
+    "method": "delete",
+    "toolName": "delete-named-location",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a named location. If in use by a Conditional Access policy, the location reference must be removed from the policy first."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/templates",
+    "method": "get",
+    "toolName": "list-conditional-access-templates",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists Conditional Access policy templates provided by Microsoft. Templates can be used as starting points for new policies. Returns id, name, description, scenarios, details."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies",
+    "method": "post",
+    "toolName": "create-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new device compliance policy. Body varies by platform. Example for Windows: {\"@odata.type\":\"#microsoft.graph.windows10CompliancePolicy\",\"displayName\":\"Win10 Compliance\",\"passwordRequired\":true,\"bitLockerEnabled\":true}."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "patch",
+    "toolName": "update-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an existing device compliance policy. Body can include any compliance settings for the platform type."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "delete",
+    "toolName": "delete-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a device compliance policy. Devices assigned to this policy will no longer be evaluated for compliance."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations",
+    "method": "post",
+    "toolName": "create-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new device configuration profile. Body varies by platform and profile type. Example: {\"@odata.type\":\"#microsoft.graph.windows10GeneralConfiguration\",\"displayName\":\"Win10 Config\",\"passwordBlockSimple\":true}."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "patch",
+    "toolName": "update-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an existing device configuration profile. Body can include any configuration settings for the profile type."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "delete",
+    "toolName": "delete-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a device configuration profile. Devices assigned to this profile will no longer receive these settings."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions",
+    "method": "post",
+    "toolName": "create-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "riskLevel": "medium",
+    "llmTip": "Grants a permission on a SharePoint site. Body: {\"roles\":[\"write\"],\"grantedToIdentities\":[{\"application\":{\"id\":\"app-id\",\"displayName\":\"App Name\"}}]}. Roles: read, write, owner."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions/{permission-id}",
+    "method": "patch",
+    "toolName": "update-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a permission on a SharePoint site. Body: {\"roles\":[\"read\"]} to change the role."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions/{permission-id}",
+    "method": "delete",
+    "toolName": "delete-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a permission from a SharePoint site. The app or user will lose access to the site."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists",
+    "method": "post",
+    "toolName": "create-site-list",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Creates a new SharePoint list. Body: {\"displayName\":\"My List\",\"list\":{\"template\":\"genericList\"}}. Templates: genericList, documentLibrary, events, tasks, contacts, etc."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}",
+    "method": "patch",
+    "toolName": "update-site-list",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Updates a SharePoint list. Body can include displayName and description."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}",
+    "method": "delete",
+    "toolName": "delete-site-list",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a SharePoint list and all its items."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items",
+    "method": "post",
+    "toolName": "create-site-list-item",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Creates a new item in a SharePoint list. Body: {\"fields\":{\"Title\":\"Item title\",\"ColumnName\":\"value\"}}."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items/{listItem-id}",
+    "method": "patch",
+    "toolName": "update-site-list-item",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Updates a SharePoint list item. Body: {\"fields\":{\"ColumnName\":\"new value\"}}."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items/{listItem-id}",
+    "method": "delete",
+    "toolName": "delete-site-list-item",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Deletes a SharePoint list item."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}",
+    "method": "patch",
+    "toolName": "update-exchange-mailbox",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an Exchange mailbox configuration (admin). Body can include settings like archiveEnabled."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}",
+    "method": "delete",
+    "toolName": "delete-exchange-mailbox",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes an Exchange mailbox (admin). IRREVERSIBLE \u2014 all mailbox data will be permanently removed. Always confirm with operator before executing."
+  },
+  {
+    "pathPattern": "/users",
+    "method": "post",
+    "toolName": "create-user",
+    "appPermissions": ["User.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Creates a new user in the directory. Body requires displayName, mailNickname, userPrincipalName, accountEnabled, and passwordProfile."
+  },
+  {
+    "pathPattern": "/users/{user-id}",
+    "method": "delete",
+    "toolName": "delete-user",
+    "appPermissions": ["User.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a user from the directory. The user is moved to deletedItems and can be restored within 30 days. Always confirm with operator before executing."
+  },
+  {
+    "pathPattern": "/users/{user-id}/assignLicense",
+    "method": "post",
+    "toolName": "assign-user-license",
+    "appPermissions": ["User.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Assigns or removes licenses for a user. Body requires addLicenses (array of {disabledPlans, skuId}) and removeLicenses (array of skuId GUIDs)."
+  },
+  {
+    "pathPattern": "/users/{user-id}/reprocessLicenseAssignment",
+    "method": "post",
+    "toolName": "reprocess-user-license",
+    "appPermissions": ["User.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Reprocesses all group-based license assignments for a user. Useful when license assignment is in an error state."
+  },
+  {
+    "pathPattern": "/users/{user-id}/changePassword",
+    "method": "post",
+    "toolName": "change-user-password",
+    "appPermissions": ["Directory.AccessAsUser.All"],
+    "riskLevel": "high",
+    "llmTip": "Changes the signed-in user's password. Body requires currentPassword and newPassword. This is a delegated-only operation."
+  },
+  {
+    "pathPattern": "/groups",
+    "method": "post",
+    "toolName": "create-group",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new group. Body requires displayName, mailEnabled, mailNickname, securityEnabled. Set groupTypes=['Unified'] for Microsoft 365 group."
+  },
+  {
+    "pathPattern": "/groups/{group-id}",
+    "method": "patch",
+    "toolName": "update-group",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates group properties (displayName, description, visibility, etc.)."
+  },
+  {
+    "pathPattern": "/groups/{group-id}",
+    "method": "delete",
+    "toolName": "delete-group",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a group. For Microsoft 365 groups, can be restored within 30 days. Security groups are permanently deleted. Always confirm with operator."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/members/$ref",
+    "method": "post",
+    "toolName": "add-group-member",
+    "appPermissions": ["GroupMember.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Adds a member to a group. Body requires @odata.id pointing to the directoryObject (e.g., https://graph.microsoft.com/v1.0/users/{id})."
+  },
+  {
+    "pathPattern": "/applications/{application-id}",
+    "method": "patch",
+    "toolName": "update-application",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Updates an application registration (displayName, identifierUris, web redirect URIs, requiredResourceAccess, etc.)."
+  },
+  {
+    "pathPattern": "/applications/{application-id}",
+    "method": "delete",
+    "toolName": "delete-application",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes an application registration. Can be restored from deletedItems within 30 days. Always confirm with operator."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}",
+    "method": "patch",
+    "toolName": "update-service-principal",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Updates a service principal (displayName, appRoleAssignmentRequired, notes, tags, etc.)."
+  },
+  {
+    "pathPattern": "/directoryRoles/{directoryRole-id}/members/$ref",
+    "method": "post",
+    "toolName": "add-directory-role-member",
+    "appPermissions": ["RoleManagement.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Adds a member to a directory role. Body requires @odata.id pointing to the user or service principal. CRITICAL: grants admin privileges."
+  },
+  {
+    "pathPattern": "/domains",
+    "method": "post",
+    "toolName": "create-domain",
+    "appPermissions": ["Domain.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds a new domain to the tenant. Body requires id (the domain name, e.g., 'contoso.com'). Domain must be verified after creation."
+  },
+  {
+    "pathPattern": "/domains/{domain-id}/verify",
+    "method": "post",
+    "toolName": "verify-domain",
+    "appPermissions": ["Domain.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Verifies domain ownership. DNS records (TXT or MX) must be configured before calling. Returns the verified domain object."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
+    "method": "post",
+    "toolName": "create-enrollment-configuration",
+    "appPermissions": ["DeviceManagementServiceConfig.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new device enrollment configuration (enrollment restrictions, ESP profile, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations/{deviceEnrollmentConfiguration-id}",
+    "method": "patch",
+    "toolName": "update-enrollment-configuration",
+    "appPermissions": ["DeviceManagementServiceConfig.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a device enrollment configuration (displayName, description, priority, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations/{deviceEnrollmentConfiguration-id}",
+    "method": "delete",
+    "toolName": "delete-enrollment-configuration",
+    "appPermissions": ["DeviceManagementServiceConfig.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a device enrollment configuration. Cannot delete default configurations."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities/{windowsAutopilotDeviceIdentity-id}",
+    "method": "patch",
+    "toolName": "update-autopilot-device",
+    "appPermissions": ["DeviceManagementServiceConfig.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates properties of an Autopilot device identity (groupTag, displayName, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities/{windowsAutopilotDeviceIdentity-id}",
+    "method": "delete",
+    "toolName": "delete-autopilot-device",
+    "appPermissions": ["DeviceManagementServiceConfig.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes an Autopilot device identity from Intune. The physical device is not affected."
+  },
+  {
+    "pathPattern": "/deviceManagement/importedWindowsAutopilotDeviceIdentities",
+    "method": "post",
+    "toolName": "import-autopilot-device",
+    "appPermissions": ["DeviceManagementServiceConfig.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Imports a new Autopilot device identity. Body requires serialNumber and hardwareIdentifier (base64-encoded hardware hash)."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}",
+    "method": "delete",
+    "toolName": "delete-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a managed device record from Intune. Does NOT wipe the physical device. Use wipe-managed-device for factory reset."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits",
+    "method": "post",
+    "toolName": "create-administrative-unit",
+    "appPermissions": ["AdministrativeUnit.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new administrative unit. Body requires displayName. Optional: description, visibility ('HiddenMembership' or null)."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}",
+    "method": "patch",
+    "toolName": "update-administrative-unit",
+    "appPermissions": ["AdministrativeUnit.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an administrative unit (displayName, description, visibility)."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}",
+    "method": "delete",
+    "toolName": "delete-administrative-unit",
+    "appPermissions": ["AdministrativeUnit.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes an administrative unit. All scoped role assignments are also removed."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}/members/$ref",
+    "method": "post",
+    "toolName": "add-administrative-unit-member",
+    "appPermissions": ["AdministrativeUnit.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Adds a member (user or group) to an administrative unit. Body requires @odata.id pointing to the directory object."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/authenticationStrength/policies",
+    "method": "post",
+    "toolName": "create-auth-strength-policy",
+    "appPermissions": ["Policy.ReadWrite.AuthenticationMethod"],
+    "riskLevel": "high",
+    "llmTip": "Creates a custom authentication strength policy. Body requires displayName and allowedCombinations (array of auth method combos like 'password,microsoftAuthenticatorPush')."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/authenticationStrength/policies/{authenticationStrengthPolicy-id}",
+    "method": "get",
+    "toolName": "get-auth-strength-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "riskLevel": "low",
+    "llmTip": "Gets a specific authentication strength policy by ID."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/authenticationStrength/policies/{authenticationStrengthPolicy-id}",
+    "method": "patch",
+    "toolName": "update-auth-strength-policy",
+    "appPermissions": ["Policy.ReadWrite.AuthenticationMethod"],
+    "riskLevel": "high",
+    "llmTip": "Updates a custom authentication strength policy (displayName, description, allowedCombinations). Built-in policies cannot be modified."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/authenticationStrength/policies/{authenticationStrengthPolicy-id}",
+    "method": "delete",
+    "toolName": "delete-auth-strength-policy",
+    "appPermissions": ["Policy.ReadWrite.AuthenticationMethod"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a custom authentication strength policy. Built-in policies cannot be deleted. Fails if policy is referenced by a Conditional Access policy."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulations",
+    "method": "post",
+    "toolName": "create-attack-simulation",
+    "appPermissions": ["AttackSimulation.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Creates a new attack simulation campaign. Body requires displayName, attackTechnique, status, and payload configuration."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulations/{simulation-id}",
+    "method": "patch",
+    "toolName": "update-attack-simulation",
+    "appPermissions": ["AttackSimulation.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an attack simulation (displayName, status, etc.). Can be used to launch or cancel a simulation."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulations/{simulation-id}",
+    "method": "delete",
+    "toolName": "delete-attack-simulation",
+    "appPermissions": ["AttackSimulation.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Deletes an attack simulation campaign."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/provisioningPolicies",
+    "method": "post",
+    "toolName": "create-cloud-pc-provisioning-policy",
+    "appPermissions": ["CloudPC.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new Cloud PC provisioning policy. Body requires displayName, imageId or imageDisplayName, imageType, and onPremisesConnectionId."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/provisioningPolicies/{cloudPcProvisioningPolicy-id}",
+    "method": "patch",
+    "toolName": "update-cloud-pc-provisioning-policy",
+    "appPermissions": ["CloudPC.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a Cloud PC provisioning policy (displayName, description, imageId, onPremisesConnectionId, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/virtualEndpoint/provisioningPolicies/{cloudPcProvisioningPolicy-id}",
+    "method": "delete",
+    "toolName": "delete-cloud-pc-provisioning-policy",
+    "appPermissions": ["CloudPC.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Cloud PC provisioning policy. Existing Cloud PCs provisioned with this policy are not affected."
   }
 ]
