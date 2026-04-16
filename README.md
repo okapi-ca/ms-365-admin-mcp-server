@@ -176,18 +176,18 @@ node dist/index.js --verify-login
 
 ### Users (10)
 
-| Tool                       | Method | Risk     |
-| -------------------------- | ------ | -------- |
-| `list-users`               | GET    |          |
-| `get-user`                 | GET    |          |
-| `list-user-memberships`    | GET    |          |
-| `list-user-auth-methods`   | GET    |          |
-| `list-user-devices`        | GET    |          |
-| `create-user`              | POST   | high     |
-| `update-user`              | PATCH  | medium   |
-| `delete-user`              | DELETE | critical |
-| `assign-user-license`      | POST   | medium   |
-| `reprocess-user-license`   | POST   | low      |
+| Tool                     | Method | Risk     |
+| ------------------------ | ------ | -------- |
+| `list-users`             | GET    |          |
+| `get-user`               | GET    |          |
+| `list-user-memberships`  | GET    |          |
+| `list-user-auth-methods` | GET    |          |
+| `list-user-devices`      | GET    |          |
+| `create-user`            | POST   | high     |
+| `update-user`            | PATCH  | medium   |
+| `delete-user`            | DELETE | critical |
+| `assign-user-license`    | POST   | medium   |
+| `reprocess-user-license` | POST   | low      |
 
 ### Devices (2)
 
@@ -312,21 +312,21 @@ node dist/index.js --verify-login
 
 ### Security & access policies (13)
 
-| Tool                             | Method | Risk   |
-| -------------------------------- | ------ | ------ |
-| `get-auth-methods-policy`        | GET    |        |
-| `list-auth-method-configs`       | GET    |        |
-| `get-auth-method-config`         | GET    |        |
-| `get-security-defaults`          | GET    |        |
-| `get-admin-consent-policy`       | GET    |        |
-| `list-auth-strength-policies`    | GET    |        |
-| `get-auth-strength-policy`       | GET    |        |
-| `create-auth-strength-policy`    | POST   | high   |
-| `update-auth-strength-policy`    | PATCH  | high   |
-| `delete-auth-strength-policy`    | DELETE | high   |
-| `get-cross-tenant-access-policy` | GET    |        |
-| `list-cross-tenant-partners`     | GET    |        |
-| `change-user-password`           | POST   | high   |
+| Tool                             | Method | Risk |
+| -------------------------------- | ------ | ---- |
+| `get-auth-methods-policy`        | GET    |      |
+| `list-auth-method-configs`       | GET    |      |
+| `get-auth-method-config`         | GET    |      |
+| `get-security-defaults`          | GET    |      |
+| `get-admin-consent-policy`       | GET    |      |
+| `list-auth-strength-policies`    | GET    |      |
+| `get-auth-strength-policy`       | GET    |      |
+| `create-auth-strength-policy`    | POST   | high |
+| `update-auth-strength-policy`    | PATCH  | high |
+| `delete-auth-strength-policy`    | DELETE | high |
+| `get-cross-tenant-access-policy` | GET    |      |
+| `list-cross-tenant-partners`     | GET    |      |
+| `change-user-password`           | POST   | high |
 
 ### Guest user invitations (2)
 
@@ -444,18 +444,18 @@ node dist/index.js --verify-login
 
 ### Enrollment & Autopilot (10)
 
-| Tool                               | Method | Risk   |
-| ---------------------------------- | ------ | ------ |
-| `list-enrollment-configurations`   | GET    |        |
-| `get-enrollment-configuration`     | GET    |        |
-| `list-autopilot-devices`           | GET    |        |
-| `get-autopilot-device`             | GET    |        |
-| `create-enrollment-configuration`  | POST   | medium |
-| `update-enrollment-configuration`  | PATCH  | medium |
-| `delete-enrollment-configuration`  | DELETE | high   |
-| `update-autopilot-device`          | PATCH  | medium |
-| `delete-autopilot-device`          | DELETE | high   |
-| `import-autopilot-device`          | POST   | medium |
+| Tool                              | Method | Risk   |
+| --------------------------------- | ------ | ------ |
+| `list-enrollment-configurations`  | GET    |        |
+| `get-enrollment-configuration`    | GET    |        |
+| `list-autopilot-devices`          | GET    |        |
+| `get-autopilot-device`            | GET    |        |
+| `create-enrollment-configuration` | POST   | medium |
+| `update-enrollment-configuration` | PATCH  | medium |
+| `delete-enrollment-configuration` | DELETE | high   |
+| `update-autopilot-device`         | PATCH  | medium |
+| `delete-autopilot-device`         | DELETE | high   |
+| `import-autopilot-device`         | POST   | medium |
 
 ### Detected apps (3)
 
