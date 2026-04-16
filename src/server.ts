@@ -70,6 +70,7 @@ class AdminGraphServer {
       const tokenValidatorOptions = {
         tenantId: this.secrets!.tenantId,
         allowedClientIds: this.options.allowedClients.split(',').map((id: string) => id.trim()),
+        expectedAudience: `api://${this.secrets!.clientId}`,
       };
 
       await startHttpServer({

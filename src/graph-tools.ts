@@ -75,7 +75,7 @@ async function executeGraphTool(
     let body: unknown = null;
 
     for (const [paramName, paramValue] of Object.entries(params)) {
-      if (['includeHeaders', 'excludeResponse'].includes(paramName)) {
+      if (paramName === 'excludeResponse') {
         continue;
       }
 
@@ -106,9 +106,19 @@ async function executeGraphTool(
         switch (paramDef.type) {
           case 'Path': {
             const shouldSkipEncoding = config?.skipEncoding?.includes(paramName) ?? false;
-            const encodedValue = shouldSkipEncoding
-              ? (paramValue as string)
-              : encodeURIComponent(paramValue as string).replace(/%3D/g, '=');
+            let encodedValue: string;
+            if (shouldSkipEncoding) {
+              // SEC-A: Validate skip-encoded params to prevent path traversal
+              const raw = paramValue as string;
+              if (/[\/\\?#&]|\.\./.test(raw)) {
+                throw new Error(
+                  `Invalid value for path parameter '${paramName}': contains disallowed characters`
+                );
+              }
+              encodedValue = raw;
+            } else {
+              encodedValue = encodeURIComponent(paramValue as string).replace(/%3D/g, '=');
+            }
 
             path = path
               .replace(`{${paramName}}`, encodedValue)
@@ -177,7 +187,6 @@ async function executeGraphTool(
       method: tool.method.toUpperCase(),
       headers,
       rawResponse: !!config?.acceptType || !!config?.returnDownloadUrl,
-      includeHeaders: !!params.includeHeaders,
       excludeResponse: !!params.excludeResponse,
     };
 
