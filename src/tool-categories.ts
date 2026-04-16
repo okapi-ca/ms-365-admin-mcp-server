@@ -30,7 +30,7 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   identity: {
     name: 'identity',
     pattern:
-      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role|invitation|identity-provider|b2x|api-connector|custom-auth/i,
+      /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|sp-password|sp-key|sp-token|sp-owner|oauth2|organization|named-location|device|administrative-unit|cross-tenant|pim|app-role|invitation|identity-provider|b2x|api-connector|custom-auth/i,
     description:
       'Identity and access management (Entra ID users, groups, roles, devices, PIM, guest users, external identities)',
   },
@@ -63,7 +63,7 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   response: {
     name: 'response',
     pattern:
-      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query|wipe-managed|retire-managed|remote-lock|locate-managed|bypass-activation/i,
+      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query|wipe-managed|retire-managed|remote-lock|locate-managed|bypass-activation|apply-hold|remove-hold/i,
     description:
       'Incident response operations (disable user, revoke sessions, confirm compromised/safe, dismiss risk, hunting queries)',
   },

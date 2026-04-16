@@ -3235,5 +3235,577 @@
     "appPermissions": ["CloudPC.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Deletes a Cloud PC provisioning policy. Existing Cloud PCs provisioned with this policy are not affected."
+  },
+
+  {
+    "pathPattern": "/applications",
+    "method": "post",
+    "toolName": "create-application",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Creates a new Entra ID application registration. Body requires displayName. Returns the application object including appId and id."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/addPassword",
+    "method": "post",
+    "toolName": "add-application-password",
+    "appPermissions": ["Application.ReadWrite.OwnedBy"],
+    "riskLevel": "high",
+    "llmTip": "Adds a new client secret (passwordCredential) to an application. Body: {\"passwordCredential\":{\"displayName\":\"...\",\"endDateTime\":\"...\"}}. Returns the secretText (only visible once)."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/removePassword",
+    "method": "post",
+    "toolName": "remove-application-password",
+    "appPermissions": ["Application.ReadWrite.OwnedBy"],
+    "riskLevel": "high",
+    "llmTip": "Removes a client secret by keyId from an application. Body: {\"keyId\":\"<guid>\"}."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/addKey",
+    "method": "post",
+    "toolName": "add-application-key",
+    "appPermissions": ["Application.ReadWrite.OwnedBy"],
+    "riskLevel": "high",
+    "llmTip": "Adds a key credential (certificate) to an application. Requires a signed JWT proof of possession. Body: {\"keyCredential\":{...}, \"passwordCredential\":null, \"proof\":\"<jwt>\"}."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/removeKey",
+    "method": "post",
+    "toolName": "remove-application-key",
+    "appPermissions": ["Application.ReadWrite.OwnedBy"],
+    "riskLevel": "high",
+    "llmTip": "Removes a key credential by keyId. Requires proof of possession JWT. Body: {\"keyId\":\"<guid>\",\"proof\":\"<jwt>\"}."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/owners/$ref",
+    "method": "post",
+    "toolName": "add-application-owner",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds an owner (user or service principal) to an application. Body: {\"@odata.id\":\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"}."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/owners/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-application-owner",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes an owner from an application. directoryObject-id is the owner's object id."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials",
+    "method": "post",
+    "toolName": "create-app-federated-credential",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Creates a federated identity credential (workload identity federation) on an application. Body requires name, issuer, subject, audiences. Enables external tokens (GitHub Actions, Kubernetes, etc.) to act as this app without secrets."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials/{federatedIdentityCredential-id}",
+    "method": "patch",
+    "toolName": "update-app-federated-credential",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Updates a federated identity credential. Can change issuer, subject, audiences, description."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/federatedIdentityCredentials/{federatedIdentityCredential-id}",
+    "method": "delete",
+    "toolName": "delete-app-federated-credential",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a federated identity credential, revoking external token trust."
+  },
+  {
+    "pathPattern": "/applications/{application-id}/setVerifiedPublisher",
+    "method": "post",
+    "toolName": "set-application-verified-publisher",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Sets the verified publisher MPN ID on an application. Body: {\"verifiedPublisherId\":\"<mpn-id>\"}. Requires a verified MPN account in Partner Center."
+  },
+
+  {
+    "pathPattern": "/servicePrincipals",
+    "method": "post",
+    "toolName": "create-service-principal",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Creates a service principal for an application in this tenant. Body requires appId. Typically used to instantiate a multi-tenant app in the current tenant."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}",
+    "method": "delete",
+    "toolName": "delete-service-principal",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a service principal. This removes the app's ability to sign in to this tenant. Confirm carefully."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/addPassword",
+    "method": "post",
+    "toolName": "add-sp-password",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds a client secret to a service principal. Body: {\"passwordCredential\":{\"displayName\":\"...\",\"endDateTime\":\"...\"}}. Returns secretText (visible only once)."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/removePassword",
+    "method": "post",
+    "toolName": "remove-sp-password",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a client secret from a service principal by keyId. Body: {\"keyId\":\"<guid>\"}."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/addKey",
+    "method": "post",
+    "toolName": "add-sp-key",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds a key credential to a service principal. Requires proof of possession JWT."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/removeKey",
+    "method": "post",
+    "toolName": "remove-sp-key",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a key credential from a service principal by keyId. Requires proof of possession JWT."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/addTokenSigningCertificate",
+    "method": "post",
+    "toolName": "add-sp-token-signing-certificate",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Creates a self-signed token signing certificate on a service principal (used for SAML SSO). Body: {\"displayName\":\"CN=<name>\",\"endDateTime\":\"...\"}."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/owners/$ref",
+    "method": "post",
+    "toolName": "add-sp-owner",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds an owner to a service principal. Body: {\"@odata.id\":\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"}."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/owners/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-sp-owner",
+    "appPermissions": ["Application.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes an owner from a service principal."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo",
+    "method": "post",
+    "toolName": "create-sp-app-role-assignment",
+    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Assigns an app role to a user, group, or service principal. Body: {\"principalId\":\"<user-or-group-id>\",\"resourceId\":\"<servicePrincipal-id>\",\"appRoleId\":\"<role-guid-or-00000000-0000-0000-0000-000000000000>\"}."
+  },
+
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests",
+    "method": "post",
+    "toolName": "create-pim-role-assignment-request",
+    "appPermissions": ["RoleAssignmentSchedule.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Activates/assigns a directory role via PIM. Body requires action (selfActivate, adminAssign, adminRemove, adminUpdate, adminExtend, adminRenew, selfDeactivate, selfExtend, selfRenew), principalId, roleDefinitionId, directoryScopeId ('/'), justification, and scheduleInfo.startDateTime/expiration. Use for just-in-time role activation or admin assignment."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests/{unifiedRoleAssignmentScheduleRequest-id}/cancel",
+    "method": "post",
+    "toolName": "cancel-pim-role-assignment-request",
+    "appPermissions": ["RoleAssignmentSchedule.ReadWrite.Directory"],
+    "riskLevel": "high",
+    "llmTip": "Cancels a pending PIM role assignment request."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleEligibilityScheduleRequests",
+    "method": "post",
+    "toolName": "create-pim-role-eligibility-request",
+    "appPermissions": ["RoleEligibilitySchedule.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Creates a PIM role eligibility request (makes a user eligible to activate a role later). Body: action (adminAssign, adminRemove, adminUpdate, adminExtend, adminRenew), principalId, roleDefinitionId, directoryScopeId ('/'), justification, scheduleInfo."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleEligibilityScheduleRequests/{unifiedRoleEligibilityScheduleRequest-id}/cancel",
+    "method": "post",
+    "toolName": "cancel-pim-role-eligibility-request",
+    "appPermissions": ["RoleEligibilitySchedule.ReadWrite.Directory"],
+    "riskLevel": "high",
+    "llmTip": "Cancels a pending PIM role eligibility request."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentScheduleRequests",
+    "method": "post",
+    "toolName": "create-pim-group-assignment-request",
+    "appPermissions": ["PrivilegedAccess.ReadWrite.AzureADGroup"],
+    "riskLevel": "high",
+    "llmTip": "Activates or assigns a user/group to a role-assignable group via PIM for Groups. Body: action, accessId ('member'|'owner'), principalId, groupId, justification, scheduleInfo."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/assignmentScheduleRequests/{privilegedAccessGroupAssignmentScheduleRequest-id}/cancel",
+    "method": "post",
+    "toolName": "cancel-pim-group-assignment-request",
+    "appPermissions": ["PrivilegedAccess.ReadWrite.AzureADGroup"],
+    "riskLevel": "medium",
+    "llmTip": "Cancels a pending PIM for Groups assignment request."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests",
+    "method": "post",
+    "toolName": "create-pim-group-eligibility-request",
+    "appPermissions": ["PrivilegedAccess.ReadWrite.AzureADGroup"],
+    "riskLevel": "high",
+    "llmTip": "Creates a PIM for Groups eligibility request. Body: action, accessId ('member'|'owner'), principalId, groupId, justification, scheduleInfo."
+  },
+  {
+    "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests/{privilegedAccessGroupEligibilityScheduleRequest-id}/cancel",
+    "method": "post",
+    "toolName": "cancel-pim-group-eligibility-request",
+    "appPermissions": ["PrivilegedAccess.ReadWrite.AzureADGroup"],
+    "riskLevel": "medium",
+    "llmTip": "Cancels a pending PIM for Groups eligibility request."
+  },
+  {
+    "pathPattern": "/policies/roleManagementPolicyAssignments",
+    "method": "post",
+    "toolName": "create-role-management-policy-assignment",
+    "appPermissions": ["RoleManagementPolicy.ReadWrite.Directory"],
+    "riskLevel": "high",
+    "llmTip": "Creates a role management policy assignment (binds a PIM policy to a role at a scope). Body: policyId, roleDefinitionId, scopeId, scopeType."
+  },
+  {
+    "pathPattern": "/policies/roleManagementPolicies/{unifiedRoleManagementPolicy-id}",
+    "method": "patch",
+    "toolName": "update-role-management-policy",
+    "appPermissions": ["RoleManagementPolicy.ReadWrite.Directory"],
+    "riskLevel": "high",
+    "llmTip": "Updates a PIM role management policy (activation duration, MFA/justification requirements, approval rules, etc.)."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages",
+    "method": "post",
+    "toolName": "create-access-package",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new access package in Entitlement Management. Body requires displayName, description, isHidden, catalog (relationship to an existing catalog)."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages/{accessPackage-id}",
+    "method": "patch",
+    "toolName": "update-access-package",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an access package (displayName, description, isHidden)."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/accessPackages/{accessPackage-id}",
+    "method": "delete",
+    "toolName": "delete-access-package",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes an access package. Cannot delete if there are active assignments."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/catalogs",
+    "method": "post",
+    "toolName": "create-access-package-catalog",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a catalog for access packages. Body requires displayName, description, state ('published'|'unpublished'), isExternallyVisible."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/catalogs/{accessPackageCatalog-id}",
+    "method": "patch",
+    "toolName": "update-access-package-catalog",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a catalog (displayName, description, state, isExternallyVisible)."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/catalogs/{accessPackageCatalog-id}",
+    "method": "delete",
+    "toolName": "delete-access-package-catalog",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a catalog. Cannot delete if it contains access packages."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentPolicies",
+    "method": "post",
+    "toolName": "create-access-package-assignment-policy",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates an assignment policy for an access package. Defines who can request, approval rules, access review settings, and expiration. Body requires accessPackage relationship, displayName, description, allowedTargetScope, requestorSettings, requestApprovalSettings."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentPolicies/{accessPackageAssignmentPolicy-id}",
+    "method": "put",
+    "toolName": "update-access-package-assignment-policy",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Replaces an assignment policy (full PUT semantics in v1.0 — provide the complete policy body)."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentPolicies/{accessPackageAssignmentPolicy-id}",
+    "method": "delete",
+    "toolName": "delete-access-package-assignment-policy",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes an assignment policy from an access package."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests",
+    "method": "post",
+    "toolName": "create-access-package-assignment-request",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates an access package assignment request (request access for a user). Body: requestType ('adminAdd'|'adminRemove'|'userAdd'|'userRemove'), accessPackageAssignment (target, assignmentPolicy, schedule), justification."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests/{accessPackageAssignmentRequest-id}/reprocess",
+    "method": "post",
+    "toolName": "reprocess-access-package-assignment-request",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Reprocesses a failed or stuck assignment request."
+  },
+  {
+    "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests/{accessPackageAssignmentRequest-id}/cancel",
+    "method": "post",
+    "toolName": "cancel-access-package-assignment-request",
+    "appPermissions": ["EntitlementManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Cancels a pending assignment request."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows",
+    "method": "post",
+    "toolName": "create-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a lifecycle workflow (joiner/mover/leaver automation). Body: category ('joiner'|'mover'|'leaver'), displayName, description, isEnabled, isSchedulingEnabled, executionConditions, tasks."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}",
+    "method": "patch",
+    "toolName": "update-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a lifecycle workflow (displayName, description, isEnabled, isSchedulingEnabled, executionConditions, tasks)."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}",
+    "method": "delete",
+    "toolName": "delete-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a lifecycle workflow (soft-delete; can be restored from deletedItems)."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}/microsoft.graph.identityGovernance.activate",
+    "method": "post",
+    "toolName": "activate-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "On-demand activation of a workflow against a set of subjects. Body: subjects (array of user references: [{\"id\":\"<user-id>\"}])."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/deletedItems/workflows/{workflow-id}/microsoft.graph.identityGovernance.restore",
+    "method": "post",
+    "toolName": "restore-lifecycle-workflow",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Restores a soft-deleted lifecycle workflow."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/customTaskExtensions",
+    "method": "post",
+    "toolName": "create-lifecycle-custom-task-extension",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a custom task extension (Logic Apps callout) for lifecycle workflows. Body: displayName, description, endpointConfiguration, authenticationConfiguration, callbackConfiguration."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/customTaskExtensions/{customTaskExtension-id}",
+    "method": "patch",
+    "toolName": "update-lifecycle-custom-task-extension",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a custom task extension."
+  },
+  {
+    "pathPattern": "/identityGovernance/lifecycleWorkflows/customTaskExtensions/{customTaskExtension-id}",
+    "method": "delete",
+    "toolName": "delete-lifecycle-custom-task-extension",
+    "appPermissions": ["LifecycleWorkflows.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a custom task extension. Will fail if any workflow still references it."
+  },
+
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions",
+    "method": "post",
+    "toolName": "create-access-review-definition",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new access review schedule definition. Body: displayName, scope (queryType/query), instanceEnumerationScope, reviewers, settings (mailNotificationsEnabled, recurrence, decisionHistoriesForDecisionsEnabled, etc.)."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}",
+    "method": "put",
+    "toolName": "update-access-review-definition",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Replaces an access review schedule definition (v1.0 requires full PUT — provide the complete definition body)."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}",
+    "method": "delete",
+    "toolName": "delete-access-review-definition",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes an access review schedule definition and all its instances."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/stop",
+    "method": "post",
+    "toolName": "stop-access-review-instance",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Stops an in-progress access review instance. No body required. Pending decisions keep their default outcome."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/sendReminder",
+    "method": "post",
+    "toolName": "send-reminder-access-review",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Sends a reminder email to reviewers of an access review instance. No body required."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/resetDecisions",
+    "method": "post",
+    "toolName": "reset-access-review-decisions",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Resets all decisions in an access review instance back to notReviewed. No body required."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/applyDecisions",
+    "method": "post",
+    "toolName": "apply-access-review-decisions",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Applies review decisions (revokes access for denied users) ahead of the normal completion. No body required."
+  },
+  {
+    "pathPattern": "/identityGovernance/accessReviews/definitions/{accessReviewScheduleDefinition-id}/instances/{accessReviewInstance-id}/acceptRecommendations",
+    "method": "post",
+    "toolName": "accept-access-review-recommendations",
+    "appPermissions": ["AccessReview.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Accepts all system-generated recommendations (approve/deny) for decisions not yet made by reviewers. No body required."
+  },
+
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}",
+    "method": "get",
+    "toolName": "get-ediscovery-case",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Gets a specific eDiscovery (Premium) case by id."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases",
+    "method": "post",
+    "toolName": "create-ediscovery-case",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new eDiscovery (Premium) case. Body: displayName, description, externalId."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}",
+    "method": "patch",
+    "toolName": "update-ediscovery-case",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an eDiscovery case (displayName, description, externalId)."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}",
+    "method": "delete",
+    "toolName": "delete-ediscovery-case",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes an eDiscovery case permanently along with all custodians, searches, and review sets."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/microsoft.graph.security.close",
+    "method": "post",
+    "toolName": "close-ediscovery-case",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Closes an eDiscovery case. All holds are released. No body required."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/microsoft.graph.security.reopen",
+    "method": "post",
+    "toolName": "reopen-ediscovery-case",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Reopens a previously closed eDiscovery case. No body required."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians",
+    "method": "get",
+    "toolName": "list-ediscovery-custodians",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists custodians in an eDiscovery case. Each custodian preserves data for a specific user's mailbox, OneDrive, and Teams."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians",
+    "method": "post",
+    "toolName": "create-ediscovery-custodian",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Adds a custodian to a case. Body: email, applyHoldToSources (boolean)."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}/microsoft.graph.security.applyHold",
+    "method": "post",
+    "toolName": "apply-hold-ediscovery-custodian",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Applies legal hold to a custodian's data sources (mailbox, OneDrive, Teams). No body required. Hold prevents deletion until released."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}/microsoft.graph.security.removeHold",
+    "method": "post",
+    "toolName": "remove-hold-ediscovery-custodian",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes legal hold from a custodian's data sources. No body required. Content may become subject to normal retention/deletion policies."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches",
+    "method": "get",
+    "toolName": "list-ediscovery-searches",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists searches defined in an eDiscovery case."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches",
+    "method": "post",
+    "toolName": "create-ediscovery-search",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a collection search in a case. Body: displayName, description, contentQuery (KQL), dataSourceScopes ('none'|'allTenantMailboxes'|'allTenantSites'|'allCaseCustodians'|'allCaseNoncustodialDataSources')."
   }
 ]

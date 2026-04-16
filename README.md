@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **447 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **515 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -125,7 +125,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (447)
+## Available tools (515)
 
 ### Security (11)
 
@@ -904,6 +904,112 @@ node dist/index.js --verify-login
 | `list-federation-configurations`  | GET    |      |
 | `list-on-premises-sync`           | GET    |      |
 
+### Application credentials & owners CRUD (11) -- requires `--allow-writes`
+
+| Tool                                 | Method | Risk   |
+| ------------------------------------ | ------ | ------ |
+| `create-application`                 | POST   | high   |
+| `add-application-password`           | POST   | high   |
+| `remove-application-password`        | POST   | high   |
+| `add-application-key`                | POST   | high   |
+| `remove-application-key`             | POST   | high   |
+| `add-application-owner`              | POST   | high   |
+| `remove-application-owner`           | DELETE | high   |
+| `create-app-federated-credential`    | POST   | high   |
+| `update-app-federated-credential`    | PATCH  | high   |
+| `delete-app-federated-credential`    | DELETE | high   |
+| `set-application-verified-publisher` | POST   | medium |
+
+### Service Principals CRUD & credentials (10) -- requires `--allow-writes`
+
+| Tool                               | Method | Risk     |
+| ---------------------------------- | ------ | -------- |
+| `create-service-principal`         | POST   | high     |
+| `delete-service-principal`         | DELETE | critical |
+| `add-sp-password`                  | POST   | high     |
+| `remove-sp-password`               | POST   | high     |
+| `add-sp-key`                       | POST   | high     |
+| `remove-sp-key`                    | POST   | high     |
+| `add-sp-token-signing-certificate` | POST   | high     |
+| `add-sp-owner`                     | POST   | high     |
+| `remove-sp-owner`                  | DELETE | high     |
+| `create-sp-app-role-assignment`    | POST   | high     |
+
+### PIM activation & requests (10) -- requires `--allow-writes`
+
+| Tool                                       | Method | Risk     |
+| ------------------------------------------ | ------ | -------- |
+| `create-pim-role-assignment-request`       | POST   | critical |
+| `cancel-pim-role-assignment-request`       | POST   | high     |
+| `create-pim-role-eligibility-request`      | POST   | critical |
+| `cancel-pim-role-eligibility-request`      | POST   | high     |
+| `create-pim-group-assignment-request`      | POST   | high     |
+| `cancel-pim-group-assignment-request`      | POST   | medium   |
+| `create-pim-group-eligibility-request`     | POST   | high     |
+| `cancel-pim-group-eligibility-request`     | POST   | medium   |
+| `create-role-management-policy-assignment` | POST   | high     |
+| `update-role-management-policy`            | PATCH  | high     |
+
+### Entitlement Management CRUD (12) -- requires `--allow-writes`
+
+| Tool                                          | Method | Risk   |
+| --------------------------------------------- | ------ | ------ |
+| `create-access-package`                       | POST   | medium |
+| `update-access-package`                       | PATCH  | medium |
+| `delete-access-package`                       | DELETE | high   |
+| `create-access-package-catalog`               | POST   | medium |
+| `update-access-package-catalog`               | PATCH  | medium |
+| `delete-access-package-catalog`               | DELETE | high   |
+| `create-access-package-assignment-policy`     | POST   | medium |
+| `update-access-package-assignment-policy`     | PUT    | medium |
+| `delete-access-package-assignment-policy`     | DELETE | high   |
+| `create-access-package-assignment-request`    | POST   | medium |
+| `reprocess-access-package-assignment-request` | POST   | low    |
+| `cancel-access-package-assignment-request`    | POST   | medium |
+
+### Lifecycle Workflows CRUD & execution (8) -- requires `--allow-writes`
+
+| Tool                                     | Method | Risk   |
+| ---------------------------------------- | ------ | ------ |
+| `create-lifecycle-workflow`              | POST   | medium |
+| `update-lifecycle-workflow`              | PATCH  | medium |
+| `delete-lifecycle-workflow`              | DELETE | high   |
+| `activate-lifecycle-workflow`            | POST   | high   |
+| `restore-lifecycle-workflow`             | POST   | medium |
+| `create-lifecycle-custom-task-extension` | POST   | medium |
+| `update-lifecycle-custom-task-extension` | PATCH  | medium |
+| `delete-lifecycle-custom-task-extension` | DELETE | high   |
+
+### Access Reviews CRUD & actions (8) -- requires `--allow-writes`
+
+| Tool                                   | Method | Risk   |
+| -------------------------------------- | ------ | ------ |
+| `create-access-review-definition`      | POST   | medium |
+| `update-access-review-definition`      | PUT    | medium |
+| `delete-access-review-definition`      | DELETE | high   |
+| `stop-access-review-instance`          | POST   | high   |
+| `send-reminder-access-review`          | POST   | low    |
+| `reset-access-review-decisions`        | POST   | high   |
+| `apply-access-review-decisions`        | POST   | high   |
+| `accept-access-review-recommendations` | POST   | medium |
+
+### eDiscovery v2 (Purview) (12) -- writes require `--allow-writes`
+
+| Tool                               | Method | Risk     |
+| ---------------------------------- | ------ | -------- |
+| `get-ediscovery-case`              | GET    |          |
+| `create-ediscovery-case`           | POST   | medium   |
+| `update-ediscovery-case`           | PATCH  | medium   |
+| `delete-ediscovery-case`           | DELETE | critical |
+| `close-ediscovery-case`            | POST   | medium   |
+| `reopen-ediscovery-case`           | POST   | medium   |
+| `list-ediscovery-custodians`       | GET    |          |
+| `create-ediscovery-custodian`      | POST   | medium   |
+| `apply-hold-ediscovery-custodian`  | POST   | high     |
+| `remove-hold-ediscovery-custodian` | POST   | high     |
+| `list-ediscovery-searches`         | GET    |          |
+| `create-ediscovery-search`         | POST   | medium   |
+
 ## Azure AD permissions
 
 ### Read-only (default)
@@ -987,8 +1093,11 @@ UserAuthenticationMethod.Read.All
 ### Write (incident response, device actions, CA policies, Teams, SharePoint, identity management)
 
 ```
+AccessReview.ReadWrite.All
 AdministrativeUnit.ReadWrite.All
 Application.ReadWrite.All
+Application.ReadWrite.OwnedBy
+AppRoleAssignment.ReadWrite.All
 AttackSimulation.ReadWrite.All
 Channel.Create
 Channel.Delete.All
@@ -1000,13 +1109,20 @@ DeviceManagementManagedDevices.ReadWrite.All
 DeviceManagementServiceConfig.ReadWrite.All
 Directory.AccessAsUser.All
 Domain.ReadWrite.All
+eDiscovery.ReadWrite.All
+EntitlementManagement.ReadWrite.All
 Group.ReadWrite.All
 GroupMember.ReadWrite.All
 IdentityRiskyServicePrincipal.ReadWrite.All
 IdentityRiskyUser.ReadWrite.All
+LifecycleWorkflows.ReadWrite.All
 Policy.ReadWrite.AuthenticationMethod
 Policy.ReadWrite.ConditionalAccess
+PrivilegedAccess.ReadWrite.AzureADGroup
+RoleAssignmentSchedule.ReadWrite.Directory
+RoleEligibilitySchedule.ReadWrite.Directory
 RoleManagement.ReadWrite.Directory
+RoleManagementPolicy.ReadWrite.Directory
 SecurityAlert.ReadWrite.All
 SecurityIncident.ReadWrite.All
 Sites.ReadWrite.All
