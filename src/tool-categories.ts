@@ -31,6 +31,12 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
       /user|group|role|conditional|directory|domain|auth-method|credential|application|service-principal|oauth2|organization|named-location/i,
     description: 'Identity and access management (Entra ID users, groups, roles, policies)',
   },
+  compliance: {
+    name: 'compliance',
+    pattern:
+      /secure-score|subscribed-sku|license|risky-user|risky-service|security-defaults|auth-method-config|admin-consent/i,
+    description: 'Compliance, licenses, Secure Score, Identity Protection, and security policies',
+  },
   response: {
     name: 'response',
     pattern:

@@ -302,5 +302,120 @@
     "appPermissions": ["Device.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Updates device properties. Use {\"accountEnabled\": false} to disable a device in Entra ID. This prevents the device from authenticating. Useful for lost/stolen devices or compromised endpoints."
+  },
+
+  {
+    "pathPattern": "/subscribedSkus",
+    "method": "get",
+    "toolName": "list-subscribed-skus",
+    "appPermissions": ["Organization.Read.All"],
+    "llmTip": "Lists all commercial subscriptions (licenses) in the tenant. Each SKU has skuPartNumber (e.g. ENTERPRISEPACK for E3), prepaidUnits, consumedUnits. Use to audit license allocation and find unused licenses."
+  },
+  {
+    "pathPattern": "/subscribedSkus/{subscribedSku-id}",
+    "method": "get",
+    "toolName": "get-subscribed-sku",
+    "appPermissions": ["Organization.Read.All"],
+    "llmTip": "Gets details for a specific license SKU by ID. Returns prepaidUnits (enabled, suspended, warning), consumedUnits, and servicePlans with their provisioning status."
+  },
+  {
+    "pathPattern": "/security/secureScores",
+    "method": "get",
+    "toolName": "list-secure-scores",
+    "appPermissions": ["SecurityEvents.Read.All"],
+    "llmTip": "Lists Secure Score snapshots over time. Each entry has currentScore, maxScore, and controlScores array. Use $top=1&$orderby=createdDateTime desc to get the latest score. Useful for tracking security posture improvement."
+  },
+  {
+    "pathPattern": "/security/secureScores/{secureScore-id}",
+    "method": "get",
+    "toolName": "get-secure-score",
+    "appPermissions": ["SecurityEvents.Read.All"],
+    "llmTip": "Gets a specific Secure Score snapshot. Returns currentScore, maxScore, averageComparativeScores (comparison with similar tenants), and controlScores with detailed per-control scoring."
+  },
+  {
+    "pathPattern": "/security/secureScoreControlProfiles",
+    "method": "get",
+    "toolName": "list-secure-score-controls",
+    "appPermissions": ["SecurityEvents.Read.All"],
+    "llmTip": "Lists all Secure Score control profiles. Each has title, maxScore, implementationStatus, and actionUrl. Useful to prioritize security improvements."
+  },
+  {
+    "pathPattern": "/security/secureScoreControlProfiles/{secureScoreControlProfile-id}",
+    "method": "get",
+    "toolName": "get-secure-score-control",
+    "appPermissions": ["SecurityEvents.Read.All"],
+    "llmTip": "Gets a specific Secure Score control profile. Returns remediation impact, implementation cost, threats addressed, and compliance information."
+  },
+
+  {
+    "pathPattern": "/identityProtection/riskyUsers",
+    "method": "get",
+    "toolName": "list-risky-users",
+    "appPermissions": ["IdentityRiskyUser.Read.All"],
+    "llmTip": "Lists users flagged as risky by Identity Protection. Use $filter=riskLevel eq 'high' to find high-risk users. Each entry has riskLevel (low, medium, high), riskState (atRisk, confirmedCompromised, remediated, dismissed), riskDetail, and riskLastUpdatedDateTime."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyUsers/{riskyUser-id}",
+    "method": "get",
+    "toolName": "get-risky-user",
+    "appPermissions": ["IdentityRiskyUser.Read.All"],
+    "llmTip": "Gets details for a specific risky user. Returns full risk information including riskLevel, riskState, riskDetail, and history."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyUsers/{riskyUser-id}/history",
+    "method": "get",
+    "toolName": "list-risky-user-history",
+    "appPermissions": ["IdentityRiskyUser.Read.All"],
+    "llmTip": "Lists the risk history for a specific user. Shows how risk level changed over time and what triggered each risk event."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyServicePrincipals",
+    "method": "get",
+    "toolName": "list-risky-service-principals",
+    "appPermissions": ["IdentityRiskyServicePrincipal.Read.All"],
+    "llmTip": "Lists service principals flagged as risky. Useful for detecting compromised applications and service accounts."
+  },
+  {
+    "pathPattern": "/identityProtection/riskyServicePrincipals/{riskyServicePrincipal-id}",
+    "method": "get",
+    "toolName": "get-risky-service-principal",
+    "appPermissions": ["IdentityRiskyServicePrincipal.Read.All"],
+    "llmTip": "Gets details for a specific risky service principal. Returns riskLevel, riskState, and riskDetail."
+  },
+
+  {
+    "pathPattern": "/policies/authenticationMethodsPolicy",
+    "method": "get",
+    "toolName": "get-auth-methods-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the tenant authentication methods policy. Shows which authentication methods are enabled (FIDO2, Microsoft Authenticator, SMS, etc.) and their configuration. Critical for auditing MFA enforcement."
+  },
+  {
+    "pathPattern": "/policies/authenticationMethodsPolicy/authenticationMethodConfigurations",
+    "method": "get",
+    "toolName": "list-auth-method-configs",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists all authentication method configurations. Each has id (method type), state (enabled/disabled), and method-specific settings. Useful to verify FIDO2, Authenticator, and passwordless policies."
+  },
+  {
+    "pathPattern": "/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/{authenticationMethodConfiguration-id}",
+    "method": "get",
+    "toolName": "get-auth-method-config",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets a specific authentication method configuration. IDs include: microsoftAuthenticator, fido2, email, sms, temporaryAccessPass, x509Certificate, etc."
+  },
+  {
+    "pathPattern": "/policies/identitySecurityDefaultsEnforcementPolicy",
+    "method": "get",
+    "toolName": "get-security-defaults",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the security defaults policy. Returns isEnabled (true/false). Security defaults enforce MFA for all users, block legacy auth, and require MFA for admin roles. Should be disabled only if Conditional Access is used instead."
+  },
+  {
+    "pathPattern": "/policies/adminConsentRequestPolicy",
+    "method": "get",
+    "toolName": "get-admin-consent-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the admin consent request policy. Shows isEnabled, notifyReviewers, remindersEnabled, and reviewers list. Controls whether users can request admin consent for apps they want to use."
   }
 ]
