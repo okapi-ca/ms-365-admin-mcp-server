@@ -7,8 +7,9 @@ export interface ToolCategory {
 export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   security: {
     name: 'security',
-    pattern: /security|alert|incident|attack-simulation/i,
-    description: 'Security alerts, incidents, and attack simulations (Microsoft 365 Defender)',
+    pattern: /security|alert|incident|attack-simulation|threat-intel/i,
+    description:
+      'Security alerts, incidents, attack simulations, and threat intelligence (Microsoft 365 Defender)',
   },
   audit: {
     name: 'audit',
@@ -39,6 +40,11 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
       /secure-score|subscribed-sku|license|risky-user|risky-service|risk-detection|security-defaults|auth-method-config|auth-strength|admin-consent/i,
     description:
       'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
+  },
+  exchange: {
+    name: 'exchange',
+    pattern: /message-trace|exchange-mailbox|mailbox-usage/i,
+    description: 'Exchange administration (message traces, mailboxes)',
   },
   intune: {
     name: 'intune',

@@ -1009,5 +1009,153 @@
     "toolName": "list-ios-update-statuses",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "llmTip": "Lists iOS update installation statuses across managed devices. Each has deviceDisplayName, userName, osVersion, installStatus (downloading, installing, idle, available, etc.), lastReportedDateTime, deviceModel, deviceId."
+  },
+
+  {
+    "pathPattern": "/admin/exchange/tracing/messageTraces",
+    "method": "get",
+    "toolName": "list-message-traces",
+    "appPermissions": ["MailboxSettings.Read"],
+    "llmTip": "Lists Exchange message traces for auditing mail flow. Each trace has senderAddress, recipientAddress, subject, messageId, receivedDateTime, status (Delivered, Failed, Quarantined, FilteredAsSpam, Expanded, etc.), and size. Use $filter=receivedDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=senderAddress eq 'user@domain.com' to filter by sender."
+  },
+  {
+    "pathPattern": "/admin/exchange/tracing/messageTraces/{exchangeMessageTrace-id}",
+    "method": "get",
+    "toolName": "get-message-trace",
+    "appPermissions": ["MailboxSettings.Read"],
+    "llmTip": "Gets a specific message trace by ID. Returns full details including senderAddress, recipientAddress, subject, messageId, receivedDateTime, status, size, and additional routing information."
+  },
+
+  {
+    "pathPattern": "/admin/exchange/mailboxes",
+    "method": "get",
+    "toolName": "list-exchange-mailboxes",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "llmTip": "Lists Exchange mailboxes in the tenant via admin API. Each mailbox has displayName, primarySmtpAddress, recipientType (UserMailbox, SharedMailbox, RoomMailbox, EquipmentMailbox), and identity. Useful for auditing mailbox types and finding shared/resource mailboxes."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}",
+    "method": "get",
+    "toolName": "get-exchange-mailbox",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "llmTip": "Gets a specific Exchange mailbox. Returns full details including displayName, primarySmtpAddress, recipientType, and mailbox configuration."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/hosts",
+    "method": "get",
+    "toolName": "list-threat-intel-hosts",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists hosts tracked by Microsoft threat intelligence. Use $filter=id eq 'example.com' to look up a specific host. Returns host details including firstSeenDateTime, lastSeenDateTime, and registrar info."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-host",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets threat intelligence for a specific host (domain or IP). The host-id is the hostname or IP address. Returns firstSeenDateTime, lastSeenDateTime, registrar, registrant info, and reputation data."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}/whois",
+    "method": "get",
+    "toolName": "get-threat-intel-host-whois",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets WHOIS information for a host. Returns registrar, registrant (name, organization, email, phone), nameservers, registrationDateTime, expirationDateTime. Useful for investigating suspicious domains."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}/hostPairs",
+    "method": "get",
+    "toolName": "list-threat-intel-host-pairs",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists host pairs for a given host — relationships between parent and child hosts (redirects, iframes, scripts, etc.). Each has parentHost, childHost, linkKind (redirect, script, etc.), firstSeenDateTime, lastSeenDateTime. Useful for mapping infrastructure."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/articles",
+    "method": "get",
+    "toolName": "list-threat-intel-articles",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists Microsoft threat intelligence articles. Each has title, body, createdDateTime, lastUpdatedDateTime, tags, and indicators. These are curated reports about threat actors, campaigns, and vulnerabilities."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/articles/{article-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-article",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific threat intelligence article by ID. Returns title, body (HTML), summary, tags, indicators, and linked intelligence profiles."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/articles/{article-id}/indicators",
+    "method": "get",
+    "toolName": "list-threat-intel-article-indicators",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists indicators of compromise (IOCs) associated with a threat intelligence article. Each indicator has artifact (hostname, IP, URL, file hash), source, and pattern details."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles",
+    "method": "get",
+    "toolName": "list-threat-intel-profiles",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists threat actor intelligence profiles. Each has title, kind (actor, tool, vulnerability), aliases, countriesOrRegionsOfOrigin, targets (industries, countries), firstActiveDateTime, and description. Profiles represent tracked threat actors and their TTPs."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles/{intelligenceProfile-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-profile",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific threat actor intelligence profile. Returns full details including title, kind, description, aliases, countriesOrRegionsOfOrigin, targets, tradecraft summary, and linked indicators."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles/{intelligenceProfile-id}/indicators",
+    "method": "get",
+    "toolName": "list-threat-intel-profile-indicators",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists indicators of compromise associated with a threat actor profile. Each indicator has artifact (hostname, IP, URL, file hash), source, and firstSeenDateTime."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/vulnerabilities",
+    "method": "get",
+    "toolName": "list-threat-intel-vulnerabilities",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists known vulnerabilities tracked by Microsoft threat intelligence. Each has id (CVE ID), description, severity, publishedDateTime, lastModifiedDateTime, hasChatter, exploitsAvailable, and cvss scores. Use to check if known CVEs are being actively exploited."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/vulnerabilities/{vulnerability-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-vulnerability",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific vulnerability by CVE ID (e.g. CVE-2024-1234). Returns description, severity, cvss scores, publishedDateTime, exploitsAvailable, activeExploitsObserved, hasChatter, priorityScore, and remediation info."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/whoisRecords",
+    "method": "get",
+    "toolName": "list-threat-intel-whois-records",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists WHOIS records from threat intelligence. Use to search WHOIS data across domains. Each record has host, registrar, registrant, nameservers, and dates."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/whoisRecords/{whoisRecord-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-whois-record",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific WHOIS record by ID. Returns full registrant and registrar details, nameservers, registration and expiration dates."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/hostComponents",
+    "method": "get",
+    "toolName": "list-threat-intel-host-components",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists web components detected on hosts (web servers, frameworks, CMS, etc.). Each has host, name, version, category, firstSeenDateTime, lastSeenDateTime. Use to identify vulnerable software versions running on infrastructure."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hostSslCertificates",
+    "method": "get",
+    "toolName": "list-threat-intel-ssl-certs",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists SSL certificates observed on hosts. Each has host, sslCertificate (issuer, subject, serialNumber, sha256, validityPeriod), firstSeenDateTime, lastSeenDateTime. Useful for tracking certificate changes and detecting suspicious certificates."
   }
 ]

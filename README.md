@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **136 tools** covering security, audit, identity, Intune, governance, compliance, reports, and incident response
+- **156 tools** covering security, audit, identity, Exchange, Intune, governance, compliance, threat intelligence, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -100,11 +100,12 @@ node dist/index.js --preset security,audit,identity
 
 | Preset       | Description                                                               |
 | ------------ | ------------------------------------------------------------------------- |
-| `security`   | Security alerts, incidents, and attack simulations                        |
+| `security`   | Security alerts, incidents, attack simulations, and threat intelligence   |
 | `audit`      | Directory audits, sign-ins, provisioning logs, deleted items              |
 | `health`     | Service health and Message Center                                         |
 | `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)    |
 | `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains     |
+| `exchange`   | Exchange administration (message traces, mailboxes)                       |
 | `intune`     | Managed devices, compliance, configurations, Autopilot, apps, RBAC        |
 | `governance` | Access reviews, entitlement management, lifecycle workflows, terms of use |
 | `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies    |
@@ -117,7 +118,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (136)
+## Available tools (156)
 
 ### Security (8)
 
@@ -273,6 +274,56 @@ node dist/index.js --verify-login
 | `list-auth-strength-policies`    | GET    |
 | `get-cross-tenant-access-policy` | GET    |
 | `list-cross-tenant-partners`     | GET    |
+
+### Exchange message traces (2)
+
+| Tool                  | Method |
+| --------------------- | ------ |
+| `list-message-traces` | GET    |
+| `get-message-trace`   | GET    |
+
+### Exchange mailboxes (2)
+
+| Tool                      | Method |
+| ------------------------- | ------ |
+| `list-exchange-mailboxes` | GET    |
+| `get-exchange-mailbox`    | GET    |
+
+### Threat intelligence - hosts (4)
+
+| Tool                           | Method |
+| ------------------------------ | ------ |
+| `list-threat-intel-hosts`      | GET    |
+| `get-threat-intel-host`        | GET    |
+| `get-threat-intel-host-whois`  | GET    |
+| `list-threat-intel-host-pairs` | GET    |
+
+### Threat intelligence - articles & profiles (6)
+
+| Tool                                   | Method |
+| -------------------------------------- | ------ |
+| `list-threat-intel-articles`           | GET    |
+| `get-threat-intel-article`             | GET    |
+| `list-threat-intel-article-indicators` | GET    |
+| `list-threat-intel-profiles`           | GET    |
+| `get-threat-intel-profile`             | GET    |
+| `list-threat-intel-profile-indicators` | GET    |
+
+### Threat intelligence - vulnerabilities & WHOIS (4)
+
+| Tool                                | Method |
+| ----------------------------------- | ------ |
+| `list-threat-intel-vulnerabilities` | GET    |
+| `get-threat-intel-vulnerability`    | GET    |
+| `list-threat-intel-whois-records`   | GET    |
+| `get-threat-intel-whois-record`     | GET    |
+
+### Threat intelligence - infrastructure (2)
+
+| Tool                                | Method |
+| ----------------------------------- | ------ |
+| `list-threat-intel-host-components` | GET    |
+| `list-threat-intel-ssl-certs`       | GET    |
 
 ### Managed devices (5)
 
@@ -432,6 +483,7 @@ DeviceManagementServiceConfig.Read.All
 Directory.Read.All
 Domain.Read.All
 EntitlementManagement.Read.All
+Exchange.ManageAsApp
 Group.Read.All
 GroupMember.Read.All
 IdentityRiskEvent.Read.All
@@ -440,6 +492,7 @@ IdentityRiskyUser.Read.All
 LifecycleWorkflows.Read.All
 Organization.Read.All
 Policy.Read.All
+MailboxSettings.Read
 PrivilegedAccess.Read.AzureADGroup
 Reports.Read.All
 RoleAssignmentSchedule.Read.Directory
@@ -448,6 +501,7 @@ RoleManagement.Read.Directory
 SecurityAlert.Read.All
 SecurityEvents.Read.All
 SecurityIncident.Read.All
+ThreatIntelligence.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
 User.Read.All
