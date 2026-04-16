@@ -514,7 +514,7 @@ node dist/index.js --verify-login
 | `add-security-alert-comment`    | POST   | low      |
 | `update-device`                 | PATCH  | high     |
 | `confirm-compromised-users`     | POST   | high     |
-| `dismiss-risky-users`           | POST   | medium   |
+| `dismiss-risky-users`           | POST   | high     |
 | `delete-user-phone-auth-method` | DELETE | high     |
 
 ### eDiscovery (1)
@@ -585,7 +585,7 @@ AccessReview.Read.All
 AdministrativeUnit.Read.All
 Agreement.Read.All
 Application.Read.All
-AppRoleAssignment.ReadWrite.All
+AppRoleAssignment.Read.All
 AttackSimulation.Read.All
 AuditLog.Read.All
 ConsentRequest.Read.All
