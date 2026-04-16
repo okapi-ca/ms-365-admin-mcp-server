@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **57 tools** covering security, audit, identity, compliance, reports, and incident response
+- **84 tools** covering security, audit, identity, compliance, Intune, threat intel, SharePoint, Teams, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -98,16 +98,19 @@ node dist/index.js --preset identity
 node dist/index.js --preset security,audit,identity
 ```
 
-| Preset       | Description                                                    |
-| ------------ | -------------------------------------------------------------- |
-| `security`   | Security alerts and incidents                                  |
-| `audit`      | Directory audits, sign-ins, provisioning logs                  |
-| `health`     | Service health and Message Center                              |
-| `reports`    | Usage reports (Teams, Email, SharePoint, Active Users)         |
-| `identity`   | Users, groups, roles, conditional access, apps, domains        |
-| `compliance` | Licenses, Secure Score, Identity Protection, security policies |
-| `response`   | Incident response write operations                             |
-| `all`        | All available tools                                            |
+| Preset          | Description                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| `security`      | Security alerts and incidents                                        |
+| `audit`         | Directory audits, sign-ins, provisioning logs                        |
+| `health`        | Service health and Message Center                                    |
+| `reports`       | Usage reports (Teams, Email, SharePoint, Active Users)               |
+| `identity`      | Users, groups, roles, conditional access, apps, domains              |
+| `compliance`    | Licenses, Secure Score, Identity Protection, security policies       |
+| `intune`        | Managed devices, compliance policies, configurations, detected apps  |
+| `threatintel`   | Threat intel articles, profiles, hosts, vulnerabilities, simulations |
+| `collaboration` | SharePoint, Teams, cross-tenant access, deleted items                |
+| `response`      | Incident response write operations                                   |
+| `all`           | All available tools                                                  |
 
 ### Verify credentials
 
@@ -115,7 +118,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (57)
+## Available tools (84)
 
 ### Security (6)
 
@@ -240,6 +243,48 @@ node dist/index.js --verify-login
 | `get-security-defaults`    | GET    |
 | `get-admin-consent-policy` | GET    |
 
+### Intune device management (8)
+
+| Tool                          | Method |
+| ----------------------------- | ------ |
+| `list-managed-devices`        | GET    |
+| `get-managed-device`          | GET    |
+| `get-managed-device-overview` | GET    |
+| `list-compliance-policies`    | GET    |
+| `get-compliance-policy`       | GET    |
+| `list-device-configurations`  | GET    |
+| `get-device-configuration`    | GET    |
+| `list-detected-apps`          | GET    |
+
+### Threat intelligence (10)
+
+| Tool                                | Method |
+| ----------------------------------- | ------ |
+| `list-threat-intel-articles`        | GET    |
+| `get-threat-intel-article`          | GET    |
+| `list-threat-intel-profiles`        | GET    |
+| `get-threat-intel-profile`          | GET    |
+| `list-threat-intel-hosts`           | GET    |
+| `get-threat-intel-host`             | GET    |
+| `list-threat-intel-vulnerabilities` | GET    |
+| `get-threat-intel-vulnerability`    | GET    |
+| `list-attack-simulations`           | GET    |
+| `get-attack-simulation`             | GET    |
+
+### SharePoint, Teams & collaboration (9)
+
+| Tool                         | Method |
+| ---------------------------- | ------ |
+| `list-sharepoint-sites`      | GET    |
+| `get-sharepoint-site`        | GET    |
+| `get-sharepoint-settings`    | GET    |
+| `list-teams`                 | GET    |
+| `get-team`                   | GET    |
+| `get-cross-tenant-policy`    | GET    |
+| `list-cross-tenant-partners` | GET    |
+| `list-deleted-users`         | GET    |
+| `list-deleted-groups`        | GET    |
+
 ### Incident response (4) -- requires `--allow-writes`
 
 | Tool                         | Method | Risk     |
@@ -255,7 +300,11 @@ node dist/index.js --verify-login
 
 ```
 Application.Read.All
+AttackSimulation.Read.All
 AuditLog.Read.All
+DeviceManagementApps.Read.All
+DeviceManagementConfiguration.Read.All
+DeviceManagementManagedDevices.Read.All
 Directory.Read.All
 Domain.Read.All
 Group.Read.All
@@ -271,6 +320,10 @@ SecurityEvents.Read.All
 SecurityIncident.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
+SharePointTenantSettings.Read.All
+Sites.Read.All
+Team.ReadBasic.All
+ThreatIntelligence.Read.All
 User.Read.All
 UserAuthenticationMethod.Read.All
 ```
