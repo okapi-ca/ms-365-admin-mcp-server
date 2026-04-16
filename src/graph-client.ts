@@ -51,7 +51,8 @@ class GraphClient {
     const cloudEndpoints = getCloudEndpoints(this.secrets.cloudType);
     const url = `${cloudEndpoints.graphApi}/v1.0${endpoint}`;
 
-    logger.debug(`[GRAPH CLIENT] Final URL: ${url}`);
+    // SEC: strip query string — can contain PII/UPN/secret IDs via $filter, etc.
+    logger.debug(`[GRAPH CLIENT] Final URL: ${url.split('?')[0]}`);
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${accessToken}`,
