@@ -8,7 +8,6 @@ interface GraphRequestOptions {
   method?: string;
   body?: string;
   rawResponse?: boolean;
-  includeHeaders?: boolean;
   excludeResponse?: boolean;
 }
 
@@ -39,7 +38,7 @@ class GraphClient {
       const result = await this.makeRequest(endpoint, options);
       return this.formatResponse(result, options.rawResponse, options.excludeResponse);
     } catch (error) {
-      logger.error(`Error in Graph API request: ${error}`);
+      logger.error(`Error in Graph API request: ${(error as Error).message}`);
       return {
         content: [{ type: 'text', text: JSON.stringify({ error: (error as Error).message }) }],
         isError: true,
@@ -68,9 +67,21 @@ class GraphClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `Microsoft Graph API error: ${response.status} ${response.statusText} - ${errorText}`
-      );
+      // SEC-B: Log full error for debugging but return sanitized message to client
+      logger.error(`Graph API error ${response.status} on ${url.split('?')[0]}: ${errorText}`);
+      let clientMessage = `Microsoft Graph API error: ${response.status} ${response.statusText}`;
+      try {
+        const parsed = JSON.parse(errorText) as { error?: { message?: string; code?: string } };
+        if (parsed.error?.code) {
+          clientMessage += ` (${parsed.error.code})`;
+        }
+        if (parsed.error?.message) {
+          clientMessage += ` - ${parsed.error.message}`;
+        }
+      } catch {
+        // Non-JSON error body — don't leak raw text
+      }
+      throw new Error(clientMessage);
     }
 
     const text = await response.text();

@@ -68,6 +68,8 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   // SEC-12: Wrap handlers in try-catch
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     try {
+      // SEC-E: Stateless — each request creates a fresh transport. Session affinity is
+      // handled by the Entra token validation (tenant + allowed-clients).
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
       await options.server.connect(transport);
       await transport.handleRequest(req, res, req.body);
