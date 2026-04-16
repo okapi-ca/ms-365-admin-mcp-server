@@ -65,7 +65,7 @@ async function executeGraphTool(
   graphClient: GraphClient,
   params: Record<string, unknown>
 ): Promise<CallToolResult> {
-  logger.info(`Tool ${tool.alias} called with params: ${JSON.stringify(params)}`);
+  logger.info(`Tool ${tool.alias} called with params: [${Object.keys(params).join(', ')}]`);
   try {
     const parameterDefinitions = tool.parameters || [];
 
