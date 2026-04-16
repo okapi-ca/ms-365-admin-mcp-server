@@ -131,11 +131,18 @@ class AuthManager {
       });
 
       if (!response.ok) {
+        // SEC-B: log full error for diagnostics, return sanitized message to caller
         const errorText = await response.text();
-        return {
-          success: false,
-          message: `Graph API error: ${response.status} ${response.statusText} - ${errorText}`,
-        };
+        logger.error(`testLogin Graph error ${response.status}: ${errorText}`);
+        let clientMessage = `Graph API error: ${response.status} ${response.statusText}`;
+        try {
+          const parsed = JSON.parse(errorText) as { error?: { message?: string; code?: string } };
+          if (parsed.error?.code) clientMessage += ` (${parsed.error.code})`;
+          if (parsed.error?.message) clientMessage += ` - ${parsed.error.message}`;
+        } catch {
+          // Non-JSON error body — don't leak raw text
+        }
+        return { success: false, message: clientMessage };
       }
 
       const data = (await response.json()) as {
