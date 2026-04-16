@@ -125,7 +125,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (369)
+## Available tools (410)
 
 ### Security (8)
 
@@ -338,15 +338,17 @@ node dist/index.js --verify-login
 | `list-message-traces` | GET    |
 | `get-message-trace`   | GET    |
 
-### Exchange mailboxes (5)
+### Exchange mailboxes (7)
 
-| Tool                            | Method | Risk   |
-| ------------------------------- | ------ | ------ |
-| `list-exchange-mailboxes`       | GET    |        |
-| `get-exchange-mailbox`          | GET    |        |
-| `list-exchange-mailbox-folders` | GET    |        |
-| `get-exchange-mailbox-folder`   | GET    |        |
-| `export-exchange-mailbox-items` | POST   | medium |
+| Tool                            | Method | Risk     |
+| ------------------------------- | ------ | -------- |
+| `list-exchange-mailboxes`       | GET    |          |
+| `get-exchange-mailbox`          | GET    |          |
+| `list-exchange-mailbox-folders` | GET    |          |
+| `get-exchange-mailbox-folder`   | GET    |          |
+| `export-exchange-mailbox-items` | POST   | medium   |
+| `update-exchange-mailbox`       | PATCH  | medium   |
+| `delete-exchange-mailbox`       | DELETE | critical |
 
 ### Threat intelligence - hosts (4)
 
@@ -524,6 +526,51 @@ node dist/index.js --verify-login
 | `confirm-safe-users`                     | POST   | high     |
 | `run-hunting-query`                      | POST   | low      |
 
+### Intune device remote actions (16) -- requires `--allow-writes`
+
+| Tool                            | Method | Risk     |
+| ------------------------------- | ------ | -------- |
+| `wipe-managed-device`           | POST   | critical |
+| `retire-managed-device`         | POST   | high     |
+| `sync-managed-device`           | POST   | low      |
+| `reboot-managed-device`         | POST   | high     |
+| `remote-lock-device`            | POST   | medium   |
+| `reset-device-passcode`         | POST   | high     |
+| `shutdown-managed-device`       | POST   | high     |
+| `disable-lost-mode`             | POST   | low      |
+| `locate-managed-device`         | POST   | low      |
+| `bypass-activation-lock`        | POST   | high     |
+| `trigger-defender-scan`         | POST   | low      |
+| `update-defender-signatures`    | POST   | low      |
+| `clean-windows-device`          | POST   | critical |
+| `logout-shared-apple-user`      | POST   | medium   |
+| `delete-shared-apple-user`      | POST   | high     |
+| `update-windows-device-account` | POST   | medium   |
+
+### Conditional Access CRUD (8) -- requires `--allow-writes`
+
+| Tool                                | Method | Risk     |
+| ----------------------------------- | ------ | -------- |
+| `list-conditional-access-templates` | GET    |          |
+| `get-conditional-access-policy`     | GET    |          |
+| `create-conditional-access-policy`  | POST   | high     |
+| `update-conditional-access-policy`  | PATCH  | high     |
+| `delete-conditional-access-policy`  | DELETE | critical |
+| `create-named-location`             | POST   | medium   |
+| `update-named-location`             | PATCH  | medium   |
+| `delete-named-location`             | DELETE | high     |
+
+### Intune policies CRUD (6) -- requires `--allow-writes`
+
+| Tool                          | Method | Risk   |
+| ----------------------------- | ------ | ------ |
+| `create-compliance-policy`    | POST   | medium |
+| `update-compliance-policy`    | PATCH  | medium |
+| `delete-compliance-policy`    | DELETE | high   |
+| `create-device-configuration` | POST   | medium |
+| `update-device-configuration` | PATCH  | medium |
+| `delete-device-configuration` | DELETE | high   |
+
 ### eDiscovery (1)
 
 | Tool                    | Method | Risk |
@@ -581,7 +628,7 @@ node dist/index.js --verify-login
 | `get-sensitivity-label-rights`    | GET    |
 | `get-protection-scopes`           | GET    |
 
-### SharePoint administration (16)
+### SharePoint administration (25)
 
 | Tool                      | Method | Risk   |
 | ------------------------- | ------ | ------ |
@@ -593,12 +640,21 @@ node dist/index.js --verify-login
 | `get-site-default-drive`  | GET    |        |
 | `list-site-lists`         | GET    |        |
 | `get-site-list`           | GET    |        |
+| `create-site-list`        | POST   | low    |
+| `update-site-list`        | PATCH  | low    |
+| `delete-site-list`        | DELETE | high   |
 | `list-site-list-items`    | GET    |        |
+| `create-site-list-item`   | POST   | low    |
+| `update-site-list-item`   | PATCH  | low    |
+| `delete-site-list-item`   | DELETE | medium |
 | `list-site-list-columns`  | GET    |        |
 | `list-site-columns`       | GET    |        |
 | `list-site-content-types` | GET    |        |
 | `list-site-permissions`   | GET    |        |
 | `get-site-permission`     | GET    |        |
+| `create-site-permission`  | POST   | medium |
+| `update-site-permission`  | PATCH  | medium |
+| `delete-site-permission`  | DELETE | high   |
 | `get-site-analytics`      | GET    |        |
 | `list-site-subsites`      | GET    |        |
 
@@ -891,15 +947,18 @@ User.Read.All
 UserAuthenticationMethod.Read.All
 ```
 
-### Write (incident response, Teams admin, SharePoint, invitations)
+### Write (incident response, device actions, CA policies, Teams, SharePoint)
 
 ```
 Channel.Create
 Channel.Delete.All
 Device.ReadWrite.All
+DeviceManagementConfiguration.ReadWrite.All
+DeviceManagementManagedDevices.PrivilegedOperations.All
 Group.ReadWrite.All
 IdentityRiskyServicePrincipal.ReadWrite.All
 IdentityRiskyUser.ReadWrite.All
+Policy.ReadWrite.ConditionalAccess
 SecurityAlert.ReadWrite.All
 SecurityIncident.ReadWrite.All
 Sites.ReadWrite.All

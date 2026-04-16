@@ -2716,5 +2716,336 @@
     "appPermissions": ["CallRecords.Read.All"],
     "skipEncoding": ["fromDateTime", "toDateTime"],
     "llmTip": "Gets Direct Routing call records for a date range. Parameters are ISO 8601 dates. Returns callId, correlationId, userId, callerNumber, calleeNumber, duration, startDateTime, failureDateTime, finalSipCode, mediaPathLocation."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/wipe",
+    "method": "post",
+    "toolName": "wipe-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "critical",
+    "llmTip": "Wipes a managed device (factory reset). IRREVERSIBLE — all data on the device will be erased. Optional body: {\"keepEnrollmentData\":false,\"keepUserData\":false,\"macOsUnlockCode\":\"pin\"}. Always confirm with operator before executing."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/retire",
+    "method": "post",
+    "toolName": "retire-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Retires a managed device. Removes company data (apps, email, Wi-Fi, VPN profiles) but keeps personal data. The device is unenrolled from Intune management."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/syncDevice",
+    "method": "post",
+    "toolName": "sync-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Triggers an immediate sync of the managed device with Intune. Forces the device to check in and apply any pending policies, apps, or configurations."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/rebootNow",
+    "method": "post",
+    "toolName": "reboot-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Reboots a managed device immediately. The user will lose unsaved work. Windows devices only."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/remoteLock",
+    "method": "post",
+    "toolName": "remote-lock-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "medium",
+    "llmTip": "Remotely locks a managed device. The device owner must use their passcode/PIN to unlock. Useful for lost/stolen devices."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/resetPasscode",
+    "method": "post",
+    "toolName": "reset-device-passcode",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Resets the passcode on a managed device. Behavior varies by platform: Android generates a new passcode, iOS removes the passcode."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/shutDown",
+    "method": "post",
+    "toolName": "shutdown-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Shuts down a managed device. The user will lose unsaved work."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/disableLostMode",
+    "method": "post",
+    "toolName": "disable-lost-mode",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Disables Lost Mode on a supervised iOS device. The device returns to normal operation."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/locateDevice",
+    "method": "post",
+    "toolName": "locate-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Locates a managed device (iOS supervised). Returns the device's GPS coordinates. Use get-managed-device after to read deviceActionResults for the location."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/bypassActivationLock",
+    "method": "post",
+    "toolName": "bypass-activation-lock",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Bypasses the Activation Lock on a supervised iOS device. Used when a device needs to be reactivated without the original Apple ID credentials."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/windowsDefenderScan",
+    "method": "post",
+    "toolName": "trigger-defender-scan",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Triggers a Windows Defender antivirus scan on the device. Body: {\"quickScan\": true} for quick scan, or {\"quickScan\": false} for full scan."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/windowsDefenderUpdateSignatures",
+    "method": "post",
+    "toolName": "update-defender-signatures",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "low",
+    "llmTip": "Forces a Windows Defender signature update on the device. Ensures the latest antivirus definitions are installed."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/cleanWindowsDevice",
+    "method": "post",
+    "toolName": "clean-windows-device",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "critical",
+    "llmTip": "Cleans a Windows device (fresh start). Body: {\"keepUserData\": false}. Removes all installed apps and resets to default Windows. IRREVERSIBLE."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/logoutSharedAppleDeviceActiveUser",
+    "method": "post",
+    "toolName": "logout-shared-apple-user",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "medium",
+    "llmTip": "Logs out the active user from a shared Apple device (iPad). The device returns to the login screen."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deleteUserFromSharedAppleDevice",
+    "method": "post",
+    "toolName": "delete-shared-apple-user",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a user and their data from a shared Apple device. Body: {\"userPrincipalName\": \"user@contoso.com\"}."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/updateWindowsDeviceAccount",
+    "method": "post",
+    "toolName": "update-windows-device-account",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates the account on a Windows device (Surface Hub). Body: {\"updateWindowsDeviceAccountActionParameter\": {\"deviceAccount\": {\"email\": \"room@contoso.com\"}, \"passwordRotationEnabled\": true}}."
+  },
+
+  {
+    "pathPattern": "/identity/conditionalAccess/policies",
+    "method": "post",
+    "toolName": "create-conditional-access-policy",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "high",
+    "llmTip": "Creates a new Conditional Access policy. Body requires displayName, state (enabled/disabled/enabledForReportingButNotEnforced), conditions (users, applications, locations, platforms, signInRiskLevels), grantControls or sessionControls. Start with state='disabled' or 'enabledForReportingButNotEnforced' for safety."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+    "method": "get",
+    "toolName": "get-conditional-access-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets a specific Conditional Access policy by ID. Returns displayName, state, conditions (users, applications, locations, platforms, signInRiskLevels, clientAppTypes), grantControls, sessionControls, createdDateTime, modifiedDateTime."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+    "method": "patch",
+    "toolName": "update-conditional-access-policy",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "high",
+    "llmTip": "Updates a Conditional Access policy. Body can include displayName, state, conditions, grantControls, sessionControls. Changing state to 'enabled' activates enforcement — verify conditions before enabling."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+    "method": "delete",
+    "toolName": "delete-conditional-access-policy",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a Conditional Access policy. IRREVERSIBLE. Consider disabling (state='disabled') instead of deleting."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations",
+    "method": "post",
+    "toolName": "create-named-location",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a named location for Conditional Access. For IP ranges: {\"@odata.type\":\"#microsoft.graph.ipNamedLocation\",\"displayName\":\"Corp IPs\",\"isTrusted\":true,\"ipRanges\":[{\"@odata.type\":\"#microsoft.graph.iPv4CidrRange\",\"cidrAddress\":\"10.0.0.0/8\"}]}."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations/{namedLocation-id}",
+    "method": "patch",
+    "toolName": "update-named-location",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a named location. Body can include displayName, isTrusted, ipRanges (for IP locations) or countriesAndRegions, includeUnknownCountriesAndRegions (for country locations)."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations/{namedLocation-id}",
+    "method": "delete",
+    "toolName": "delete-named-location",
+    "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a named location. If in use by a Conditional Access policy, the location reference must be removed from the policy first."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/templates",
+    "method": "get",
+    "toolName": "list-conditional-access-templates",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists Conditional Access policy templates provided by Microsoft. Templates can be used as starting points for new policies. Returns id, name, description, scenarios, details."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies",
+    "method": "post",
+    "toolName": "create-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new device compliance policy. Body varies by platform. Example for Windows: {\"@odata.type\":\"#microsoft.graph.windows10CompliancePolicy\",\"displayName\":\"Win10 Compliance\",\"passwordRequired\":true,\"bitLockerEnabled\":true}."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "patch",
+    "toolName": "update-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an existing device compliance policy. Body can include any compliance settings for the platform type."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "delete",
+    "toolName": "delete-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a device compliance policy. Devices assigned to this policy will no longer be evaluated for compliance."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations",
+    "method": "post",
+    "toolName": "create-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new device configuration profile. Body varies by platform and profile type. Example: {\"@odata.type\":\"#microsoft.graph.windows10GeneralConfiguration\",\"displayName\":\"Win10 Config\",\"passwordBlockSimple\":true}."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "patch",
+    "toolName": "update-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an existing device configuration profile. Body can include any configuration settings for the profile type."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "delete",
+    "toolName": "delete-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a device configuration profile. Devices assigned to this profile will no longer receive these settings."
+  },
+
+  {
+    "pathPattern": "/sites/{site-id}/permissions",
+    "method": "post",
+    "toolName": "create-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "riskLevel": "medium",
+    "llmTip": "Grants a permission on a SharePoint site. Body: {\"roles\":[\"write\"],\"grantedToIdentities\":[{\"application\":{\"id\":\"app-id\",\"displayName\":\"App Name\"}}]}. Roles: read, write, owner."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions/{permission-id}",
+    "method": "patch",
+    "toolName": "update-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a permission on a SharePoint site. Body: {\"roles\":[\"read\"]} to change the role."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/permissions/{permission-id}",
+    "method": "delete",
+    "toolName": "delete-site-permission",
+    "appPermissions": ["Sites.FullControl.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a permission from a SharePoint site. The app or user will lose access to the site."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists",
+    "method": "post",
+    "toolName": "create-site-list",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Creates a new SharePoint list. Body: {\"displayName\":\"My List\",\"list\":{\"template\":\"genericList\"}}. Templates: genericList, documentLibrary, events, tasks, contacts, etc."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}",
+    "method": "patch",
+    "toolName": "update-site-list",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Updates a SharePoint list. Body can include displayName and description."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}",
+    "method": "delete",
+    "toolName": "delete-site-list",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a SharePoint list and all its items."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items",
+    "method": "post",
+    "toolName": "create-site-list-item",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Creates a new item in a SharePoint list. Body: {\"fields\":{\"Title\":\"Item title\",\"ColumnName\":\"value\"}}."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items/{listItem-id}",
+    "method": "patch",
+    "toolName": "update-site-list-item",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Updates a SharePoint list item. Body: {\"fields\":{\"ColumnName\":\"new value\"}}."
+  },
+  {
+    "pathPattern": "/sites/{site-id}/lists/{list-id}/items/{listItem-id}",
+    "method": "delete",
+    "toolName": "delete-site-list-item",
+    "appPermissions": ["Sites.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Deletes a SharePoint list item."
+  },
+
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}",
+    "method": "patch",
+    "toolName": "update-exchange-mailbox",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "riskLevel": "medium",
+    "llmTip": "Updates an Exchange mailbox configuration (admin). Body can include settings like archiveEnabled."
+  },
+  {
+    "pathPattern": "/admin/exchange/mailboxes/{mailbox-id}",
+    "method": "delete",
+    "toolName": "delete-exchange-mailbox",
+    "appPermissions": ["Exchange.ManageAsApp"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes an Exchange mailbox (admin). IRREVERSIBLE — all mailbox data will be permanently removed. Always confirm with operator before executing."
   }
 ]
