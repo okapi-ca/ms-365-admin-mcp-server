@@ -32,9 +32,11 @@
   "license": "MIT",
   "dependencies": {
     "@azure/msal-node": "^3.8.0",
+    "@modelcontextprotocol/express": "^2.0.0-alpha.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^11.1.0",
     "dotenv": "^17.0.1",
+    "express": "^5.2.1",
     "js-yaml": "^4.1.0",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
@@ -44,6 +46,7 @@
     "@azure/keyvault-secrets": "^4.9.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.15.15",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",

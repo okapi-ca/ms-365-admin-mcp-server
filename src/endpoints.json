@@ -18,6 +18,7 @@
     "method": "patch",
     "toolName": "update-security-alert",
     "appPermissions": ["SecurityAlert.ReadWrite.All"],
+    "riskLevel": "medium",
     "llmTip": "Updates a security alert. Body can include: status ('new', 'inProgress', 'resolved'), assignedTo (email), classification ('truePositive', 'falsePositive', 'informationalExpectedActivity'), determination, comment."
   },
   {
@@ -39,6 +40,7 @@
     "method": "patch",
     "toolName": "update-security-incident",
     "appPermissions": ["SecurityIncident.ReadWrite.All"],
+    "riskLevel": "medium",
     "llmTip": "Updates a security incident. Body can include: status ('active', 'resolved', 'redirected'), assignedTo (email), classification ('truePositive', 'falsePositive', 'informationalExpectedActivity'), determination, customTags."
   },
   {
@@ -114,5 +116,191 @@
     "appPermissions": ["Reports.Read.All"],
     "skipEncoding": ["period"],
     "llmTip": "Gets SharePoint site usage details. The period parameter must be one of: D7, D30, D90, D180. Returns CSV data with per-site details: siteUrl, ownerDisplayName, storageUsedInBytes, fileCount, activeFileCount, pageViewCount, lastActivityDate."
+  },
+
+  {
+    "pathPattern": "/users",
+    "method": "get",
+    "toolName": "list-users",
+    "appPermissions": ["User.Read.All"],
+    "llmTip": "Lists all users in the tenant. Use $filter=accountEnabled eq true/false to find enabled/disabled accounts. Use $select=displayName,userPrincipalName,accountEnabled,signInActivity,createdDateTime to get key fields. Use $filter=signInActivity/lastSignInDateTime le 2024-01-01T00:00:00Z to find inactive users. Use $top to paginate, follow @odata.nextLink for more. Max $top=999 for users."
+  },
+  {
+    "pathPattern": "/users/{user-id}",
+    "method": "get",
+    "toolName": "get-user",
+    "appPermissions": ["User.Read.All"],
+    "llmTip": "Gets a single user by ID or userPrincipalName. Use $select=displayName,userPrincipalName,accountEnabled,signInActivity,assignedLicenses,memberOf to get detailed info. signInActivity requires AuditLog.Read.All in addition to User.Read.All."
+  },
+  {
+    "pathPattern": "/users/{user-id}/memberOf",
+    "method": "get",
+    "toolName": "list-user-memberships",
+    "appPermissions": ["Directory.Read.All"],
+    "llmTip": "Lists all groups and directory roles a user is a member of. Returns directoryRole and group objects. Use $select=displayName,id to reduce payload. Useful for auditing a user's access."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/methods",
+    "method": "get",
+    "toolName": "list-user-auth-methods",
+    "appPermissions": ["UserAuthenticationMethod.Read.All"],
+    "llmTip": "Lists authentication methods registered for a user (phone, email, FIDO2, Microsoft Authenticator, etc.). Useful for MFA coverage audits. Each method has @odata.type to identify the method kind."
+  },
+  {
+    "pathPattern": "/users/{user-id}/registeredDevices",
+    "method": "get",
+    "toolName": "list-user-devices",
+    "appPermissions": ["Directory.Read.All"],
+    "llmTip": "Lists devices registered to a user. Returns device objects with displayName, operatingSystem, operatingSystemVersion, isCompliant, isManaged, approximateLastSignInDateTime."
+  },
+
+  {
+    "pathPattern": "/groups",
+    "method": "get",
+    "toolName": "list-groups",
+    "appPermissions": ["Group.Read.All"],
+    "llmTip": "Lists all groups. Use $filter=groupTypes/any(c:c eq 'Unified') for Microsoft 365 groups. Use $filter=securityEnabled eq true for security groups. Use $filter=onPremisesSyncEnabled eq true for hybrid-synced groups. Use $select=displayName,mail,groupTypes,securityEnabled,membershipRule to get key fields."
+  },
+  {
+    "pathPattern": "/groups/{group-id}",
+    "method": "get",
+    "toolName": "get-group",
+    "appPermissions": ["Group.Read.All"],
+    "llmTip": "Gets a single group by ID. Use $select=displayName,description,groupTypes,securityEnabled,membershipRule,membershipRuleProcessingState for policy details."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/members",
+    "method": "get",
+    "toolName": "list-group-members",
+    "appPermissions": ["GroupMember.Read.All"],
+    "llmTip": "Lists members of a group. Returns user and servicePrincipal objects. Use $select=displayName,userPrincipalName,id. Use $top to paginate. For large groups, use $count=true with ConsistencyLevel=eventual header."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/owners",
+    "method": "get",
+    "toolName": "list-group-owners",
+    "appPermissions": ["GroupMember.Read.All"],
+    "llmTip": "Lists owners of a group. Useful for auditing ownerless groups. Returns user objects."
+  },
+
+  {
+    "pathPattern": "/directoryRoles",
+    "method": "get",
+    "toolName": "list-directory-roles",
+    "appPermissions": ["RoleManagement.Read.Directory"],
+    "llmTip": "Lists activated directory roles in the tenant. Only roles that have been activated (have at least one member) appear here. Use $expand=members to see who holds each role. Key roles to audit: Global Administrator, Privileged Role Administrator, Security Administrator."
+  },
+  {
+    "pathPattern": "/directoryRoles/{directoryRole-id}/members",
+    "method": "get",
+    "toolName": "list-role-members",
+    "appPermissions": ["RoleManagement.Read.Directory"],
+    "llmTip": "Lists members of a specific directory role. Use this to audit who has Global Admin, Exchange Admin, etc. Returns user and servicePrincipal objects."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignments",
+    "method": "get",
+    "toolName": "list-role-assignments",
+    "appPermissions": ["RoleManagement.Read.Directory"],
+    "llmTip": "Lists all role assignments in the directory. Use $filter=principalId eq '{user-id}' to find all roles for a specific user. Use $expand=principal to get user details. Includes both permanent and PIM-eligible assignments."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleDefinitions",
+    "method": "get",
+    "toolName": "list-role-definitions",
+    "appPermissions": ["RoleManagement.Read.Directory"],
+    "llmTip": "Lists all role definitions (built-in and custom). Each has displayName, description, isBuiltIn, rolePermissions. Useful for understanding what each role can do."
+  },
+
+  {
+    "pathPattern": "/identity/conditionalAccess/policies",
+    "method": "get",
+    "toolName": "list-conditional-access-policies",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists all Conditional Access policies. Each policy has displayName, state (enabled/disabled/enabledForReportingButNotEnforced), conditions (users, applications, locations, platforms, signInRiskLevels), and grantControls (MFA, compliant device, etc.). Use this to audit MFA enforcement and access controls."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
+    "method": "get",
+    "toolName": "get-conditional-access-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets a single Conditional Access policy by ID. Returns full policy details including conditions, grantControls, and sessionControls."
+  },
+  {
+    "pathPattern": "/identity/conditionalAccess/namedLocations",
+    "method": "get",
+    "toolName": "list-named-locations",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists named locations used in Conditional Access policies. Shows trusted IP ranges and country-based locations. Useful for auditing geographic access controls."
+  },
+
+  {
+    "pathPattern": "/applications",
+    "method": "get",
+    "toolName": "list-applications",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists all app registrations in the tenant. Use $select=displayName,appId,signInAudience,requiredResourceAccess,passwordCredentials,keyCredentials to audit app permissions and credentials. Use $filter=passwordCredentials/any(p:p/endDateTime le 2024-06-01T00:00:00Z) to find apps with expiring secrets (beta)."
+  },
+  {
+    "pathPattern": "/servicePrincipals",
+    "method": "get",
+    "toolName": "list-service-principals",
+    "appPermissions": ["Application.Read.All"],
+    "llmTip": "Lists all service principals (enterprise apps). Use $filter=appOwnerOrganizationId ne '{tenant-id}' to find third-party apps. Use $select=displayName,appId,appOwnerOrganizationId,servicePrincipalType,accountEnabled to audit external access."
+  },
+  {
+    "pathPattern": "/oauth2PermissionGrants",
+    "method": "get",
+    "toolName": "list-oauth2-grants",
+    "appPermissions": ["Directory.Read.All"],
+    "llmTip": "Lists all delegated permission grants (OAuth2 consent). Shows which apps have been granted what permissions by whom (admin consent vs user consent). Use $filter=consentType eq 'AllPrincipals' to find admin-consented grants. Critical for auditing overpermissioned apps."
+  },
+
+  {
+    "pathPattern": "/organization",
+    "method": "get",
+    "toolName": "get-organization",
+    "appPermissions": ["Organization.Read.All"],
+    "llmTip": "Gets tenant organization info. Returns displayName, verifiedDomains, securityComplianceNotificationPhones, technicalNotificationMails, tenantType. Useful for basic tenant identity verification."
+  },
+  {
+    "pathPattern": "/domains",
+    "method": "get",
+    "toolName": "list-domains",
+    "appPermissions": ["Domain.Read.All"],
+    "llmTip": "Lists all domains registered in the tenant. Shows isVerified, isDefault, authenticationType (Managed vs Federated). Useful for auditing federated domains and finding unverified domains."
+  },
+
+  {
+    "pathPattern": "/users/{user-id}",
+    "method": "patch",
+    "toolName": "disable-user-account",
+    "appPermissions": ["User.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Disables a user account by setting accountEnabled to false. Body MUST be: {\"accountEnabled\": false}. This blocks all sign-ins immediately. Use for compromised accounts. CRITICAL: verify the user-id carefully — disabling the wrong account locks out a legitimate user. To re-enable, send {\"accountEnabled\": true}."
+  },
+  {
+    "pathPattern": "/users/{user-id}/revokeSignInSessions",
+    "method": "post",
+    "toolName": "revoke-user-sessions",
+    "appPermissions": ["User.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Revokes all refresh tokens and session cookies for a user, forcing re-authentication everywhere. No request body needed. Use after password reset or account compromise. Effect is not instant — cached tokens may remain valid for up to 1 hour. Combine with disable-user-account for immediate containment."
+  },
+  {
+    "pathPattern": "/security/alerts_v2/{alert-id}/comments",
+    "method": "post",
+    "toolName": "add-security-alert-comment",
+    "appPermissions": ["SecurityAlert.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Adds a comment to a security alert for tracking investigation progress. Body: {\"comment\": \"your comment text\"}. Use to document triage decisions and findings."
+  },
+  {
+    "pathPattern": "/devices/{device-id}",
+    "method": "patch",
+    "toolName": "update-device",
+    "appPermissions": ["Device.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Updates device properties. Use {\"accountEnabled\": false} to disable a device in Entra ID. This prevents the device from authenticating. Useful for lost/stolen devices or compromised endpoints."
   }
 ]

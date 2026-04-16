@@ -53,9 +53,29 @@ class AdminGraphServer {
       logger.info('Server running in READ-ONLY mode.');
     }
 
-    const transport = new StdioServerTransport();
-    await this.server!.connect(transport);
-    logger.info('Server connected to stdio transport');
+    if (this.options.transport === 'http') {
+      const { startHttpServer } = await import('./http-server.js');
+      const port = parseInt(this.options.port || '8080', 10);
+
+      let tokenValidatorOptions;
+      if (this.options.allowedClients && this.secrets) {
+        tokenValidatorOptions = {
+          tenantId: this.secrets.tenantId,
+          allowedClientIds: this.options.allowedClients.split(',').map((id: string) => id.trim()),
+        };
+      }
+
+      await startHttpServer({
+        port,
+        server: this.server!,
+        tokenValidatorOptions,
+      });
+      logger.info(`Server connected to HTTP transport on port ${port}`);
+    } else {
+      const transport = new StdioServerTransport();
+      await this.server!.connect(transport);
+      logger.info('Server connected to stdio transport');
+    }
   }
 }
 

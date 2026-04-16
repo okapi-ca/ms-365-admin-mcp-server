@@ -16,6 +16,7 @@ interface EndpointConfig {
   toolName: string;
   appPermissions?: string[];
   llmTip?: string;
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
   skipEncoding?: string[];
   contentType?: string;
   acceptType?: string;
@@ -281,6 +282,15 @@ export function registerGraphTools(
       tool.description || `Execute ${tool.method.toUpperCase()} request to ${tool.path}`;
     if (endpointConfig?.llmTip) {
       toolDescription += `\n\nTIP: ${endpointConfig.llmTip}`;
+    }
+    if (endpointConfig?.riskLevel) {
+      toolDescription += `\n\nRISK LEVEL: ${endpointConfig.riskLevel.toUpperCase()}. ${
+        endpointConfig.riskLevel === 'critical'
+          ? 'This action is irreversible or has major security impact. Always confirm with the operator before executing.'
+          : endpointConfig.riskLevel === 'high'
+            ? 'This action has significant impact. Verify the target carefully before executing.'
+            : ''
+      }`;
     }
 
     try {
