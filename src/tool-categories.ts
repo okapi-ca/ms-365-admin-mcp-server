@@ -37,6 +37,22 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
       /secure-score|subscribed-sku|license|risky-user|risky-service|security-defaults|auth-method-config|admin-consent/i,
     description: 'Compliance, licenses, Secure Score, Identity Protection, and security policies',
   },
+  intune: {
+    name: 'intune',
+    pattern: /managed-device|compliance-polic|device-configuration|detected-app/i,
+    description: 'Intune device management (managed devices, compliance, configurations, apps)',
+  },
+  threatintel: {
+    name: 'threatintel',
+    pattern: /threat-intel|attack-simulation/i,
+    description:
+      'Threat intelligence (articles, profiles, hosts, vulnerabilities, attack simulations)',
+  },
+  collaboration: {
+    name: 'collaboration',
+    pattern: /sharepoint|team(?!s-activity)|cross-tenant|deleted-user|deleted-group/i,
+    description: 'SharePoint, Teams, cross-tenant access, and deleted items',
+  },
   response: {
     name: 'response',
     pattern:

@@ -417,5 +417,197 @@
     "toolName": "get-admin-consent-policy",
     "appPermissions": ["Policy.Read.All"],
     "llmTip": "Gets the admin consent request policy. Shows isEnabled, notifyReviewers, remindersEnabled, and reviewers list. Controls whether users can request admin consent for apps they want to use."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/managedDevices",
+    "method": "get",
+    "toolName": "list-managed-devices",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists all Intune-managed devices. Use $filter=operatingSystem eq 'Windows' to filter by OS. Use $select=deviceName,operatingSystem,complianceState,lastSyncDateTime,userPrincipalName to get key fields. complianceState values: compliant, noncompliant, unknown."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}",
+    "method": "get",
+    "toolName": "get-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Gets a specific Intune-managed device. Returns deviceName, operatingSystem, osVersion, complianceState, isEncrypted, managementAgent, enrolledDateTime, lastSyncDateTime, userPrincipalName."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDeviceOverview",
+    "method": "get",
+    "toolName": "get-managed-device-overview",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Gets a summary overview of all managed devices. Returns enrolledDeviceCount, mdmEnrolledCount, dualEnrolledDeviceCount, and device operating system summary."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies",
+    "method": "get",
+    "toolName": "list-compliance-policies",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists all Intune device compliance policies. Each has displayName, description, lastModifiedDateTime, and platform-specific settings (password, encryption, OS version requirements)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "get",
+    "toolName": "get-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a specific Intune compliance policy. Returns full policy details including platform-specific compliance settings."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations",
+    "method": "get",
+    "toolName": "list-device-configurations",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists all Intune device configuration profiles. Each has displayName, description, lastModifiedDateTime, and @odata.type indicating the profile type (Wi-Fi, VPN, email, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "get",
+    "toolName": "get-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a specific Intune device configuration profile. Returns full configuration details."
+  },
+  {
+    "pathPattern": "/deviceManagement/detectedApps",
+    "method": "get",
+    "toolName": "list-detected-apps",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists applications detected on managed devices. Each has displayName, version, sizeInByte, deviceCount. Useful for software inventory and shadow IT detection."
+  },
+
+  {
+    "pathPattern": "/security/threatIntelligence/articles",
+    "method": "get",
+    "toolName": "list-threat-intel-articles",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists Microsoft Threat Intelligence articles. Each has title, body, createdDateTime, lastUpdatedDateTime, and indicators. Use to stay informed about current threat campaigns."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/articles/{article-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-article",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific threat intelligence article. Returns full content, indicators, and related articles."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles",
+    "method": "get",
+    "toolName": "list-threat-intel-profiles",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists threat actor intelligence profiles. Each has title, kind (actor, tool, vulnerability), tradecraft summary, and associated indicators."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/intelProfiles/{intelligenceProfile-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-profile",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific threat actor profile with full details including tradecraft, targets, and indicators."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts",
+    "method": "get",
+    "toolName": "list-threat-intel-hosts",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists known threat intelligence hosts (IPs and hostnames). Use to look up reputation and history of suspicious hosts observed in your environment."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/hosts/{host-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-host",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets details for a specific host. The host-id is the hostname or IP address. Returns firstSeenDateTime, lastSeenDateTime, reputation, and associated components."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/vulnerabilities",
+    "method": "get",
+    "toolName": "list-threat-intel-vulnerabilities",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Lists known vulnerabilities from Microsoft Threat Intelligence. Each has CVE ID, description, severity, exploits, and affected components."
+  },
+  {
+    "pathPattern": "/security/threatIntelligence/vulnerabilities/{vulnerability-id}",
+    "method": "get",
+    "toolName": "get-threat-intel-vulnerability",
+    "appPermissions": ["ThreatIntelligence.Read.All"],
+    "llmTip": "Gets a specific vulnerability by CVE ID. Returns full details including CVSS score, exploits, remediation, and affected components."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulations",
+    "method": "get",
+    "toolName": "list-attack-simulations",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Lists attack simulation campaigns (phishing simulations). Each has displayName, status, launchDateTime, completionDateTime, and report with click rates and compromise rates."
+  },
+  {
+    "pathPattern": "/security/attackSimulation/simulations/{simulation-id}",
+    "method": "get",
+    "toolName": "get-attack-simulation",
+    "appPermissions": ["AttackSimulation.Read.All"],
+    "llmTip": "Gets details for a specific attack simulation campaign. Returns full report including user targeting, click rates, and training completion."
+  },
+
+  {
+    "pathPattern": "/sites",
+    "method": "get",
+    "toolName": "list-sharepoint-sites",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Lists SharePoint sites in the tenant. Use $select=displayName,webUrl,createdDateTime,lastModifiedDateTime to get key fields. Use $filter=isPersonalSite eq false to exclude OneDrive sites. Use $search to find sites by name."
+  },
+  {
+    "pathPattern": "/sites/{site-id}",
+    "method": "get",
+    "toolName": "get-sharepoint-site",
+    "appPermissions": ["Sites.Read.All"],
+    "llmTip": "Gets a specific SharePoint site. Use root for the root site. Returns displayName, webUrl, description, createdDateTime. Use $expand=drives to list document libraries."
+  },
+  {
+    "pathPattern": "/admin/sharepoint/settings",
+    "method": "get",
+    "toolName": "get-sharepoint-settings",
+    "appPermissions": ["SharePointTenantSettings.Read.All"],
+    "llmTip": "Gets tenant-wide SharePoint admin settings. Returns sharingCapability, isResharingByExternalUsersEnabled, defaultSharingLinkType, isSiteCreationEnabled, and other governance settings. Critical for auditing external sharing configuration."
+  },
+  {
+    "pathPattern": "/teams",
+    "method": "get",
+    "toolName": "list-teams",
+    "appPermissions": ["Team.ReadBasic.All"],
+    "llmTip": "Lists all teams in the tenant. Use $select=displayName,description,createdDateTime,visibility to get key fields. visibility can be public or private."
+  },
+  {
+    "pathPattern": "/teams/{team-id}",
+    "method": "get",
+    "toolName": "get-team",
+    "appPermissions": ["Team.ReadBasic.All"],
+    "llmTip": "Gets a specific team. Returns displayName, description, visibility, memberSettings, messagingSettings, funSettings, guestSettings."
+  },
+  {
+    "pathPattern": "/policies/crossTenantAccessPolicy",
+    "method": "get",
+    "toolName": "get-cross-tenant-policy",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Gets the cross-tenant access policy. Shows default inbound/outbound settings for B2B collaboration and B2B direct connect. Critical for auditing external access configuration."
+  },
+  {
+    "pathPattern": "/policies/crossTenantAccessPolicy/partners",
+    "method": "get",
+    "toolName": "list-cross-tenant-partners",
+    "appPermissions": ["Policy.Read.All"],
+    "llmTip": "Lists partner-specific cross-tenant access configurations. Each entry overrides the default policy for a specific external tenant. Shows tenantId, inboundTrust, b2bCollaborationInbound/Outbound settings."
+  },
+  {
+    "pathPattern": "/directory/deletedItems/graph.user",
+    "method": "get",
+    "toolName": "list-deleted-users",
+    "appPermissions": ["User.Read.All"],
+    "llmTip": "Lists recently deleted users (soft-deleted, recoverable within 30 days). Returns the same user properties as active users. Useful for auditing account deletions and recovery."
+  },
+  {
+    "pathPattern": "/directory/deletedItems/graph.group",
+    "method": "get",
+    "toolName": "list-deleted-groups",
+    "appPermissions": ["Group.Read.All"],
+    "llmTip": "Lists recently deleted groups (soft-deleted, recoverable within 30 days). Only Microsoft 365 groups can be restored. Security groups are permanently deleted."
   }
 ]
