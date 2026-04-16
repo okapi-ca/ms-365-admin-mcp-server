@@ -6,7 +6,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Features
 
-- **105 tools** covering security, audit, identity, governance, compliance, reports, and incident response
+- **136 tools** covering security, audit, identity, Intune, governance, compliance, reports, and incident response
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -105,6 +105,7 @@ node dist/index.js --preset security,audit,identity
 | `health`     | Service health and Message Center                                         |
 | `reports`    | Usage reports (Teams, Email, SharePoint, OneDrive, Mailbox, M365 Apps)    |
 | `identity`   | Users, groups, roles, devices, PIM, conditional access, apps, domains     |
+| `intune`     | Managed devices, compliance, configurations, Autopilot, apps, RBAC        |
 | `governance` | Access reviews, entitlement management, lifecycle workflows, terms of use |
 | `compliance` | Licenses, Secure Score, Identity Protection, risk detections, policies    |
 | `response`   | Incident response write operations (disable, revoke, confirm, dismiss)    |
@@ -116,7 +117,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (105)
+## Available tools (136)
 
 ### Security (8)
 
@@ -273,6 +274,77 @@ node dist/index.js --verify-login
 | `get-cross-tenant-access-policy` | GET    |
 | `list-cross-tenant-partners`     | GET    |
 
+### Managed devices (5)
+
+| Tool                               | Method |
+| ---------------------------------- | ------ |
+| `list-managed-devices`             | GET    |
+| `get-managed-device`               | GET    |
+| `list-device-compliance-states`    | GET    |
+| `list-device-configuration-states` | GET    |
+| `get-managed-device-overview`      | GET    |
+
+### Compliance policies (5)
+
+| Tool                                     | Method |
+| ---------------------------------------- | ------ |
+| `list-compliance-policies`               | GET    |
+| `get-compliance-policy`                  | GET    |
+| `list-compliance-policy-device-statuses` | GET    |
+| `get-compliance-policy-status-overview`  | GET    |
+| `get-compliance-state-summary`           | GET    |
+
+### Device configurations (3)
+
+| Tool                                       | Method |
+| ------------------------------------------ | ------ |
+| `list-device-configurations`               | GET    |
+| `get-device-configuration`                 | GET    |
+| `get-device-configuration-status-overview` | GET    |
+
+### Enrollment & Autopilot (4)
+
+| Tool                             | Method |
+| -------------------------------- | ------ |
+| `list-enrollment-configurations` | GET    |
+| `get-enrollment-configuration`   | GET    |
+| `list-autopilot-devices`         | GET    |
+| `get-autopilot-device`           | GET    |
+
+### Detected apps (3)
+
+| Tool                        | Method |
+| --------------------------- | ------ |
+| `list-detected-apps`        | GET    |
+| `get-detected-app`          | GET    |
+| `list-detected-app-devices` | GET    |
+
+### Intune RBAC & config (7)
+
+| Tool                               | Method |
+| ---------------------------------- | ------ |
+| `list-intune-audit-events`         | GET    |
+| `get-software-update-summary`      | GET    |
+| `get-apple-push-certificate`       | GET    |
+| `list-intune-role-definitions`     | GET    |
+| `list-intune-role-assignments`     | GET    |
+| `list-intune-terms-and-conditions` | GET    |
+| `list-intune-terms-acceptances`    | GET    |
+
+### Intune connectors & updates (3)
+
+| Tool                                     | Method |
+| ---------------------------------------- | ------ |
+| `get-intune-conditional-access-settings` | GET    |
+| `list-mtd-connectors`                    | GET    |
+| `list-ios-update-statuses`               | GET    |
+
+### Device categories (1)
+
+| Tool                     | Method |
+| ------------------------ | ------ |
+| `list-device-categories` | GET    |
+
 ### Access reviews (5)
 
 | Tool                             | Method |
@@ -352,6 +424,11 @@ AttackSimulation.Read.All
 AuditLog.Read.All
 ConsentRequest.Read.All
 Device.Read.All
+DeviceManagementApps.Read.All
+DeviceManagementConfiguration.Read.All
+DeviceManagementManagedDevices.Read.All
+DeviceManagementRBAC.Read.All
+DeviceManagementServiceConfig.Read.All
 Directory.Read.All
 Domain.Read.All
 EntitlementManagement.Read.All

@@ -776,5 +776,238 @@
     "toolName": "list-user-consent-requests",
     "appPermissions": ["ConsentRequest.Read.All"],
     "llmTip": "Lists user consent requests for a specific app consent request. Each has createdBy, status (Submitted, InProgress, Completed), and reason. Shows which individual users requested consent for the app."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/managedDevices",
+    "method": "get",
+    "toolName": "list-managed-devices",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists all Intune-managed devices. Use $filter=operatingSystem eq 'Windows' to filter by OS. Use $filter=complianceState eq 'noncompliant' to find non-compliant devices. Use $select=deviceName,operatingSystem,osVersion,complianceState,isEncrypted,managementAgent,enrolledDateTime,lastSyncDateTime,userPrincipalName. Use $filter=lastSyncDateTime le 2024-01-01T00:00:00Z to find stale devices."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}",
+    "method": "get",
+    "toolName": "get-managed-device",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Gets a specific Intune-managed device by ID. Returns full details: deviceName, operatingSystem, osVersion, complianceState, isEncrypted, jailBroken, managementAgent, enrolledDateTime, lastSyncDateTime, userPrincipalName, azureADDeviceId, model, manufacturer, serialNumber, wiFiMacAddress."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deviceCompliancePolicyStates",
+    "method": "get",
+    "toolName": "list-device-compliance-states",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists compliance policy states for a specific managed device. Shows which compliance policies apply and their state (compliant, nonCompliant, notApplicable, error). Each has displayName, state, settingCount, settingStates."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deviceConfigurationStates",
+    "method": "get",
+    "toolName": "list-device-configuration-states",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists configuration profile states for a specific managed device. Shows which configuration profiles apply and their state (notApplicable, success, error, conflict). Each has displayName, state, settingCount."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies",
+    "method": "get",
+    "toolName": "list-compliance-policies",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists all Intune device compliance policies. Each has displayName, description, @odata.type (platform-specific: windows10, iOS, androidWorkProfile, macOS), createdDateTime, lastModifiedDateTime, and version. Use to audit what compliance rules are in place."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
+    "method": "get",
+    "toolName": "get-compliance-policy",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a specific compliance policy. Returns full details including platform-specific settings (password requirements, encryption, OS version, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/deviceStatuses",
+    "method": "get",
+    "toolName": "list-compliance-policy-device-statuses",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists device statuses for a specific compliance policy. Each has deviceDisplayName, userName, status (compliant, nonCompliant, error, conflict, notApplicable), lastReportedDateTime, and complianceGracePeriodExpirationDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/deviceStatusOverview",
+    "method": "get",
+    "toolName": "get-compliance-policy-status-overview",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets the device status overview for a compliance policy. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicyDeviceStateSummary",
+    "method": "get",
+    "toolName": "get-compliance-state-summary",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets the tenant-wide device compliance state summary. Returns aggregate counts: inGracePeriodCount, compliantDeviceCount, nonCompliantDeviceCount, remediatedDeviceCount, errorDeviceCount, conflictDeviceCount, unknownDeviceCount, notApplicableDeviceCount."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations",
+    "method": "get",
+    "toolName": "list-device-configurations",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists all Intune device configuration profiles. Each has displayName, description, @odata.type (platform-specific), createdDateTime, lastModifiedDateTime, and version. Covers Wi-Fi, VPN, email, certificates, device restrictions, endpoint protection, etc."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
+    "method": "get",
+    "toolName": "get-device-configuration",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a specific device configuration profile. Returns full details including platform-specific settings (Wi-Fi SSID, VPN config, device restrictions, etc.)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/deviceStatusOverview",
+    "method": "get",
+    "toolName": "get-device-configuration-status-overview",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets device status overview for a configuration profile. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
+    "method": "get",
+    "toolName": "list-enrollment-configurations",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists device enrollment configurations. Includes Windows Autopilot deployment profiles, enrollment restrictions (platform, device limit), and enrollment status page settings. Each has displayName, @odata.type, priority, createdDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations/{deviceEnrollmentConfiguration-id}",
+    "method": "get",
+    "toolName": "get-enrollment-configuration",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets a specific enrollment configuration. Returns full details including platform restrictions, device limits, or Autopilot profile settings depending on the type."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/deviceCategories",
+    "method": "get",
+    "toolName": "list-device-categories",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Lists Intune device categories. Categories allow organizing devices for dynamic group targeting. Each has displayName and description."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities",
+    "method": "get",
+    "toolName": "list-autopilot-devices",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Windows Autopilot device identities. Each has serialNumber, model, manufacturer, groupTag, purchaseOrderIdentifier, enrollmentState, deploymentProfileAssignmentStatus, lastContactedDateTime. Use to audit Autopilot-registered devices and their deployment status."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsAutopilotDeviceIdentities/{windowsAutopilotDeviceIdentity-id}",
+    "method": "get",
+    "toolName": "get-autopilot-device",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets a specific Autopilot device identity. Returns serialNumber, model, manufacturer, groupTag, enrollmentState, deploymentProfileAssignmentStatus, and assignedDeploymentProfile."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/detectedApps",
+    "method": "get",
+    "toolName": "list-detected-apps",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists all applications detected on Intune-managed devices. Each has displayName, version, sizeInByte, deviceCount, and platform. Use to audit software inventory and find unauthorized applications. Use $orderby=deviceCount desc to see most-installed apps."
+  },
+  {
+    "pathPattern": "/deviceManagement/detectedApps/{detectedApp-id}",
+    "method": "get",
+    "toolName": "get-detected-app",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Gets a specific detected application. Returns displayName, version, sizeInByte, deviceCount, and platform."
+  },
+  {
+    "pathPattern": "/deviceManagement/detectedApps/{detectedApp-id}/managedDevices",
+    "method": "get",
+    "toolName": "list-detected-app-devices",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists managed devices that have a specific application installed. Useful for finding all devices with a particular app version (e.g., outdated or unauthorized software)."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/managedDeviceOverview",
+    "method": "get",
+    "toolName": "get-managed-device-overview",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Gets a high-level overview of all managed devices. Returns aggregate counts by enrolledDeviceCount, mdmEnrolledCount, dualEnrolledDeviceCount, deviceOperatingSystemSummary (android, iOS, macOS, windows, windowsMobile), and deviceExchangeAccessStateSummary."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/auditEvents",
+    "method": "get",
+    "toolName": "list-intune-audit-events",
+    "appPermissions": ["DeviceManagementApps.Read.All"],
+    "llmTip": "Lists Intune audit events. Each has displayName, componentName, activity, activityDateTime, activityType, actor (userPrincipalName, applicationDisplayName), and resources (displayName, type). Use $filter=activityDateTime ge 2024-01-01T00:00:00Z to filter by date. Use to track who changed Intune policies."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/softwareUpdateStatusSummary",
+    "method": "get",
+    "toolName": "get-software-update-summary",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Gets a summary of Windows update statuses across managed devices. Returns counts by status: compliantDeviceCount, nonCompliantDeviceCount, remediatedDeviceCount, errorDeviceCount, conflictDeviceCount, unknownDeviceCount, notApplicableDeviceCount."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/applePushNotificationCertificate",
+    "method": "get",
+    "toolName": "get-apple-push-certificate",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets the Apple Push Notification certificate info. Returns appleIdentifier, topicIdentifier, lastModifiedDateTime, expirationDateTime, and certificateSerialNumber. CRITICAL: monitor expirationDateTime — if it expires, all iOS/macOS device management stops."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/roleDefinitions",
+    "method": "get",
+    "toolName": "list-intune-role-definitions",
+    "appPermissions": ["DeviceManagementRBAC.Read.All"],
+    "llmTip": "Lists Intune RBAC role definitions. Each has displayName, description, isBuiltIn, permissions (actions), and roleAssignments. Built-in roles include Intune Administrator, Help Desk Operator, Read Only Operator, etc."
+  },
+  {
+    "pathPattern": "/deviceManagement/roleAssignments",
+    "method": "get",
+    "toolName": "list-intune-role-assignments",
+    "appPermissions": ["DeviceManagementRBAC.Read.All"],
+    "llmTip": "Lists Intune RBAC role assignments. Each has displayName, description, resourceScopes, and members. Shows who has been granted which Intune admin roles and over which scope."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/termsAndConditions",
+    "method": "get",
+    "toolName": "list-intune-terms-and-conditions",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Intune terms and conditions. Each has displayName, description, title, bodyText, acceptanceStatement, version, createdDateTime, and modifiedDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/termsAndConditions/{termsAndConditions-id}/acceptanceStatuses",
+    "method": "get",
+    "toolName": "list-intune-terms-acceptances",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists acceptance statuses for Intune terms and conditions. Each has userDisplayName, userPrincipalName, acceptedVersion, acceptedDateTime. Useful for compliance reporting."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/conditionalAccessSettings",
+    "method": "get",
+    "toolName": "get-intune-conditional-access-settings",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Gets Intune on-premises conditional access settings. Returns enabled status and which devices are included/excluded from conditional access to on-premises Exchange."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/mobileThreatDefenseConnectors",
+    "method": "get",
+    "toolName": "list-mtd-connectors",
+    "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
+    "llmTip": "Lists Mobile Threat Defense (MTD) connectors. Shows which MTD partners are integrated (Microsoft Defender, Lookout, Zimperium, etc.), their state (enabled/disabled), and platform support. Each has partnerState, androidEnabled, iosEnabled, lastHeartbeatDateTime."
+  },
+
+  {
+    "pathPattern": "/deviceManagement/iosUpdateStatuses",
+    "method": "get",
+    "toolName": "list-ios-update-statuses",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Lists iOS update installation statuses across managed devices. Each has deviceDisplayName, userName, osVersion, installStatus (downloading, installing, idle, available, etc.), lastReportedDateTime, deviceModel, deviceId."
   }
 ]

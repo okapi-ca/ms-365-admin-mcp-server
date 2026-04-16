@@ -40,6 +40,13 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
     description:
       'Compliance, licenses, Secure Score, Identity Protection, risk detections, and security policies',
   },
+  intune: {
+    name: 'intune',
+    pattern:
+      /managed-device|compliance-policy|compliance-state|device-configuration|enrollment|autopilot|detected-app|device-overview|intune|software-update|apple-push|mtd-connector|ios-update|device-categor/i,
+    description:
+      'Intune device management (managed devices, compliance, configurations, Autopilot, apps, RBAC)',
+  },
   governance: {
     name: 'governance',
     pattern:
