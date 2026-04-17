@@ -156,11 +156,11 @@ Single source of truth for tool definitions. Each entry:
   "method": "GET",
   "appPermissions": ["User.Read.All"],
   "llmTip": "Use $filter='userType eq ''Guest''' to list guests",
-  "riskLevel": "medium",         // only for non-GET
-  "skipEncoding": ["userId"],    // optional: path params that should not be URL-encoded
+  "riskLevel": "medium", // only for non-GET
+  "skipEncoding": ["userId"], // optional: path params that should not be URL-encoded
   "contentType": "application/json",
   "acceptType": "application/json",
-  "returnDownloadUrl": false
+  "returnDownloadUrl": false,
 }
 ```
 
@@ -182,9 +182,9 @@ This means tool parameter validation is derived automatically from Graph's own s
 
 The runtime tool registration in `graph-tools.ts` then combines:
 
-- Generated schema (from OpenAPI)  →  parameter validation
-- `endpoints.json` metadata         →  risk level, llmTip, skipEncoding, content type
-- `tool-categories.ts` regexes      →  preset filtering
+- Generated schema (from OpenAPI) → parameter validation
+- `endpoints.json` metadata → risk level, llmTip, skipEncoding, content type
+- `tool-categories.ts` regexes → preset filtering
 
 ## Risk classification
 

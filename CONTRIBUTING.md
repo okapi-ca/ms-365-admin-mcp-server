@@ -70,7 +70,7 @@ test/                 Vitest specs
      "method": "GET",
      "appPermissions": ["Something.Read.All"],
      "llmTip": "Optional hint shown to the LLM in the tool description",
-     "riskLevel": "low" // only for non-GET
+     "riskLevel": "low", // only for non-GET
    }
    ```
 
@@ -95,12 +95,12 @@ test/                 Vitest specs
 
 Use this rubric for non-GET operations:
 
-| Level      | Criteria                                                                  | Examples                                                              |
-| ---------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `low`      | Read-only in effect (POST-only queries, reports) or trivial annotations   | `run-hunting-query`, `add-security-alert-comment`, Intune reports     |
-| `medium`   | Reversible mutation affecting a single entity                             | `update-user`, `add-group-member`, `create-invitation`                |
-| `high`     | Significant impact: broad scope, credential change, or destructive+       | `revoke-user-sessions`, `update-conditional-access-policy`            |
-| `critical` | Irreversible or tenant-wide impact                                        | `delete-user`, `wipe-managed-device`, `delete-conditional-access-policy` |
+| Level      | Criteria                                                                | Examples                                                                 |
+| ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `low`      | Read-only in effect (POST-only queries, reports) or trivial annotations | `run-hunting-query`, `add-security-alert-comment`, Intune reports        |
+| `medium`   | Reversible mutation affecting a single entity                           | `update-user`, `add-group-member`, `create-invitation`                   |
+| `high`     | Significant impact: broad scope, credential change, or destructive+     | `revoke-user-sessions`, `update-conditional-access-policy`               |
+| `critical` | Irreversible or tenant-wide impact                                      | `delete-user`, `wipe-managed-device`, `delete-conditional-access-policy` |
 
 When in doubt, pick the higher level.
 

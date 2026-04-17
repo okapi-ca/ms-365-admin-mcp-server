@@ -39,15 +39,15 @@ Endpoints:
 
 The server validates the incoming JWT against Microsoft JWKS:
 
-| Check              | Value                                                      |
-| ------------------ | ---------------------------------------------------------- |
-| Algorithm          | `RS256` (only)                                             |
-| Issuer (`iss`)     | `https://login.microsoftonline.com/<tenant>/v2.0`          |
-| Tenant (`tid`)     | Must match `MS365_ADMIN_MCP_TENANT_ID`                     |
-| Client (`appid`/`azp`) | Must be in `--allowed-clients`                         |
-| Audience (`aud`)   | Matches `--expected-audience` (if configured)              |
-| Signature          | Verified via `https://login.microsoftonline.com/<tenant>/discovery/v2.0/keys` |
-| Clock tolerance    | 30 seconds                                                 |
+| Check                  | Value                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| Algorithm              | `RS256` (only)                                                                |
+| Issuer (`iss`)         | `https://login.microsoftonline.com/<tenant>/v2.0`                             |
+| Tenant (`tid`)         | Must match `MS365_ADMIN_MCP_TENANT_ID`                                        |
+| Client (`appid`/`azp`) | Must be in `--allowed-clients`                                                |
+| Audience (`aud`)       | Matches `--expected-audience` (if configured)                                 |
+| Signature              | Verified via `https://login.microsoftonline.com/<tenant>/discovery/v2.0/keys` |
+| Clock tolerance        | 30 seconds                                                                    |
 
 Failure modes:
 
@@ -82,14 +82,14 @@ curl -X POST http://localhost:8080/mcp \
 
 The server ships with these defenses enabled by default (see `src/http-server.ts`):
 
-| Defense            | Detail                                                             |
-| ------------------ | ------------------------------------------------------------------ |
-| Rate limit         | 100 req/min per source IP on `/mcp`                                |
-| Body size limit    | 100 KB                                                             |
-| Security headers   | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, CSP `default-src 'none'`, `Referrer-Policy: no-referrer` |
-| Default bind       | `127.0.0.1` (loopback)                                             |
-| Stateless sessions | Each request creates a fresh transport; no server-side session state |
-| Stack trace suppression | Errors return `500` with generic message; details in logs only |
+| Defense                 | Detail                                                                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rate limit              | 100 req/min per source IP on `/mcp`                                                                                                             |
+| Body size limit         | 100 KB                                                                                                                                          |
+| Security headers        | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, CSP `default-src 'none'`, `Referrer-Policy: no-referrer` |
+| Default bind            | `127.0.0.1` (loopback)                                                                                                                          |
+| Stateless sessions      | Each request creates a fresh transport; no server-side session state                                                                            |
+| Stack trace suppression | Errors return `500` with generic message; details in logs only                                                                                  |
 
 ## Operator-provided hardening (you must do this)
 
@@ -155,14 +155,14 @@ az deployment group create \
 
 The server logs via Winston in JSON format. Key events:
 
-| Event                           | Level | Sample                                                          |
-| ------------------------------- | ----- | --------------------------------------------------------------- |
-| Tool invocation                 | info  | `Tool list-users called with params: [top, filter]`              |
-| Token acquisition (server-side) | info  | `Acquiring token via client credentials flow...`                |
-| Token validation failure        | warn  | `Token client ID not in allowed list`                           |
-| Graph API error                 | error | `testLogin Graph error 403: Forbidden`                          |
-| Tool registration summary       | info  | `Tool registration complete: 515 registered, 0 skipped, 0 failed` |
-| Rate limit hit                  | (express-rate-limit default) |                                                |
+| Event                           | Level                        | Sample                                                            |
+| ------------------------------- | ---------------------------- | ----------------------------------------------------------------- |
+| Tool invocation                 | info                         | `Tool list-users called with params: [top, filter]`               |
+| Token acquisition (server-side) | info                         | `Acquiring token via client credentials flow...`                  |
+| Token validation failure        | warn                         | `Token client ID not in allowed list`                             |
+| Graph API error                 | error                        | `testLogin Graph error 403: Forbidden`                            |
+| Tool registration summary       | info                         | `Tool registration complete: 515 registered, 0 skipped, 0 failed` |
+| Rate limit hit                  | (express-rate-limit default) |                                                                   |
 
 Enable verbose Graph request logging with `-v`.
 

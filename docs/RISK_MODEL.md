@@ -12,12 +12,12 @@ LLMs operating admin tools can cause real damage: delete users, wipe devices, di
 
 ## Classification rubric
 
-| Level      | Reversibility                                          | Scope                             | Example tools                                                                  |
-| ---------- | ------------------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------ |
-| `low`      | Fully reversible or read-only-by-intent                | Narrow (one entity or a query)    | `run-hunting-query`, `add-security-alert-comment`, `sync-managed-device`       |
-| `medium`   | Reversible with manual effort                          | Single entity                     | `update-user`, `add-group-member`, `create-invitation`, `remote-lock-device`    |
-| `high`     | Partly reversible; significant operational impact      | Single entity with broad effect, or policy change | `revoke-user-sessions`, `update-conditional-access-policy`, `retire-managed-device`, `confirm-compromised-users` |
-| `critical` | Irreversible without backups, or tenant-wide impact    | Tenant, multiple entities, data loss | `delete-user`, `wipe-managed-device`, `delete-conditional-access-policy`, `clean-windows-device`, `disable-user-account` |
+| Level      | Reversibility                                       | Scope                                             | Example tools                                                                                                            |
+| ---------- | --------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `low`      | Fully reversible or read-only-by-intent             | Narrow (one entity or a query)                    | `run-hunting-query`, `add-security-alert-comment`, `sync-managed-device`                                                 |
+| `medium`   | Reversible with manual effort                       | Single entity                                     | `update-user`, `add-group-member`, `create-invitation`, `remote-lock-device`                                             |
+| `high`     | Partly reversible; significant operational impact   | Single entity with broad effect, or policy change | `revoke-user-sessions`, `update-conditional-access-policy`, `retire-managed-device`, `confirm-compromised-users`         |
+| `critical` | Irreversible without backups, or tenant-wide impact | Tenant, multiple entities, data loss              | `delete-user`, `wipe-managed-device`, `delete-conditional-access-policy`, `clean-windows-device`, `disable-user-account` |
 
 ### Decision questions
 
@@ -64,7 +64,7 @@ It terminates active tokens but does not change credentials. The user can sign i
 
 ### Why `update-conditional-access-policy` is `high`
 
-CA changes can lock out the entire tenant. The mitigation is procedural (deploy in report-only, test, then enforce), not technical — hence the level reflects what *can* happen, not what *usually* happens.
+CA changes can lock out the entire tenant. The mitigation is procedural (deploy in report-only, test, then enforce), not technical — hence the level reflects what _can_ happen, not what _usually_ happens.
 
 ### Why `run-hunting-query` is `low`
 
@@ -98,7 +98,7 @@ before executing.
   "pathPattern": "/users/{userId}",
   "method": "DELETE",
   "appPermissions": ["User.ReadWrite.All"],
-  "riskLevel": "critical"
+  "riskLevel": "critical",
 }
 ```
 
