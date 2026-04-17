@@ -1,5 +1,9 @@
 # ms-365-admin-mcp-server
 
+[![CI](https://github.com/okapi-ca/ms-365-admin-mcp-server/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/okapi-ca/ms-365-admin-mcp-server/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@okapi-ca/ms-365-admin-mcp-server.svg)](https://www.npmjs.com/package/@okapi-ca/ms-365-admin-mcp-server)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for Microsoft 365 administration via Graph API **application permissions** (client credentials).
 
 Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365-mcp-server) which uses delegated permissions. This server is designed for admin operations: security monitoring, identity audits, incident response, and service health.
@@ -36,6 +40,26 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 - A specific tenant ID (not "common")
 
 ## Installation
+
+### npm (recommended)
+
+```bash
+npm install -g @okapi-ca/ms-365-admin-mcp-server
+ms-365-admin-mcp-server --help
+```
+
+### Docker
+
+```bash
+docker pull ghcr.io/okapi-ca/ms-365-admin-mcp-server:latest
+docker run --rm -i \
+  -e MS365_ADMIN_MCP_CLIENT_ID=... \
+  -e MS365_ADMIN_MCP_CLIENT_SECRET=... \
+  -e MS365_ADMIN_MCP_TENANT_ID=... \
+  ghcr.io/okapi-ca/ms-365-admin-mcp-server:latest
+```
+
+### From source
 
 ```bash
 git clone https://github.com/okapi-ca/ms-365-admin-mcp-server.git

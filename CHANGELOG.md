@@ -8,23 +8,18 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
-### Added
+## [0.1.0] — 2026-04-17
 
-- `docs/USE_CASES.md` — 15 typical admin scenarios (security monitoring, incident response, PIM hygiene, Intune, eDiscovery, Conditional Access, etc.)
-- `docs/APP_REGISTRATION.md` — step-by-step Azure AD app registration guide
-- `docs/HTTP_DEPLOYMENT.md` — HTTP transport and Azure Container Apps deployment
-- `docs/TROUBLESHOOTING.md` — common errors and diagnosis
-- `docs/ARCHITECTURE.md` — internal architecture and code generation flow
-- `docs/RISK_MODEL.md` — risk classification methodology
-- `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE` (MIT), `CHANGELOG.md`
-- `.github/PULL_REQUEST_TEMPLATE.md` and issue templates
-
-## [0.1.0] — 515 tools
+Initial public release. **515 tools** covering Microsoft 365 admin operations via Graph API application permissions.
 
 ### Added
 
 - 71 admin write endpoints, bringing the total to **515 tools** (#26)
 - eDiscovery hold actions exposed via the `response` preset
+- Complete documentation set: `USE_CASES`, `APP_REGISTRATION`, `HTTP_DEPLOYMENT`, `TROUBLESHOOTING`, `ARCHITECTURE`, `RISK_MODEL` (#29, #30)
+- `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE` (MIT), `CHANGELOG.md`
+- `.github/PULL_REQUEST_TEMPLATE.md` and issue templates
+- Published to npm as `@okapi-ca/ms-365-admin-mcp-server` and to GHCR as `ghcr.io/okapi-ca/ms-365-admin-mcp-server`
 
 ### Security
 
