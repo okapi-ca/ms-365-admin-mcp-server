@@ -38,6 +38,7 @@ export default [
       'bin/**',
       'src/generated/**',
       '.venv/**',
+      '.claude/**',
     ],
   },
 ];
