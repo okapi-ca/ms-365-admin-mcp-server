@@ -19,7 +19,7 @@ Initial public release. **515 tools** covering Microsoft 365 admin operations vi
 - Complete documentation set: `USE_CASES`, `APP_REGISTRATION`, `HTTP_DEPLOYMENT`, `TROUBLESHOOTING`, `ARCHITECTURE`, `RISK_MODEL` (#29, #30)
 - `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE` (MIT), `CHANGELOG.md`
 - `.github/PULL_REQUEST_TEMPLATE.md` and issue templates
-- Published to npm as `@okapi-ca/ms-365-admin-mcp-server` and to GHCR as `ghcr.io/okapi-ca/ms-365-admin-mcp-server`
+- Published to npm as `@okapi_ca/ms-365-admin-mcp-server` and to GHCR as `ghcr.io/okapi-ca/ms-365-admin-mcp-server`
 
 ### Security
 

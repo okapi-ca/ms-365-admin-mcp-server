@@ -1,7 +1,7 @@
 # ms-365-admin-mcp-server
 
 [![CI](https://github.com/okapi-ca/ms-365-admin-mcp-server/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/okapi-ca/ms-365-admin-mcp-server/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/@okapi-ca/ms-365-admin-mcp-server.svg)](https://www.npmjs.com/package/@okapi-ca/ms-365-admin-mcp-server)
+[![npm version](https://img.shields.io/npm/v/@okapi_ca/ms-365-admin-mcp-server.svg)](https://www.npmjs.com/package/@okapi_ca/ms-365-admin-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for Microsoft 365 administration via Graph API **application permissions** (client credentials).
@@ -44,7 +44,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 ### npm (recommended)
 
 ```bash
-npm install -g @okapi-ca/ms-365-admin-mcp-server
+npm install -g @okapi_ca/ms-365-admin-mcp-server
 ms-365-admin-mcp-server --help
 ```
 
