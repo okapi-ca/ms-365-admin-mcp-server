@@ -5,12 +5,16 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import rateLimit from 'express-rate-limit';
 import logger from './logger.js';
 import { validateEntraToken, type TokenValidatorOptions } from './token-validator.js';
+import { validateUserToken, type UserTokenValidatorOptions } from './user-token-validator.js';
+import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
 
 export interface HttpServerOptions {
   port: number;
   host?: string;
   server: McpServer;
-  tokenValidatorOptions: TokenValidatorOptions;
+  tokenValidatorOptions?: TokenValidatorOptions;
+  userTokenValidatorOptions?: UserTokenValidatorOptions;
+  oauthProxyOptions?: OAuthProxyOptions;
 }
 
 function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
@@ -26,13 +30,10 @@ function securityHeaders(_req: Request, res: Response, next: NextFunction): void
 export async function startHttpServer(options: HttpServerOptions): Promise<void> {
   const app = express();
 
-  // SEC-07: Security headers on all responses
   app.use(securityHeaders);
-
-  // SEC-05: Explicit body size limit
   app.use(express.json({ limit: '100kb' }));
+  app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
-  // SEC-04: Rate limiting
   app.use(
     '/mcp',
     rateLimit({
@@ -48,8 +49,20 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     res.json({ status: 'ok', transport: 'http', timestamp: new Date().toISOString() });
   });
 
-  // SEC-03: Auth middleware is always applied (--allowed-clients is mandatory)
-  const validatorOptions = options.tokenValidatorOptions;
+  if (options.oauthProxyOptions) {
+    registerOAuthRoutes(app, options.oauthProxyOptions);
+    logger.info('OAuth proxy routes enabled (/authorize, /token, DCR, metadata)');
+  }
+
+  const serviceValidator = options.tokenValidatorOptions;
+  const userValidator = options.userTokenValidatorOptions;
+
+  if (!serviceValidator && !userValidator) {
+    throw new Error(
+      'HTTP transport requires at least one auth mode: --allowed-clients or --oauth-mode'
+    );
+  }
+
   app.use('/mcp', async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -57,19 +70,29 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
       return;
     }
     const token = authHeader.slice(7);
-    const valid = await validateEntraToken(token, validatorOptions);
-    if (!valid) {
-      res.status(403).json({ error: 'Token validation failed' });
-      return;
+
+    if (userValidator) {
+      const userClaims = await validateUserToken(token, userValidator);
+      if (userClaims) {
+        logger.info(`MCP request authenticated as user ${userClaims.upn ?? userClaims.oid}`);
+        next();
+        return;
+      }
     }
-    next();
+
+    if (serviceValidator) {
+      const serviceValid = await validateEntraToken(token, serviceValidator);
+      if (serviceValid) {
+        next();
+        return;
+      }
+    }
+
+    res.status(403).json({ error: 'Token validation failed' });
   });
 
-  // SEC-12: Wrap handlers in try-catch
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     try {
-      // SEC-E: Stateless — each request creates a fresh transport. Session affinity is
-      // handled by the Entra token validation (tenant + allowed-clients).
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
       await options.server.connect(transport);
       await transport.handleRequest(req, res, req.body);
@@ -85,7 +108,6 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   app.delete('/mcp', handleMcpRequest);
   app.get('/mcp', handleMcpRequest);
 
-  // SEC-12: Global error handler — suppress stack traces
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     logger.error(`Unhandled Express error: ${err.message}`);
     if (!res.headersSent) {
@@ -93,7 +115,6 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     }
   });
 
-  // SEC-06: Bind to specific host (127.0.0.1 by default)
   const host = options.host || '127.0.0.1';
   app.listen(options.port, host, () => {
     logger.info(`HTTP MCP server listening on ${host}:${options.port}`);

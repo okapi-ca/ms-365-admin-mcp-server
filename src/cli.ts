@@ -36,7 +36,23 @@ program
   .option('--host <address>', 'HTTP bind address (default: 127.0.0.1)', '127.0.0.1')
   .option(
     '--allowed-clients <ids>',
-    'Comma-separated Entra app IDs allowed to connect (required for HTTP mode)'
+    'Comma-separated Entra app IDs allowed to connect via service-to-service tokens (HTTP mode)'
+  )
+  .option(
+    '--oauth-mode',
+    'Enable OAuth proxy endpoints (DCR, /authorize, /token) for human-user MCP clients (Claude Desktop/Code/Web)'
+  )
+  .option(
+    '--public-url <url>',
+    'Public base URL for OAuth metadata (required with --oauth-mode when behind a reverse proxy)'
+  )
+  .option(
+    '--authorized-users <oids>',
+    'Comma-separated Entra user object IDs (oid) allowed to authenticate via OAuth mode'
+  )
+  .option(
+    '--no-dynamic-registration',
+    'Disable the OAuth Dynamic Client Registration endpoint (default: enabled with --oauth-mode)'
   );
 
 export interface CommandOptions {
@@ -54,6 +70,10 @@ export interface CommandOptions {
   port?: string;
   host?: string;
   allowedClients?: string;
+  oauthMode?: boolean;
+  publicUrl?: string;
+  authorizedUsers?: string;
+  dynamicRegistration?: boolean;
   [key: string]: unknown;
 }
 

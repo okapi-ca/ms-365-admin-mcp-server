@@ -54,10 +54,9 @@ class AdminGraphServer {
     }
 
     if (this.options.transport === 'http') {
-      if (!this.options.allowedClients) {
+      if (!this.options.allowedClients && !this.options.oauthMode) {
         throw new Error(
-          '--allowed-clients is required when using --transport http. ' +
-            'Provide comma-separated Entra app IDs to secure the HTTP endpoint.'
+          'HTTP transport requires at least one auth mode: --allowed-clients (service-to-service) or --oauth-mode (human users).'
         );
       }
 
@@ -67,17 +66,47 @@ class AdminGraphServer {
         throw new Error(`Invalid port: ${this.options.port}. Must be between 1 and 65535.`);
       }
 
-      const tokenValidatorOptions = {
-        tenantId: this.secrets!.tenantId,
-        allowedClientIds: this.options.allowedClients.split(',').map((id: string) => id.trim()),
-        expectedAudience: `api://${this.secrets!.clientId}`,
-      };
+      const tokenValidatorOptions = this.options.allowedClients
+        ? {
+            tenantId: this.secrets!.tenantId,
+            allowedClientIds: this.options.allowedClients.split(',').map((id: string) => id.trim()),
+            expectedAudience: `api://${this.secrets!.clientId}`,
+          }
+        : undefined;
+
+      const userTokenValidatorOptions = this.options.oauthMode
+        ? {
+            tenantId: this.secrets!.tenantId,
+            expectedAudiences: [
+              this.secrets!.clientId,
+              `api://${this.secrets!.clientId}`,
+              '00000003-0000-0000-c000-000000000000',
+            ],
+            authorizedUserOids: (this.options.authorizedUsers || '')
+              .split(',')
+              .map((o: string) => o.trim())
+              .filter(Boolean),
+          }
+        : undefined;
+
+      const oauthProxyOptions = this.options.oauthMode
+        ? {
+            publicUrl: this.options.publicUrl || '',
+            tenantId: this.secrets!.tenantId,
+            clientId: this.secrets!.clientId,
+            clientSecret: this.secrets!.clientSecret,
+            scopes: ['openid', 'profile', 'email', 'offline_access', 'User.Read'],
+            enableDynamicRegistration: this.options.dynamicRegistration !== false,
+          }
+        : undefined;
 
       await startHttpServer({
         port,
         host: this.options.host || '127.0.0.1',
         server: this.server!,
         tokenValidatorOptions,
+        userTokenValidatorOptions,
+        oauthProxyOptions,
       });
       logger.info(`Server connected to HTTP transport on port ${port}`);
     } else {

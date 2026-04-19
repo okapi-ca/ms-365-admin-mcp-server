@@ -38,8 +38,17 @@ param maxReplicas int = 3
 @description('Tags applied to every resource (must satisfy org tag policies)')
 param tags object = {}
 
-@description('Comma-separated Entra app IDs allowed to call the MCP server (required for HTTP transport)')
-param allowedClients string
+@description('Comma-separated Entra app IDs allowed to call the MCP server via service-to-service tokens. Leave empty when only --oauth-mode is used.')
+param allowedClients string = ''
+
+@description('Enable OAuth proxy endpoints (DCR, /authorize, /token) for human-user clients (Claude Desktop/Code/Web).')
+param oauthMode bool = false
+
+@description('Comma-separated Entra user object IDs (oid) authorized to authenticate via OAuth. Required when oauthMode=true.')
+param authorizedUsers string = ''
+
+@description('Public URL that browsers reach the server at (used in OAuth metadata issuer). Leave empty to let the server derive it from request headers.')
+param publicUrl string = ''
 
 @description('Optional Azure Container Registry login server (e.g., myacr.azurecr.io). Leave empty for public images (ghcr, mcr).')
 param acrLoginServer string = ''
@@ -53,6 +62,31 @@ var appName = '${baseName}-app'
 
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 var kvSecretsOfficerRoleId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+
+var baseArgs = [
+  '--transport'
+  'http'
+  '--port'
+  '8080'
+  '--host'
+  '0.0.0.0'
+]
+var serviceAuthArgs = empty(allowedClients) ? [] : [
+  '--allowed-clients'
+  allowedClients
+]
+var oauthArgs = oauthMode ? [
+  '--oauth-mode'
+] : []
+var publicUrlArgs = (oauthMode && !empty(publicUrl)) ? [
+  '--public-url'
+  publicUrl
+] : []
+var authorizedUserArgs = (oauthMode && !empty(authorizedUsers)) ? [
+  '--authorized-users'
+  authorizedUsers
+] : []
+var containerArgs = concat(baseArgs, serviceAuthArgs, oauthArgs, publicUrlArgs, authorizedUserArgs)
 
 // --- User-Assigned Managed Identity ---
 
@@ -191,16 +225,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             'node'
             'dist/index.js'
           ]
-          args: [
-            '--transport'
-            'http'
-            '--port'
-            '8080'
-            '--host'
-            '0.0.0.0'
-            '--allowed-clients'
-            allowedClients
-          ]
+          args: containerArgs
           resources: {
             cpu: json('0.5')
             memory: '1Gi'

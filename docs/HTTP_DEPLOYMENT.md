@@ -20,22 +20,79 @@ Do **not** use HTTP when stdio is sufficient — it's simpler and has a smaller 
 
 ## Quick start
 
+Two auth modes are available, and can be combined:
+
+- **Service-to-service** (machine callers): pre-acquired Entra bearer tokens are validated via `--allowed-clients`.
+- **OAuth proxy** (human users on Claude Desktop/Code/Web): the server exposes `/authorize`, `/token`, DCR, and metadata endpoints, delegating auth to Entra and gating by user object ID via `--authorized-users`.
+
 ```bash
+# Machine-to-machine only
 node dist/index.js \
   --transport http \
   --port 8080 \
   --host 127.0.0.1 \
   --allowed-clients "caller-app-id-1,caller-app-id-2"
+
+# Human OAuth only (Claude Desktop/Code/Web)
+node dist/index.js \
+  --transport http \
+  --port 8080 \
+  --host 127.0.0.1 \
+  --oauth-mode \
+  --public-url "https://mcp.example.com" \
+  --authorized-users "<user-oid-1>,<user-oid-2>"
+
+# Both at once
+node dist/index.js \
+  --transport http --port 8080 --host 127.0.0.1 \
+  --allowed-clients "<caller-app-id>" \
+  --oauth-mode --authorized-users "<user-oid>" --public-url "https://mcp.example.com"
 ```
 
-`--allowed-clients` is **mandatory** in HTTP mode. There is no anonymous access.
+At least one of `--allowed-clients` or `--oauth-mode` is **mandatory** in HTTP mode. There is no anonymous access.
 
 Endpoints:
 
 - `GET /health` — unauthenticated liveness probe. Returns `{ status: "ok", transport: "http", timestamp: "..." }`.
 - `POST /mcp`, `DELETE /mcp`, `GET /mcp` — MCP protocol endpoints. Require `Authorization: Bearer <token>`.
 
+When `--oauth-mode` is enabled, the following are added:
+
+- `GET /.well-known/oauth-authorization-server` — AS metadata advertising this server as an OAuth 2.0 authorization server (proxying Entra).
+- `GET /.well-known/oauth-protected-resource` — RS metadata for MCP spec compliance.
+- `POST /register` — Dynamic Client Registration (stub; returns a synthesized `client_id` — all OAuth traffic actually flows through the server's single Entra app).
+- `GET /authorize` — 302-redirects to Entra `/oauth2/v2.0/authorize` using a server-side PKCE verifier that bridges to the client's code_challenge.
+- `POST /token` — exchanges authorization codes / refresh tokens against Entra, substituting the server's PKCE verifier.
+
 ## Authentication model
+
+### OAuth proxy mode (`--oauth-mode`)
+
+The server is an OAuth 2.0 proxy to Entra ID, not a full authorization server. User tokens issued by Entra land on `/mcp` and are validated on each call:
+
+| Check                  | Value                                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| Algorithm              | `RS256` (only)                                                                                     |
+| Issuer (`iss`)         | `https://login.microsoftonline.com/<tenant>/v2.0` or `https://sts.windows.net/<tenant>/`           |
+| Tenant (`tid`)         | Must match `MS365_ADMIN_MCP_TENANT_ID`                                                             |
+| Audience (`aud`)       | One of: `<server-app-id>`, `api://<server-app-id>`, `00000003-0000-0000-c000-000000000000` (Graph) |
+| User object ID (`oid`) | Must be present and, if `--authorized-users` is set, in the allowlist                              |
+| Signature              | Verified via `https://login.microsoftonline.com/<tenant>/discovery/v2.0/keys`                      |
+| Clock tolerance        | 30 seconds                                                                                         |
+
+**Important**: the user's token is used only as an **authN gate**. The server does not call Graph on behalf of the user — it calls Graph with its own client-credentials (application permissions), so tool results are identical regardless of which user authenticated.
+
+#### Entra ID setup for OAuth mode
+
+The server's single Entra app registration must have:
+
+- **Web platform** redirect URIs for every client that will authenticate (e.g., `https://claude.ai/api/mcp/auth_callback`, `http://localhost:3000/oauth/callback`, `https://<your-fqdn>/oauth/callback`).
+- **Delegated permissions**: `openid`, `profile`, `email`, `offline_access`, `User.Read` on Microsoft Graph. Admin-consent them once.
+- **Allow public client flows** = Yes (so Claude's PKCE-without-secret clients can exchange codes).
+
+Callers (Claude Desktop/Code/Web) discover the server via `/.well-known/oauth-authorization-server` — no client-side config beyond the server URL.
+
+### Service-to-service mode (`--allowed-clients`)
 
 The server validates the incoming JWT against Microsoft JWKS:
 
