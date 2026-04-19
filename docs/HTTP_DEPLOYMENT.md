@@ -121,10 +121,14 @@ The Docker image runs as a non-root user. Do not mount writable volumes unless n
 
 A reference Bicep template lives at [infra/main.bicep](../infra/main.bicep). It deploys:
 
+- User-Assigned Managed Identity (UAMI)
+- Key Vault (RBAC authorization, purge protection, 90-day soft-delete)
 - Log Analytics workspace (retention 30 days)
 - Application Insights (linked to the workspace)
 - Container App Environment
-- Container App with system-assigned managed identity
+- Container App using the UAMI, with `MS365_ADMIN_MCP_KEYVAULT_URL` wired to the vault
+
+The UAMI is granted `Key Vault Secrets User`; secrets are seeded after deploy (not via Bicep).
 
 ### Deploy
 
@@ -132,24 +136,93 @@ A reference Bicep template lives at [infra/main.bicep](../infra/main.bicep). It 
 # Build and push the image to your ACR
 az acr build --registry <your-acr> --image ms365-admin-mcp:latest .
 
+# Object IDs that should be able to rotate KV secrets (e.g., you + the ops group)
+MY_OID=$(az ad signed-in-user show --query id -o tsv)
+
 # Deploy
 az deployment group create \
   --resource-group rg-mcp-admin \
   --template-file infra/main.bicep \
   --parameters \
+    baseName=ms365mcpprod \
     containerImage=<your-acr>.azurecr.io/ms365-admin-mcp:latest \
-    tenantId=$TENANT_ID \
-    clientId=$CLIENT_ID \
-    clientSecret=$CLIENT_SECRET
+    kvAdminObjectIds="['$MY_OID']"
 ```
+
+### Seed Key Vault secrets
+
+```bash
+KV=$(az deployment group show -g rg-mcp-admin -n main --query properties.outputs.keyVaultName.value -o tsv)
+az keyvault secret set --vault-name $KV --name ms365-admin-mcp-client-id     --value <app-client-id>
+az keyvault secret set --vault-name $KV --name ms365-admin-mcp-tenant-id     --value <tenant-id>
+az keyvault secret set --vault-name $KV --name ms365-admin-mcp-client-secret --value <client-secret>
+
+# Force the Container App to pick up the new secrets on next revision
+APP=$(az deployment group show -g rg-mcp-admin -n main --query properties.outputs.containerAppUrl.value -o tsv | awk -F/ '{print $3}' | cut -d. -f1)
+az containerapp update -n $APP -g rg-mcp-admin --revision-suffix "seed$(date +%s)"
+```
+
+Role-assignment propagation to the UAMI takes ~5 minutes. If the app logs
+`Fetching secrets from Key Vault` followed by a 403, wait and redeploy the revision.
 
 ### Post-deploy recommendations
 
 1. **Front with Application Gateway or Front Door** for WAF and TLS termination.
-2. **Switch to managed identity** — remove the client-secret parameter, assign the Container App's managed identity the Graph permissions directly, and use `DefaultAzureCredential` (requires a code change to swap MSAL client-credentials for managed-identity token acquisition, planned).
-3. **Use Key Vault for the secret** — set `MS365_ADMIN_MCP_KEYVAULT_URL` and store the client secret as `ms365-admin-mcp-client-secret`. Grant the Container App's managed identity `get` access on the vault secrets.
-4. **Log forwarding.** Container App stdout is ingested into Log Analytics. Configure a diagnostic setting to stream to your SIEM.
-5. **Autoscale.** The server is stateless; scale horizontally on request volume or CPU.
+2. **Restrict ingress** with `ipSecurityRestrictions` on the Container App, or mark the ingress as `internal: true` behind a private endpoint if callers are in-VNet.
+3. **Log forwarding.** Container App stdout is ingested into Log Analytics. Configure a diagnostic setting to stream to your SIEM.
+4. **Autoscale.** The server is stateless; scale horizontally on request volume or CPU.
+
+## Operating runbook
+
+### Tail logs
+
+```bash
+az containerapp logs show -n <app> -g <rg> --follow
+```
+
+### Force a restart / new revision
+
+```bash
+az containerapp update -n <app> -g <rg> --revision-suffix "manual$(date +%s)"
+```
+
+### Update the image
+
+```bash
+az containerapp update -n <app> -g <rg> \
+  --image <your-acr>.azurecr.io/ms365-admin-mcp:<new-tag>
+```
+
+### Rotate the client secret
+
+```bash
+# 1. Create a new secret in Entra ID → App registrations → Certificates & secrets
+# 2. Push it to Key Vault (the app reads at startup, so a new revision is needed)
+az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-client-secret --value <new-secret>
+az containerapp update -n <app> -g <rg> --revision-suffix "rotate$(date +%s)"
+# 3. Delete the old secret in Entra ID once the new revision is healthy
+```
+
+### Scale tweak
+
+```bash
+# Keep one warm instance (no cold start)
+az containerapp update -n <app> -g <rg> --min-replicas 1 --max-replicas 5
+```
+
+## Estimated cost (Canada East, 2026)
+
+| Resource         | Config                      | Monthly (idle)                    |
+| ---------------- | --------------------------- | --------------------------------- |
+| Container App    | Consumption, scale 0–3      | ~0 $ scale-to-zero · ~15–25 $ min=1 |
+| Log Analytics    | 30-day retention            | ~2–5 $ depending on log volume    |
+| Key Vault        | Standard, low op volume     | <1 $                              |
+| Managed Identity | UAMI                        | free                              |
+| **Total**        | **scale-to-zero (default)** | **~3–6 $ / month**                |
+| **Total**        | **min=1 replica**           | **~20–30 $ / month**              |
+
+Scale-to-zero produces a cold start of ~2–5 s on the first request after inactivity.
+Set `minReplicas=1` in the Bicep parameters if you cannot tolerate this latency.
 
 ## Observability
 

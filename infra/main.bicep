@@ -1,41 +1,119 @@
-// Azure Container Apps deployment for ms-365-admin-mcp-server
-// Skeleton template — fill in parameters and role assignments before deploying.
+// Azure Container Apps deployment for ms-365-admin-mcp-server.
+// Secrets live in Key Vault (RBAC + purge protection). The Container App reads them
+// via a user-assigned managed identity, using the Key Vault provider in src/secrets.ts.
+//
+// After deploy, seed the vault with:
+//   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-client-id     --value <...>
+//   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-tenant-id     --value <...>
+//   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-client-secret --value <...>
+//
+// Graph API application permissions must be granted to the app registration whose
+// clientId is stored in Key Vault (this template does not touch Entra ID).
 
 @description('Azure region for all resources')
 param location string = resourceGroup().location
 
+@description('Base name used as prefix for all resources (lowercase, 3-20 chars)')
+@minLength(3)
+@maxLength(20)
+param baseName string
+
 @description('Container image to deploy')
 param containerImage string
 
-@description('Azure AD tenant ID for Graph API auth')
-@secure()
-param tenantId string
+@description('Object IDs granted Key Vault Secrets Officer (for seeding/rotating secrets)')
+param kvAdminObjectIds array = []
 
-@description('App registration client ID')
-@secure()
-param clientId string
+@description('Log Analytics retention in days')
+param logRetentionDays int = 30
 
-@description('App registration client secret')
-@secure()
-param clientSecret string
+@description('Container App min replicas (0 enables scale-to-zero)')
+@minValue(0)
+param minReplicas int = 0
 
-// --- Log Analytics Workspace ---
+@description('Container App max replicas')
+@minValue(1)
+param maxReplicas int = 3
+
+var uamiName = '${baseName}-uami'
+var kvName = take('${replace(baseName, '-', '')}kv${uniqueString(resourceGroup().id)}', 24)
+var lawName = '${baseName}-law'
+var appInsightsName = '${baseName}-ai'
+var caeName = '${baseName}-cae'
+var appName = '${baseName}-app'
+
+var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
+var kvSecretsOfficerRoleId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+
+// --- User-Assigned Managed Identity ---
+
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: uamiName
+  location: location
+}
+
+// --- Key Vault (RBAC, purge protection, 90-day soft-delete) ---
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: kvName
+  location: location
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
+    enablePurgeProtection: true
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource uamiKvAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: keyVault
+  name: guid(keyVault.id, uami.id, kvSecretsUserRoleId)
+  properties: {
+    principalId: uami.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      kvSecretsUserRoleId
+    )
+  }
+}
+
+resource kvAdmins 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for oid in kvAdminObjectIds: {
+    scope: keyVault
+    name: guid(keyVault.id, oid, kvSecretsOfficerRoleId)
+    properties: {
+      principalId: oid
+      principalType: 'User'
+      roleDefinitionId: subscriptionResourceId(
+        'Microsoft.Authorization/roleDefinitions',
+        kvSecretsOfficerRoleId
+      )
+    }
+  }
+]
+
+// --- Log Analytics + Application Insights ---
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: 'law-mcp-admin'
+  name: lawName
   location: location
   properties: {
     sku: {
       name: 'PerGB2018'
     }
-    retentionInDays: 30
+    retentionInDays: logRetentionDays
   }
 }
 
-// --- Application Insights ---
-
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'ai-mcp-admin'
+  name: appInsightsName
   location: location
   kind: 'web'
   properties: {
@@ -47,7 +125,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 // --- Container App Environment ---
 
 resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
-  name: 'cae-mcp-admin'
+  name: caeName
   location: location
   properties: {
     appLogsConfiguration: {
@@ -63,11 +141,17 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
 // --- Container App ---
 
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
-  name: 'ca-mcp-admin'
+  name: appName
   location: location
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${uami.id}': {}
+    }
   }
+  dependsOn: [
+    uamiKvAccess
+  ]
   properties: {
     managedEnvironmentId: containerAppEnv.id
     configuration: {
@@ -76,11 +160,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         targetPort: 8080
         transport: 'http'
       }
-      secrets: [
-        { name: 'client-id', value: clientId }
-        { name: 'client-secret', value: clientSecret }
-        { name: 'tenant-id', value: tenantId }
-      ]
     }
     template: {
       containers: [
@@ -92,25 +171,30 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: '1Gi'
           }
           env: [
-            { name: 'MS365_ADMIN_MCP_CLIENT_ID', secretRef: 'client-id' }
-            { name: 'MS365_ADMIN_MCP_CLIENT_SECRET', secretRef: 'client-secret' }
-            { name: 'MS365_ADMIN_MCP_TENANT_ID', secretRef: 'tenant-id' }
-            { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+            {
+              name: 'MS365_ADMIN_MCP_KEYVAULT_URL'
+              value: keyVault.properties.vaultUri
+            }
+            {
+              name: 'AZURE_CLIENT_ID'
+              value: uami.properties.clientId
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: appInsights.properties.ConnectionString
+            }
           ]
         }
       ]
       scale: {
-        minReplicas: 0
-        maxReplicas: 3
+        minReplicas: minReplicas
+        maxReplicas: maxReplicas
       }
     }
   }
 }
 
-// TODO: Add role assignments for the system-assigned managed identity
-// - Microsoft Graph API permissions cannot be assigned via Bicep directly
-// - Use a post-deployment script with az ad app permission grant
-// - Or use Azure CLI: az role assignment create --assignee <principalId> ...
-
 output containerAppUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
-output principalId string = containerApp.identity.principalId
+output keyVaultName string = keyVault.name
+output uamiPrincipalId string = uami.properties.principalId
+output uamiClientId string = uami.properties.clientId
