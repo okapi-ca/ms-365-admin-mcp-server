@@ -8,6 +8,32 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-19
+
+Adds OAuth 2.0 proxy support to the HTTP transport so Claude Desktop, Claude Code, and Claude.ai Web remote MCP connectors can authenticate users through Entra ID without any client-side configuration beyond the server URL.
+
+### Added
+
+- `--oauth-mode` flag enables Entra-backed OAuth 2.0 + PKCE proxy endpoints on the HTTP transport:
+  - `GET /.well-known/oauth-authorization-server` and `GET /.well-known/oauth-protected-resource` metadata
+  - `POST /register` Dynamic Client Registration (stub returning a synthesized `client_id`)
+  - `GET /authorize` 302 to Entra's authorize endpoint, with a two-leg PKCE bridge so the client's `code_challenge` never has to survive the round trip
+  - `POST /token` exchanges `authorization_code` / `refresh_token` grants against Entra using the server-side verifier
+- `--public-url` sets the issuer URL advertised in OAuth metadata (required behind a reverse proxy)
+- `--authorized-users` is a comma-separated allowlist of Entra user `oid` claims; users outside the list get `403`
+- `--no-dynamic-registration` opt-out for the DCR endpoint
+- User-token validation (`src/user-token-validator.ts`) checks signature, issuer, tenant, audience, and the `oid` allowlist
+- Bicep: new `oauthMode`, `authorizedUsers`, `publicUrl` parameters; `allowedClients` is now optional
+
+### Changed
+
+- `--allowed-clients` is no longer mandatory — HTTP transport now requires `--allowed-clients` or `--oauth-mode` (or both)
+- `/mcp` auth middleware tries user-token validation first (if `--oauth-mode`), then service-token validation (if `--allowed-clients`), returning `403` only if both fail
+
+### Security
+
+- User tokens are used only as an authN gate — Graph calls still run with the server's application credentials, so an authenticated user does not gain access to anything beyond the server's granted roles
+
 ## [0.1.2] — 2026-04-19
 
 First release that actually boots on Azure Container Apps end-to-end. The `0.1.0` Docker image crashed at startup because `src/generated/client.ts` was not generated in the builder stage. `0.1.1` was skipped on npm (version not bumped).
@@ -96,6 +122,7 @@ Initial public release. **515 tools** covering Microsoft 365 admin operations vi
 
 ---
 
-[Unreleased]: https://github.com/okapi-ca/ms-365-admin-mcp-server/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/okapi-ca/ms-365-admin-mcp-server/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/okapi-ca/ms-365-admin-mcp-server/releases/tag/v0.2.0
 [0.1.2]: https://github.com/okapi-ca/ms-365-admin-mcp-server/releases/tag/v0.1.2
 [0.1.0]: https://github.com/okapi-ca/ms-365-admin-mcp-server/releases/tag/v0.1.0
