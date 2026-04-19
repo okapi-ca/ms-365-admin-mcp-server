@@ -35,6 +35,15 @@ param minReplicas int = 0
 @minValue(1)
 param maxReplicas int = 3
 
+@description('Tags applied to every resource (must satisfy org tag policies)')
+param tags object = {}
+
+@description('Comma-separated Entra app IDs allowed to call the MCP server (required for HTTP transport)')
+param allowedClients string
+
+@description('Optional Azure Container Registry login server (e.g., myacr.azurecr.io). Leave empty for public images (ghcr, mcr).')
+param acrLoginServer string = ''
+
 var uamiName = '${baseName}-uami'
 var kvName = take('${replace(baseName, '-', '')}kv${uniqueString(resourceGroup().id)}', 24)
 var lawName = '${baseName}-law'
@@ -50,6 +59,7 @@ var kvSecretsOfficerRoleId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: uamiName
   location: location
+  tags: tags
 }
 
 // --- Key Vault (RBAC, purge protection, 90-day soft-delete) ---
@@ -57,6 +67,7 @@ resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: kvName
   location: location
+  tags: tags
   properties: {
     sku: {
       family: 'A'
@@ -104,6 +115,7 @@ resource kvAdmins 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: lawName
   location: location
+  tags: tags
   properties: {
     sku: {
       name: 'PerGB2018'
@@ -115,6 +127,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
+  tags: tags
   kind: 'web'
   properties: {
     Application_Type: 'web'
@@ -127,6 +140,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: caeName
   location: location
+  tags: tags
   properties: {
     appLogsConfiguration: {
       destination: 'log-analytics'
@@ -143,6 +157,7 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: appName
   location: location
+  tags: tags
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -160,12 +175,32 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         targetPort: 8080
         transport: 'http'
       }
+      registries: empty(acrLoginServer) ? [] : [
+        {
+          server: acrLoginServer
+          identity: uami.id
+        }
+      ]
     }
     template: {
       containers: [
         {
           name: 'mcp-admin'
           image: containerImage
+          command: [
+            'node'
+            'dist/index.js'
+          ]
+          args: [
+            '--transport'
+            'http'
+            '--port'
+            '8080'
+            '--host'
+            '0.0.0.0'
+            '--allowed-clients'
+            allowedClients
+          ]
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -178,6 +213,10 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'AZURE_CLIENT_ID'
               value: uami.properties.clientId
+            }
+            {
+              name: 'MS365_ADMIN_MCP_LOG_DIR'
+              value: '/tmp/ms365-admin-mcp/logs'
             }
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
