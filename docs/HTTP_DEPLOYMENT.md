@@ -212,14 +212,14 @@ az containerapp update -n <app> -g <rg> --min-replicas 1 --max-replicas 5
 
 ## Estimated cost (Canada East, 2026)
 
-| Resource         | Config                      | Monthly (idle)                    |
-| ---------------- | --------------------------- | --------------------------------- |
+| Resource         | Config                      | Monthly (idle)                      |
+| ---------------- | --------------------------- | ----------------------------------- |
 | Container App    | Consumption, scale 0–3      | ~0 $ scale-to-zero · ~15–25 $ min=1 |
-| Log Analytics    | 30-day retention            | ~2–5 $ depending on log volume    |
-| Key Vault        | Standard, low op volume     | <1 $                              |
-| Managed Identity | UAMI                        | free                              |
-| **Total**        | **scale-to-zero (default)** | **~3–6 $ / month**                |
-| **Total**        | **min=1 replica**           | **~20–30 $ / month**              |
+| Log Analytics    | 30-day retention            | ~2–5 $ depending on log volume      |
+| Key Vault        | Standard, low op volume     | <1 $                                |
+| Managed Identity | UAMI                        | free                                |
+| **Total**        | **scale-to-zero (default)** | **~3–6 $ / month**                  |
+| **Total**        | **min=1 replica**           | **~20–30 $ / month**                |
 
 Scale-to-zero produces a cold start of ~2–5 s on the first request after inactivity.
 Set `minReplicas=1` in the Bicep parameters if you cannot tolerate this latency.
