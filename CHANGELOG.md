@@ -8,6 +8,22 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-04-19
+
+First release that actually boots on Azure Container Apps end-to-end. The `0.1.0` Docker image crashed at startup because `src/generated/client.ts` was not generated in the builder stage. `0.1.1` was skipped on npm (version not bumped).
+
+### Fixed
+
+- Docker builder now runs `npm run generate` before `npm run build`, so the published image has the client bundle it needs at runtime (#34)
+- Container entrypoint split into `command` + `args` in the reference Bicep, so `node` receives `dist/index.js` instead of treating `--transport` as its own flag (#34)
+- Winston logger now uses `MS365_ADMIN_MCP_LOG_DIR=/tmp/...` by default in the Bicep template, avoiding `EACCES` against `/nonexistent/.ms365-admin-mcp/logs` when the image runs as a rootless user without a home directory (#34)
+
+### Added
+
+- `allowedClients` Bicep parameter (required; HTTP mode refuses to start without it) (#34)
+- `tags` Bicep parameter propagated to every resource, required by org-level AppMapping/CapMapping tag policies (#34)
+- `acrLoginServer` Bicep parameter + `registries` block using the UAMI for AcrPull, to support pulling from a private Azure Container Registry (#34)
+
 ## [0.1.0] — 2026-04-17
 
 Initial public release. **515 tools** covering Microsoft 365 admin operations via Graph API application permissions.
@@ -80,5 +96,6 @@ Initial public release. **515 tools** covering Microsoft 365 admin operations vi
 
 ---
 
-[Unreleased]: https://github.com/okapi-ca/ms-365-admin-mcp-server/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/okapi-ca/ms-365-admin-mcp-server/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/okapi-ca/ms-365-admin-mcp-server/releases/tag/v0.1.2
 [0.1.0]: https://github.com/okapi-ca/ms-365-admin-mcp-server/releases/tag/v0.1.0
