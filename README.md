@@ -1198,22 +1198,26 @@ docker run -p 8080:8080 \
 
 ### Azure Container Apps
 
-A Bicep skeleton is provided in `infra/main.bicep`. It deploys:
+A Bicep template is provided in `infra/main.bicep`. It deploys:
 
-- Log Analytics workspace
-- Application Insights
+- User-Assigned Managed Identity (UAMI)
+- Key Vault (RBAC, purge protection, 90-day soft-delete)
+- Log Analytics workspace + Application Insights
 - Container App Environment
-- Container App with system-assigned managed identity
+- Container App using the UAMI, with `MS365_ADMIN_MCP_KEYVAULT_URL` wired to the vault
 
 ```bash
+MY_OID=$(az ad signed-in-user show --query id -o tsv)
+
 az deployment group create \
   --resource-group rg-mcp-admin \
   --template-file infra/main.bicep \
-  --parameters containerImage=your-acr.azurecr.io/ms365-admin-mcp:latest \
-               tenantId=your-tenant-id \
-               clientId=your-client-id \
-               clientSecret=your-client-secret
+  --parameters baseName=ms365mcpprod \
+               containerImage=your-acr.azurecr.io/ms365-admin-mcp:latest \
+               kvAdminObjectIds="['$MY_OID']"
 ```
+
+Seed the vault with `ms365-admin-mcp-{client-id,tenant-id,client-secret}` after deploy — see [docs/HTTP_DEPLOYMENT.md](docs/HTTP_DEPLOYMENT.md#seed-key-vault-secrets).
 
 ## Development
 
