@@ -12,7 +12,7 @@ Any of the following typically opens this playbook:
 
 - A user appears in `list-risky-users` with `riskLevel = high`.
 - A security alert or incident (Microsoft 365 Defender / Identity Protection) targets a user identity.
-- A sign-in flagged *impossible travel*, *atypical location*, or *anonymous IP*.
+- A sign-in flagged _impossible travel_, _atypical location_, or _anonymous IP_.
 - A user self-reports a phishing click or a stolen credential.
 
 ---
@@ -52,13 +52,13 @@ Never run the containment phase against a break-glass account. Confirm the targe
 
 Goal: confirm the compromise, reconstruct the attacker's timeline, and measure the blast radius.
 
-| # | Objective | MCP tool(s) | Notes |
-|---|---|---|---|
-| 1 | Confirm the subject and baseline context | `get-user`, `get-risky-user` | Display name, UPN, job title, last interactive sign-in, current risk state. |
-| 2 | Reconstruct the sign-in timeline | `list-sign-ins` | Filter on `userId` and the last 24–72 h. Extract IP, location, client app, conditional access result, risk level per sign-in. |
-| 3 | Correlate with Identity Protection detections | `list-risk-detections`, `list-risky-user-history` | Maps detections (e.g. *malwareInfectedIPAddress*, *unfamiliarFeatures*) to sign-ins from step 2. |
-| 4 | Measure blast radius — what did the attacker do? | `list-directory-audits` | Filter `initiatedBy.user.id = <userId>`. Look for new OAuth consents, new role assignments, password resets, mail rules, group memberships, application registrations. |
-| 5 | Detect MFA persistence added by the attacker | `list-user-auth-methods` | A phone or authenticator app registered during the compromise window is a classic persistence mechanism. |
+| #   | Objective                                        | MCP tool(s)                                       | Notes                                                                                                                                                                  |
+| --- | ------------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Confirm the subject and baseline context         | `get-user`, `get-risky-user`                      | Display name, UPN, job title, last interactive sign-in, current risk state.                                                                                            |
+| 2   | Reconstruct the sign-in timeline                 | `list-sign-ins`                                   | Filter on `userId` and the last 24–72 h. Extract IP, location, client app, conditional access result, risk level per sign-in.                                          |
+| 3   | Correlate with Identity Protection detections    | `list-risk-detections`, `list-risky-user-history` | Maps detections (e.g. _malwareInfectedIPAddress_, _unfamiliarFeatures_) to sign-ins from step 2.                                                                       |
+| 4   | Measure blast radius — what did the attacker do? | `list-directory-audits`                           | Filter `initiatedBy.user.id = <userId>`. Look for new OAuth consents, new role assignments, password resets, mail rules, group memberships, application registrations. |
+| 5   | Detect MFA persistence added by the attacker     | `list-user-auth-methods`                          | A phone or authenticator app registered during the compromise window is a classic persistence mechanism.                                                               |
 
 ### Sample investigation prompt
 
@@ -72,12 +72,12 @@ Goal: kill active access, remove attacker persistence, and feed the Identity Pro
 
 > Always run every write in dry-run first: have the LLM list the target entity and the exact operation, wait for operator confirmation, then execute.
 
-| # | Action | MCP tool | Risk | Effect |
-|---|---|---|---|---|
-| 6 | Revoke all active sessions (refresh tokens) | `revoke-user-sessions` | **high** | Forces re-authentication on every client within minutes. |
-| 7 | Disable the account if severity warrants it | `disable-user-account` | **critical** | Blocks all sign-ins. Use when the user can be reached through an alternate channel. |
-| 8 | Remove attacker-added phone MFA | `delete-user-phone-auth-method` | **high** | Removes the rogue phone. Repeat with other `delete-user-*-auth-method` tools if authenticator or FIDO was added. |
-| 9 | Confirm compromised in Identity Protection | `confirm-compromised-users` | **high** | Marks `riskState = confirmedCompromised`. Feeds the ML model and triggers dependent Conditional Access policies. |
+| #   | Action                                      | MCP tool                        | Risk         | Effect                                                                                                           |
+| --- | ------------------------------------------- | ------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| 6   | Revoke all active sessions (refresh tokens) | `revoke-user-sessions`          | **high**     | Forces re-authentication on every client within minutes.                                                         |
+| 7   | Disable the account if severity warrants it | `disable-user-account`          | **critical** | Blocks all sign-ins. Use when the user can be reached through an alternate channel.                              |
+| 8   | Remove attacker-added phone MFA             | `delete-user-phone-auth-method` | **high**     | Removes the rogue phone. Repeat with other `delete-user-*-auth-method` tools if authenticator or FIDO was added. |
+| 9   | Confirm compromised in Identity Protection  | `confirm-compromised-users`     | **high**     | Marks `riskState = confirmedCompromised`. Feeds the ML model and triggers dependent Conditional Access policies. |
 
 ### Sample containment prompt
 
@@ -89,11 +89,11 @@ Goal: kill active access, remove attacker persistence, and feed the Identity Pro
 
 Goal: record the response on the incident/alert, and produce a traceability report proving every action taken.
 
-| # | Action | MCP tool | Notes |
-|---|---|---|---|
-| 10 | Update the security incident | `update-security-incident` | Status (e.g. `active` → `inProgress`), classification, assignee. |
-| 11 | Leave a narrative trail on the alert | `add-security-alert-comment` | Short chronology referencing the audit window. |
-| 12 | Generate the post-incident audit report | `list-directory-audits` | Filter on the operator service principal / delegated user, over the response window. Every write from Phase 2 appears there — the loop closes. |
+| #   | Action                                  | MCP tool                     | Notes                                                                                                                                          |
+| --- | --------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10  | Update the security incident            | `update-security-incident`   | Status (e.g. `active` → `inProgress`), classification, assignee.                                                                               |
+| 11  | Leave a narrative trail on the alert    | `add-security-alert-comment` | Short chronology referencing the audit window.                                                                                                 |
+| 12  | Generate the post-incident audit report | `list-directory-audits`      | Filter on the operator service principal / delegated user, over the response window. Every write from Phase 2 appears there — the loop closes. |
 
 ### Sample documentation prompt
 
@@ -126,7 +126,7 @@ Use this when demoing the end-to-end flow in one shot. The LLM will chain all th
 
 ## Related playbooks
 
-- Phishing campaign (tenant-wide) — *draft*
-- OAuth illicit consent — *draft*
+- Phishing campaign (tenant-wide) — _draft_
+- OAuth illicit consent — _draft_
 
 See [USE_CASES.md](../USE_CASES.md) for the broader catalogue of scenarios.
