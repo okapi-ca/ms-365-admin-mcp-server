@@ -12,6 +12,8 @@ Each use case includes:
 
 > Read-only is the default. Write operations require `--allow-writes` and are annotated with a risk level (`low`, `medium`, `high`, `critical`).
 
+> For end-to-end security incident response scenarios with multi-phase procedures, see the [playbooks](playbooks/README.md) catalogue.
+
 ---
 
 ## 1. Daily security monitoring
