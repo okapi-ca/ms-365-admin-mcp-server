@@ -14,14 +14,18 @@ Tool counts in parentheses indicate the cumulative total after the change.
 - **SEC-F02 (breaking)** — `--public-url` is now mandatory when `--oauth-mode` is enabled, validated at startup and again at OAuth-route registration. The header-derived fallback (X-Forwarded-Proto / Host) in `resolveIssuer` and `resourceMetadataUrl` has been removed; the advertised OAuth issuer is deterministic and immune to metadata poisoning via request headers.
 - **SEC-F03** — User tokens must now contain every scope listed in `--required-user-scopes` (default `access_as_user`) in their `scp` claim. Pass `--required-user-scopes ""` to restore the previous no-scope-check behaviour.
 - **SEC-F04 (partial)** — `/token` is now rate-limited at 10 req/min per IP, bounding brute-force throughput against stolen refresh tokens. The architectural residual (single stolen refresh token is still redeemable) is tracked as SEC-F04b for a proof-of-possession follow-up.
+- **SEC-F05 (mitigated)** — [infra/main.bicep](infra/main.bicep) now defaults `maxReplicas = 1` because the PKCE bridge is in-memory per process. Operators scaling beyond one replica must explicitly override the parameter — and should first externalise the bridge. Architectural externalisation tracked as a follow-up under the same SEC-F05 ID.
 - **SEC-F06** — OAuth routes (`/authorize`, `/token`, `/register`) now have dedicated rate limiters: 30 req/min on `/authorize`, 10 req/min on `/token` and `/register`. Previously only `/mcp` was rate-limited.
-- Extracted the post-verification authorization logic into `authorizeUserClaims` and added 16 unit tests covering tenant, audience, oid allowlist, and scope enforcement paths.
+- **SEC-F07** — `/token` upstream error logging extracted into `src/upstream-error.ts`. Only the RFC 6749 fields `error`, `error_description` (clipped, whitespace-normalised), and the Microsoft `error_codes` numeric array (first 5) are logged; non-JSON bodies log `<unparseable N bytes>` and JSON without recognised fields logs a sentinel. Raw correlation IDs and trace fragments no longer leak into logs.
+- **SEC-F08** — Token validators now serve the stale cached JWKS key on fetch failure instead of failing outright. In-library cache TTL bumped from 10 minutes to 24 hours; a new pure module `src/jwks-stale-cache.ts` keeps a per-tenant `Map<kid, PEM>` of previously-fetched keys and falls back to it only when Entra is unreachable. Unknown `kid`s still fail closed.
+- Extracted the post-verification authorization logic into `authorizeUserClaims` and added 28 unit tests across `authorizeUserClaims`, `withStaleKeyFallback`, and `summarizeUpstreamError`.
 
 ### Migration
 
 - Deployments relying on the implicit "any authenticated user" behaviour must add `--allow-any-tenant-user` to their startup command (and review whether that is actually intended).
 - Deployments running `--oauth-mode` without `--public-url` must add `--public-url https://<fqdn>`. This was already documented as "required when behind a reverse proxy"; it is now strictly required.
 - Deployments whose Entra app registration does not expose the `access_as_user` scope — or whose callers request a different scope — must pass `--required-user-scopes <their-scopes>` or `--required-user-scopes ""`.
+- Bicep deployments that previously relied on `maxReplicas = 3` default now scale to a single replica by default. Multi-replica deployments must explicitly set `maxReplicas` and should externalise the PKCE bridge first (follow-up work tracked under SEC-F05).
 
 ## [0.2.4] — 2026-04-20
 

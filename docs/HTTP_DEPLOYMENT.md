@@ -157,6 +157,11 @@ The server does not terminate TLS or add caller allowlisting beyond JWT. You mus
 2. **Restrict network exposure** — bind the server to loopback or a private network, front it with the proxy.
 3. **Forward `X-Forwarded-For`** so rate limits attribute correctly.
 4. **Monitor logs** — all auth failures are logged at `warn`/`error` levels.
+5. **Keep OAuth mode on a single replica (SEC-F05)** — the PKCE bridge between `/authorize` and `/token` lives in process memory. The shipped Bicep template defaults `maxReplicas = 1`; if you scale up, externalise the bridge first (Redis / Azure Table) or the OAuth flow will fail intermittently.
+
+### JWKS resilience (SEC-F08)
+
+The server caches Entra signing keys for 24 hours and keeps a per-tenant stale-key map. If Microsoft's JWKS endpoint is temporarily unreachable, previously-validated `kid`s continue to verify tokens (with a `warn`-level log entry) instead of the server returning `403` on every request. Unknown `kid`s still fail closed.
 
 ## Docker
 

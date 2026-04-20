@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { Express, Request, Response } from 'express';
 import logger from './logger.js';
+import { summarizeUpstreamError } from './upstream-error.js';
 
 export interface OAuthProxyOptions {
   // SEC-F02: must be a non-empty absolute URL. The proxy advertises this as the
@@ -224,8 +225,9 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       });
       const payload = await upstream.text();
       if (upstream.status >= 400) {
+        // SEC-F07: scrub upstream error — log only parsed OAuth-standard fields.
         logger.warn(
-          `Entra /token returned ${upstream.status} for grant_type=${grantType}: ${payload.slice(0, 500)}`
+          `Entra /token returned ${upstream.status} for grant_type=${grantType}: ${summarizeUpstreamError(payload)}`
         );
       } else {
         logger.info(`Entra /token exchange ok (grant_type=${grantType})`);
