@@ -28,17 +28,16 @@ class AdminGraphServer {
     this.version = version;
     this.graphClient = new GraphClient(this.authManager, this.secrets);
 
-    this.server = new McpServer({
+    this.server = this.createServer();
+  }
+
+  private createServer(): McpServer {
+    const server = new McpServer({
       name: 'Microsoft365AdminMCP',
       version: this.version,
     });
-
-    registerGraphTools(
-      this.server,
-      this.graphClient,
-      this.options.readOnly,
-      this.options.enabledTools
-    );
+    registerGraphTools(server, this.graphClient!, this.options.readOnly, this.options.enabledTools);
+    return server;
   }
 
   async start(): Promise<void> {
@@ -109,7 +108,7 @@ class AdminGraphServer {
       await startHttpServer({
         port,
         host: this.options.host || '127.0.0.1',
-        server: this.server!,
+        createServer: () => this.createServer(),
         tokenValidatorOptions,
         userTokenValidatorOptions,
         oauthProxyOptions,

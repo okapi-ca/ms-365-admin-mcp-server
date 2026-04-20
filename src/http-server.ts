@@ -11,7 +11,7 @@ import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
 export interface HttpServerOptions {
   port: number;
   host?: string;
-  server: McpServer;
+  createServer: () => McpServer;
   tokenValidatorOptions?: TokenValidatorOptions;
   userTokenValidatorOptions?: UserTokenValidatorOptions;
   oauthProxyOptions?: OAuthProxyOptions;
@@ -119,9 +119,14 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   });
 
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
+    const server = options.createServer();
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    res.on('close', () => {
+      void transport.close().catch(() => {});
+      void server.close().catch(() => {});
+    });
     try {
-      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-      await options.server.connect(transport);
+      await server.connect(transport);
       await transport.handleRequest(req, res, req.body);
     } catch (error) {
       logger.error(`MCP request error: ${(error as Error).message}`);
