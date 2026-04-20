@@ -25,9 +25,11 @@ async function main(): Promise<void> {
 
     if (args.listTools) {
       const readOnly = args.readOnly || false;
+      const maxRiskLevel = args.maxRiskLevel ?? 'critical';
       const { readFileSync } = await import('fs');
       const { fileURLToPath } = await import('url');
       const path = await import('path');
+      const { isToolAllowed } = await import('./risk-level.js');
       const __dirname = path.dirname(fileURLToPath(import.meta.url));
       const endpoints = JSON.parse(
         readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
@@ -36,6 +38,7 @@ async function main(): Promise<void> {
         method: string;
         pathPattern: string;
         appPermissions?: string[];
+        riskLevel?: 'low' | 'medium' | 'high' | 'critical';
       }>;
 
       let enabledToolsRegex: RegExp | undefined;
@@ -45,15 +48,17 @@ async function main(): Promise<void> {
 
       const tools = endpoints
         .filter((e) => !readOnly || e.method.toUpperCase() === 'GET')
+        .filter((e) => isToolAllowed(e.riskLevel, e.method, maxRiskLevel))
         .filter((e) => !enabledToolsRegex || enabledToolsRegex.test(e.toolName))
         .map((e) => ({
           name: e.toolName,
           method: e.method.toUpperCase(),
           path: e.pathPattern,
+          riskLevel: e.riskLevel,
           permissions: e.appPermissions || [],
         }));
 
-      console.log(JSON.stringify({ count: tools.length, tools }, null, 2));
+      console.log(JSON.stringify({ count: tools.length, maxRiskLevel, tools }, null, 2));
       process.exit(0);
     }
 

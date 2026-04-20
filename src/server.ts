@@ -36,7 +36,13 @@ class AdminGraphServer {
       name: 'Microsoft365AdminMCP',
       version: this.version,
     });
-    registerGraphTools(server, this.graphClient!, this.options.readOnly, this.options.enabledTools);
+    registerGraphTools(
+      server,
+      this.graphClient!,
+      this.options.readOnly,
+      this.options.enabledTools,
+      this.options.maxRiskLevel
+    );
     return server;
   }
 

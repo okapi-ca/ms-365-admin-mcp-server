@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { wrapUntrustedContent } from './untrusted-envelope.js';
+import { isToolAllowed, type RiskLevel } from './risk-level.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -218,10 +219,12 @@ export function registerGraphTools(
   server: McpServer,
   graphClient: GraphClient,
   readOnly: boolean = false,
-  enabledToolsPattern?: string
+  enabledToolsPattern?: string,
+  maxRiskLevel: RiskLevel = 'critical'
 ): number {
   let registeredCount = 0;
   let skippedCount = 0;
+  let skippedByRisk = 0;
   let failedCount = 0;
 
   let enabledToolsRegex: RegExp | undefined;
@@ -238,6 +241,13 @@ export function registerGraphTools(
 
     if (readOnly && tool.method.toUpperCase() !== 'GET') {
       skippedCount++;
+      continue;
+    }
+
+    // SEC-G01: cap tool registration by risk level. Applies to both reads and writes.
+    // Sensitive-read GETs annotated with a riskLevel (SEC-G03) are also filtered here.
+    if (!isToolAllowed(endpointConfig?.riskLevel, tool.method, maxRiskLevel)) {
+      skippedByRisk++;
       continue;
     }
 
@@ -300,13 +310,27 @@ export function registerGraphTools(
       toolDescription += `\n\nTIP: ${endpointConfig.llmTip}`;
     }
     if (endpointConfig?.riskLevel) {
-      toolDescription += `\n\nRISK LEVEL: ${endpointConfig.riskLevel.toUpperCase()}. ${
-        endpointConfig.riskLevel === 'critical'
-          ? 'This action is irreversible or has major security impact. Always confirm with the operator before executing.'
-          : endpointConfig.riskLevel === 'high'
-            ? 'This action has significant impact. Verify the target carefully before executing.'
-            : ''
-      }`;
+      // SEC-G03: read-operation risk copy differs from write-operation copy.
+      const isWrite = tool.method.toUpperCase() !== 'GET';
+      let riskCopy = '';
+      if (isWrite) {
+        if (endpointConfig.riskLevel === 'critical') {
+          riskCopy =
+            'This action is irreversible or has major security impact. Always confirm with the operator before executing.';
+        } else if (endpointConfig.riskLevel === 'high') {
+          riskCopy =
+            'This action has significant impact. Verify the target carefully before executing.';
+        }
+      } else {
+        if (endpointConfig.riskLevel === 'high') {
+          riskCopy =
+            'This response contains secrets or highly sensitive data (e.g. recovery keys, LAPS passwords, legal-hold material). Do not echo verbatim; confirm with the operator before sharing.';
+        } else if (endpointConfig.riskLevel === 'medium') {
+          riskCopy =
+            'This response contains PII or authentication metadata (sign-ins, MFA factors, mail metadata, risk detections). Handle with care and avoid casual disclosure.';
+        }
+      }
+      toolDescription += `\n\nRISK LEVEL: ${endpointConfig.riskLevel.toUpperCase()}. ${riskCopy}`;
     }
 
     try {
@@ -330,7 +354,7 @@ export function registerGraphTools(
   }
 
   logger.info(
-    `Tool registration complete: ${registeredCount} registered, ${skippedCount} skipped, ${failedCount} failed`
+    `Tool registration complete: ${registeredCount} registered, ${skippedCount} skipped (read-only/filter), ${skippedByRisk} skipped (risk-level cap: ${maxRiskLevel}), ${failedCount} failed`
   );
   return registeredCount;
 }

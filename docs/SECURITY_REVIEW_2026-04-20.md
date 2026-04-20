@@ -152,11 +152,11 @@ The P2 findings are therefore about _granularity_ of gating (coarse write flag),
 ### SEC-G01 — `--allow-writes` is binary and too coarse
 
 - **Severity:** Medium
-- **Status:** Open
-- **Location:** [src/graph-tools.ts:232](../src/graph-tools.ts), [src/cli.ts:21](../src/cli.ts).
-- **Description:** The single boolean flag gates everything from `low` read-in-practice operations (`run-hunting-query`, Intune POST reports) to `critical` irreversible actions (`wipe-managed-device`, `delete-user-account`). An operator who legitimately needs the former must also expose the latter.
-- **Attack scenario:** No direct exploit. Operational consequence: over-broad enablement of risky tools to unlock benign ones, which increases the blast radius of any other vulnerability (e.g. SEC-G02 prompt injection or a stolen user session).
-- **Remediation (proposed):** Replace the binary flag with `--max-risk-level <low|medium|high|critical>` (or `--allow-risk-levels low,medium`). Registration filters on `riskLevel <= max`. Default `critical` preserves current `--allow-writes` semantics; new deployments pick their ceiling. Requires that `run-hunting-query` and the Intune POST-but-read-only tools be re-classified as `low` (they already are, so the fix is mostly mechanical).
+- **Status:** Fixed — sprint 5
+- **Location:** [src/risk-level.ts](../src/risk-level.ts), [src/graph-tools.ts](../src/graph-tools.ts), [src/cli.ts](../src/cli.ts).
+- **Description:** The single boolean flag gated everything from `low` read-in-practice operations (`run-hunting-query`, Intune POST reports) to `critical` irreversible actions (`wipe-managed-device`, `delete-user-account`). An operator who legitimately needed the former also had to expose the latter, inflating the blast radius of any other vulnerability.
+- **Remediation:** New pure module `src/risk-level.ts` with a four-step rank (`low < medium < high < critical`). CLI flag `--max-risk-level <level>` caps the level that gets registered, applies to both reads and writes, and implies `--allow-writes`. Default is `critical` (no cap) so backwards compat is preserved. Unannotated writes are fail-safe defaulted to `critical` (any future endpoint missing an annotation is hidden under non-critical caps). 15 unit tests in [test/risk-level.test.ts](../test/risk-level.test.ts) cover ordering, parsing, validation, and the gate for all method × annotation combinations.
+- **Operator benefit:** `--max-risk-level medium` now gives an LLM session that can triage alerts, update comments, and run hunting queries, without the ability to wipe devices or delete accounts.
 
 ### SEC-G02 — Prompt injection via Graph response content
 
@@ -174,11 +174,16 @@ The P2 findings are therefore about _granularity_ of gating (coarse write flag),
 ### SEC-G03 — No risk classification on sensitive-read GETs
 
 - **Severity:** Low
-- **Status:** Open
-- **Location:** [src/endpoints.json](../src/endpoints.json) — 328/329 GET endpoints have no `riskLevel`.
-- **Description:** Several GET endpoints return highly sensitive material: `list-bitlocker-recovery-keys` (BitLocker recovery passwords), `list-device-local-credentials` (LAPS local-admin passwords), `list-user-auth-methods` (MFA factors, phone numbers), `get-mail-message`, `get-meeting-transcript*`, `get-meeting-recording*`. None carry a `riskLevel`, so the LLM has no signal that the output contains secrets and should not be echoed verbatim.
-- **Attack scenario:** No direct attacker. Operational risk: operator pastes transcript output into a chat log, or the LLM surfaces a BitLocker key in a casual summary.
-- **Remediation (proposed):** Annotate the ~30 sensitive-read endpoints as `medium` or `high` with `llmTip` strings that instruct the LLM to avoid verbatim echo. Adapts the existing tool-description builder in [graph-tools.ts:296](../src/graph-tools.ts) to emit a tailored preamble for reads ("This response contains secrets/PII — confirm before echoing").
+- **Status:** Fixed — sprint 5
+- **Location:** [src/endpoints.json](../src/endpoints.json), [src/graph-tools.ts](../src/graph-tools.ts).
+- **Description:** 328 of 329 GET endpoints previously had no `riskLevel`. Several returned highly sensitive material (BitLocker recovery keys, LAPS passwords, MFA factors, legal-hold custodians) with no signal to the LLM that verbatim echo was inappropriate.
+- **Remediation:** 22 GETs annotated in `endpoints.json`:
+  - **High** (7): `list-bitlocker-recovery-keys`, `list-device-local-credentials`, `list-ediscovery-cases`, `get-ediscovery-case`, `list-ediscovery-custodians`, `list-ediscovery-searches`, `list-subject-rights-requests`.
+  - **Medium** (15): `list-user-auth-methods`, `list-user-registration-details`, `list-risky-users`/`get-risky-user`/`list-risky-user-history`, `list-risky-service-principals`/`get-risky-service-principal`, `list-risk-detections`/`get-risk-detection`, `list-service-principal-risk-detections`, `list-sign-ins`, `list-message-traces`/`get-message-trace`, `list-app-federated-credentials`/`get-app-federated-credential`.
+
+  The tool-description builder in `graph-tools.ts` now emits read-specific risk copy: `high` reads warn about secrets and legal-hold material; `medium` reads warn about PII/MFA/identity-protection data. Writes keep the existing copy. These annotations also feed the SEC-G01 cap — `--max-risk-level medium` transparently excludes BitLocker and LAPS from the tool list.
+
+- **Remaining GETs:** 306 unannotated GETs default to `low` via `effectiveRiskLevel`. Future contributors should annotate any new endpoint that surfaces secrets, auth material, or content that needs operator review before disclosure.
 
 ### SEC-G04 — Path-parameter `skipEncoding` uses a denylist regex
 
@@ -223,7 +228,7 @@ No remediation required — recorded so future reviews do not re-litigate alread
 | 2 — PR #46 | SEC-F02 (fixed), SEC-F06 (fixed), SEC-F04 (partial: rate-limited + documented)         | Harden the public OAuth proxy surface before broader exposure.                                           |
 | 3 — PR #47 | SEC-F07 (fixed), SEC-F08 (fixed), SEC-F05 (mitigated via single-replica Bicep default) | Log hygiene, availability robustness, multi-replica guardrail.                                           |
 | 4 — PR #48 | SEC-G02 (fixed)                                                                        | Output-side prompt-injection defence — the only P2 finding exploitable remotely.                         |
-| 5 — tbd    | SEC-G01 (granular writes), SEC-G03 (sensitive-read classification)                     | Tool-gating ergonomics + secret-echo hints to the LLM.                                                   |
+| 5 — PR #49 | SEC-G01 (fixed), SEC-G03 (fixed)                                                       | Granular write cap + sensitive-read risk annotations feeding the cap.                                    |
 | Follow-ups | SEC-F04b (refresh-token PoP), SEC-F05 architectural (externalise PKCE bridge)          | Architectural work — larger PRs with new runtime dependencies. Track separately when scheduling arrives. |
 | Backlog    | SEC-G04, SEC-F09, SEC-F10, SEC-F11                                                     | Documentation / cosmetic; no realistic exploit path.                                                     |
 
@@ -234,7 +239,7 @@ No remediation required — recorded so future reviews do not re-litigate alread
 The broader audit plan identified six priority areas. Status after this cycle:
 
 - **P1 — Auth / OAuth HTTP mode** — substantially remediated. Closed: SEC-F01, SEC-F02, SEC-F03, SEC-F06, SEC-F07, SEC-F08. Partially mitigated: SEC-F04 (rate-limited; architectural PoP fix as SEC-F04b) and SEC-F05 (single-replica default; architectural externalisation still open). Open-backlog: SEC-F09, SEC-F10, SEC-F11.
-- **P2 — Tool invocation gating** — reviewed. Closed: SEC-G02 (prompt-injection envelope). Open: SEC-G01 (granular writes), SEC-G03 (sensitive-read classification), SEC-G04 (path-parameter allowlist). No critical or high-severity issues remain open after sprint 4.
+- **P2 — Tool invocation gating** — substantially remediated. Closed: SEC-G01 (granular `--max-risk-level`), SEC-G02 (prompt-injection envelope), SEC-G03 (sensitive-read annotations). Open-backlog: SEC-G04 (path-parameter allowlist — hygiene only).
 - **P3 — Secret & token hygiene** — pass-level check done (no logging observed); formal pass pending.
 - **P4 — Transport & deploy hardening** — CORS, HSTS, trust-proxy depth, rate-limit breadth.
 - **P5 — Supply chain** — `npm audit`, base-image pinning, generator pipeline integrity.
