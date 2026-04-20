@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import jwksRsa from 'jwks-rsa';
 import logger from './logger.js';
+import { withStaleKeyFallback } from './jwks-stale-cache.js';
 
 export interface TokenValidatorOptions {
   tenantId: string;
@@ -18,6 +19,8 @@ interface EntraTokenPayload {
 }
 
 const jwksClients = new Map<string, jwksRsa.JwksClient>();
+// SEC-F08: per-tenant stale-while-revalidate cache of PEM public keys.
+const staleKeyCaches = new Map<string, Map<string, string>>();
 
 function getJwksClient(tenantId: string): jwksRsa.JwksClient {
   let client = jwksClients.get(tenantId);
@@ -25,7 +28,10 @@ function getJwksClient(tenantId: string): jwksRsa.JwksClient {
     client = jwksRsa({
       jwksUri: `https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`,
       cache: true,
-      cacheMaxAge: 600_000,
+      // SEC-F08: 24h in-library cache; the stale-key fallback below catches
+      // outages that outlast it. Entra only activates newly-published keys
+      // after advertising them well in advance, so a longer TTL is safe.
+      cacheMaxAge: 24 * 60 * 60 * 1000,
       rateLimit: true,
     });
     jwksClients.set(tenantId, client);
@@ -33,13 +39,18 @@ function getJwksClient(tenantId: string): jwksRsa.JwksClient {
   return client;
 }
 
-function getSigningKey(client: jwksRsa.JwksClient, header: jwt.JwtHeader): Promise<string> {
+function getStaleKeyCache(tenantId: string): Map<string, string> {
+  let cache = staleKeyCaches.get(tenantId);
+  if (!cache) {
+    cache = new Map<string, string>();
+    staleKeyCaches.set(tenantId, cache);
+  }
+  return cache;
+}
+
+function fetchSigningKey(client: jwksRsa.JwksClient, kid: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (!header.kid) {
-      reject(new Error('JWT header missing kid'));
-      return;
-    }
-    client.getSigningKey(header.kid, (err, key) => {
+    client.getSigningKey(kid, (err, key) => {
       if (err) {
         reject(err);
         return;
@@ -51,6 +62,16 @@ function getSigningKey(client: jwksRsa.JwksClient, header: jwt.JwtHeader): Promi
       resolve(key.getPublicKey());
     });
   });
+}
+
+function getSigningKey(
+  tenantId: string,
+  client: jwksRsa.JwksClient,
+  header: jwt.JwtHeader
+): Promise<string> {
+  if (!header.kid) return Promise.reject(new Error('JWT header missing kid'));
+  const kid = header.kid;
+  return withStaleKeyFallback(kid, () => fetchSigningKey(client, kid), getStaleKeyCache(tenantId));
 }
 
 export async function validateEntraToken(
@@ -66,7 +87,7 @@ export async function validateEntraToken(
       return false;
     }
 
-    const publicKey = await getSigningKey(client, decoded.header);
+    const publicKey = await getSigningKey(options.tenantId, client, decoded.header);
 
     const payload = jwt.verify(token, publicKey, {
       algorithms: ['RS256'],

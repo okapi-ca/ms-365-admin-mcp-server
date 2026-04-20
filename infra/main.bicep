@@ -31,9 +31,9 @@ param logRetentionDays int = 30
 @minValue(0)
 param minReplicas int = 0
 
-@description('Container App max replicas')
+@description('Container App max replicas. SEC-F05: default is 1 because the OAuth proxy\'s PKCE bridge is in-memory per process — scaling beyond one replica silently breaks the /authorize → /token flow. Override only after externalising the bridge (Redis / Azure Table).')
 @minValue(1)
-param maxReplicas int = 3
+param maxReplicas int = 1
 
 @description('Tags applied to every resource (must satisfy org tag policies)')
 param tags object = {}

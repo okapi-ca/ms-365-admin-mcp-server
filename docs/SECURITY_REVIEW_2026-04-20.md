@@ -76,11 +76,12 @@ Severity rubric mirrors [RISK_MODEL.md](RISK_MODEL.md) but is calibrated to secu
 ### SEC-F05 — PKCE bridge is in-memory per process
 
 - **Severity:** Medium
-- **Status:** Open
-- **Location:** [src/oauth-proxy.ts:22](../src/oauth-proxy.ts).
-- **Description:** A process-local `Map<string, PkceEntry>` holds the server-side PKCE verifier between `/authorize` and `/token`. In a multi-replica deployment, the two requests may land on different instances and the bridge lookup fails. Operators may be tempted to work around this with sticky sessions or by weakening the bridge.
+- **Status:** Mitigated — sprint 3 (infra + documentation). Architectural externalisation tracked.
+- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts).
+- **Description:** A process-local `Map<string, PkceEntry>` holds the server-side PKCE verifier between `/authorize` and `/token`. In a multi-replica deployment, the two requests may land on different instances and the bridge lookup fails.
 - **Attack scenario:** No direct exploit, but the availability failure creates pressure for ad-hoc fixes that degrade security (e.g. shortening `PKCE_TTL_MS`, removing PKCE, or relaxing the bridge lookup).
-- **Remediation (proposed):** Externalise the bridge (Redis, Azure Cosmos, Azure Table) with the same 10-minute TTL; or document and enforce `minReplicas = maxReplicas = 1` in the Container Apps deployment.
+- **Mitigation delivered (sprint 3):** [infra/main.bicep](../infra/main.bicep) now defaults `maxReplicas = 1` with an inline SEC-F05 note explaining why. Operators who scale past one replica must explicitly override the parameter — forcing them to acknowledge the broken flow before they break it. Documented in [HTTP_DEPLOYMENT.md](HTTP_DEPLOYMENT.md).
+- **Residual risk:** This is an availability/operational constraint, not a remediation. A horizontally-scalable deployment still requires externalising the bridge (Redis / Azure Cosmos / Azure Table with the same 10-minute TTL). Tracked as a follow-up under the same SEC-F05 ID; re-open on this document when the feature is scheduled.
 
 ### SEC-F06 — `/token` and `/authorize` have no rate limit
 
@@ -96,19 +97,20 @@ Severity rubric mirrors [RISK_MODEL.md](RISK_MODEL.md) but is calibrated to secu
 ### SEC-F07 — `/token` logs up to 500 chars of upstream error payload
 
 - **Severity:** Medium
-- **Status:** Open
-- **Location:** [src/oauth-proxy.ts:221-223](../src/oauth-proxy.ts).
-- **Description:** On upstream HTTP error, `logger.warn` receives `payload.slice(0, 500)`. Entra error bodies may contain correlation IDs, partial trace information, and occasionally snippets that help attackers diagnose flow-level issues.
-- **Remediation (proposed):** Parse as JSON and log only `error` + `error_description` fields; fall back to `<unparseable N bytes>` when the body is not JSON.
+- **Status:** Fixed — sprint 3
+- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts), [src/upstream-error.ts](../src/upstream-error.ts).
+- **Description:** On upstream HTTP error, the proxy used to log `payload.slice(0, 500)`. Entra error bodies contain `correlation_id`, `trace_id`, server-generated prose, and occasionally diagnostic hints that have no place in our logs.
+- **Remediation:** Extracted `summarizeUpstreamError` into a pure module and delegated logging to it. Only the RFC 6749 fields `error`, `error_description` (clipped to 200 chars, whitespace-collapsed), and the Microsoft `error_codes` numeric array (first 5) are emitted. Non-JSON payloads log `<unparseable N bytes>`; JSON without recognised fields logs `<no recognised oauth error fields>`. 7 unit tests in [test/upstream-error.test.ts](../test/upstream-error.test.ts) cover the extraction, clipping, whitespace normalisation, and both fallback paths.
 
 ### SEC-F08 — No stale-while-revalidate on JWKS cache
 
 - **Severity:** Medium
-- **Status:** Open
-- **Location:** [src/token-validator.ts:22-34](../src/token-validator.ts), [src/user-token-validator.ts:34-46](../src/user-token-validator.ts).
-- **Description:** `jwks-rsa` cache TTL is 10 minutes. If the Entra discovery endpoint is unreachable during a key rotation, token validation fails for up to 10 minutes with no fallback.
-- **Attack scenario:** Self-inflicted DoS during a genuine Entra incident or key rotation; no direct attacker-controlled exploit.
-- **Remediation (proposed):** Extend `cacheMaxAge`, add a background refresh, and serve-stale on fetch failure.
+- **Status:** Fixed — sprint 3
+- **Location:** [src/token-validator.ts](../src/token-validator.ts), [src/user-token-validator.ts](../src/user-token-validator.ts), [src/jwks-stale-cache.ts](../src/jwks-stale-cache.ts).
+- **Description:** `jwks-rsa` cache TTL was 10 minutes. A JWKS outage outlasting the cache window caused token validation to fail outright.
+- **Remediation:** Two layers:
+  - `cacheMaxAge` raised from 10 minutes to 24 hours on the in-library cache in both validators. Entra advertises new keys well before activation, so a longer TTL is safe.
+  - New pure module `jwks-stale-cache.ts` keeps a per-tenant `Map<kid, PEM>` of successfully-fetched keys. On a fetch failure, if a PEM for the same `kid` is cached, the wrapper serves it with a warning log. Truly unknown keys still fail closed (rethrow). This survives multi-hour JWKS outages without broadening trust — stale keys were already trusted when first fetched, and signatures remain valid until the key itself is rotated out. 5 unit tests in [test/jwks-stale-cache.test.ts](../test/jwks-stale-cache.test.ts) cover cache population, stale fallback, rethrow on unknown kid, and overwrite on refresh.
 
 ### SEC-F09 — Dynamic Client Registration is decorative
 
@@ -151,12 +153,13 @@ No remediation required — recorded so future reviews do not re-litigate alread
 
 ## Remediation order (recommendation)
 
-| Wave          | Findings                                                                       | Rationale                                                      |
-| ------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------- |
-| 1 — PR #44    | SEC-F01 (fixed), SEC-F03 (fixed)                                               | Critical + High exploitable at the current deployment state.   |
-| 2 — PR #45    | SEC-F02 (fixed), SEC-F06 (fixed), SEC-F04 (partial: rate-limited + documented) | Harden the public OAuth proxy surface before broader exposure. |
-| 3 — hardening | SEC-F05, SEC-F07, SEC-F08, SEC-F04b (architectural refresh-token PoP)          | Multi-replica readiness, log hygiene, availability robustness. |
-| Backlog       | SEC-F09, SEC-F10, SEC-F11                                                      | Documentation / cosmetic; no realistic exploit path.           |
+| Wave       | Findings                                                                               | Rationale                                                                                                |
+| ---------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1 — PR #44 | SEC-F01 (fixed), SEC-F03 (fixed)                                                       | Critical + High exploitable at the current deployment state.                                             |
+| 2 — PR #46 | SEC-F02 (fixed), SEC-F06 (fixed), SEC-F04 (partial: rate-limited + documented)         | Harden the public OAuth proxy surface before broader exposure.                                           |
+| 3 — PR #47 | SEC-F07 (fixed), SEC-F08 (fixed), SEC-F05 (mitigated via single-replica Bicep default) | Log hygiene, availability robustness, multi-replica guardrail.                                           |
+| Follow-ups | SEC-F04b (refresh-token PoP), SEC-F05 architectural (externalise PKCE bridge)          | Architectural work — larger PRs with new runtime dependencies. Track separately when scheduling arrives. |
+| Backlog    | SEC-F09, SEC-F10, SEC-F11                                                              | Documentation / cosmetic; no realistic exploit path.                                                     |
 
 ---
 
@@ -164,7 +167,7 @@ No remediation required — recorded so future reviews do not re-litigate alread
 
 The broader audit plan identified six priority areas. Status after this cycle:
 
-- **P1 — Auth / OAuth HTTP mode** — majority remediated. Closed: SEC-F01, SEC-F02, SEC-F03, SEC-F06. Partially mitigated: SEC-F04 (rate-limited + documented; architectural PoP fix tracked as SEC-F04b). Open: SEC-F05, SEC-F07, SEC-F08, SEC-F09, SEC-F10, SEC-F11.
+- **P1 — Auth / OAuth HTTP mode** — substantially remediated. Closed: SEC-F01, SEC-F02, SEC-F03, SEC-F06, SEC-F07, SEC-F08. Partially mitigated: SEC-F04 (rate-limited; architectural PoP fix as SEC-F04b) and SEC-F05 (single-replica default; architectural externalisation still open). Open-backlog: SEC-F09, SEC-F10, SEC-F11.
 - **P2 — Tool invocation gating** — not yet reviewed. Verify `--allow-writes` enforcement at dispatch, audit risk-level labels, assess prompt-injection via Graph response content.
 - **P3 — Secret & token hygiene** — pass-level check done (no logging observed); formal pass pending.
 - **P4 — Transport & deploy hardening** — CORS, HSTS, trust-proxy depth, rate-limit breadth.
