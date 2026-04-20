@@ -73,6 +73,31 @@ class AdminGraphServer {
           }
         : undefined;
 
+      const authorizedUserOids = (this.options.authorizedUsers || '')
+        .split(',')
+        .map((o: string) => o.trim())
+        .filter(Boolean);
+
+      const allowAnyTenantUser = Boolean(this.options.allowAnyTenantUser);
+
+      // SEC-F01: refuse to start if OAuth mode is enabled without any authorization surface.
+      if (this.options.oauthMode && authorizedUserOids.length === 0 && !allowAnyTenantUser) {
+        throw new Error(
+          'OAuth mode requires either --authorized-users <oids> (per-user allowlist) ' +
+            'or --allow-any-tenant-user (accept any tenant user). ' +
+            'Starting without one of these would leave the /mcp endpoint open to every authenticated tenant user.'
+        );
+      }
+
+      // SEC-F03: default to requiring `access_as_user` in scp. An empty string disables the check.
+      const requiredScopes =
+        this.options.requiredUserScopes === undefined
+          ? ['access_as_user']
+          : this.options.requiredUserScopes
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean);
+
       const userTokenValidatorOptions = this.options.oauthMode
         ? {
             tenantId: this.secrets!.tenantId,
@@ -81,10 +106,9 @@ class AdminGraphServer {
               `api://${this.secrets!.clientId}`,
               '00000003-0000-0000-c000-000000000000',
             ],
-            authorizedUserOids: (this.options.authorizedUsers || '')
-              .split(',')
-              .map((o: string) => o.trim())
-              .filter(Boolean),
+            authorizedUserOids,
+            allowAnyTenantUser,
+            requiredScopes,
           }
         : undefined;
 

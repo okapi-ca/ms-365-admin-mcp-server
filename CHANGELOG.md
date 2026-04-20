@@ -8,6 +8,17 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Security
+
+- **SEC-F01 (breaking)** — OAuth mode now fails closed when no per-user allowlist is configured. Previously an empty `--authorized-users` list silently accepted every authenticated tenant user; now the server refuses to start unless either `--authorized-users <oids>` is provided or the explicit opt-in `--allow-any-tenant-user` is passed.
+- **SEC-F03** — User tokens must now contain every scope listed in `--required-user-scopes` (default `access_as_user`) in their `scp` claim. Pass `--required-user-scopes ""` to restore the previous no-scope-check behaviour.
+- Extracted the post-verification authorization logic into `authorizeUserClaims` and added 16 unit tests covering tenant, audience, oid allowlist, and scope enforcement paths.
+
+### Migration
+
+- Deployments relying on the implicit "any authenticated user" behaviour must add `--allow-any-tenant-user` to their startup command (and review whether that is actually intended).
+- Deployments whose Entra app registration does not expose the `access_as_user` scope — or whose callers request a different scope — must pass `--required-user-scopes <their-scopes>` or `--required-user-scopes ""`.
+
 ## [0.2.4] — 2026-04-20
 
 Fixes the StreamableHTTP transport so more than one `/mcp` request per process actually works. With the shared `McpServer` instance, the second call to `server.connect(transport)` threw `Already connected to a transport`, which surfaced as repeated 500s after the OAuth flow finally succeeded.
