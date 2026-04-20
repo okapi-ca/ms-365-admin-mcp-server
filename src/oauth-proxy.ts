@@ -60,7 +60,10 @@ function resolveIssuer(req: Request, configured: string): string {
 
 export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): void {
   const authority = `https://login.microsoftonline.com/${options.tenantId}`;
-  const fallbackScope = 'openid profile email offline_access User.Read';
+  const fallbackScope =
+    options.scopes.length > 0
+      ? options.scopes.join(' ')
+      : `openid profile email offline_access api://${options.clientId}/access_as_user`;
 
   app.get('/.well-known/oauth-authorization-server', (req: Request, res: Response) => {
     const issuer = resolveIssuer(req, options.publicUrl);

@@ -8,6 +8,19 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-04-20
+
+Fixes the OAuth 2.0 flow end-to-end: access tokens can now actually be validated by the MCP server. v0.2.0 → v0.2.2 produced `invalid signature` failures because Microsoft Graph access tokens (`aud=00000003-…`) are opaque and cannot be verified by third parties against the public JWKS.
+
+### Changed
+
+- OAuth proxy now defaults to requesting the app's own API scope (`api://<client-id>/access_as_user`) alongside `openid profile email offline_access`, so Entra issues a standard v2 JWT with `aud=<client-id>` signed with the tenant's publishable key.
+- When the caller supplies custom `scopes`, the proxy honours them; otherwise it falls back to the app-owned scope above.
+
+### Deployment note
+
+The Entra app registration must expose the delegated scope `access_as_user` under `api://<client-id>` with `requestedAccessTokenVersion: 2`, and admin consent must be granted for that scope. This was done on the LCI deployment as part of the 0.2.3 rollout.
+
 ## [0.2.2] — 2026-04-20
 
 Observability fix: logs were written only to files inside the container, so nothing showed up in Log Analytics and post-Entra OAuth failures were invisible.
