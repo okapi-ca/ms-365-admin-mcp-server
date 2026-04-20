@@ -23,7 +23,7 @@ Do **not** use HTTP when stdio is sufficient — it's simpler and has a smaller 
 Two auth modes are available, and can be combined:
 
 - **Service-to-service** (machine callers): pre-acquired Entra bearer tokens are validated via `--allowed-clients`.
-- **OAuth proxy** (human users on Claude Desktop/Code/Web): the server exposes `/authorize`, `/token`, DCR, and metadata endpoints, delegating auth to Entra and gating by user object ID via `--authorized-users`.
+- **OAuth proxy** (human users on Claude Desktop/Code/Web): the server exposes `/authorize`, `/token`, DCR, and metadata endpoints, delegating auth to Entra and gating by user object ID via `--authorized-users` (or explicitly `--allow-any-tenant-user` to accept every tenant user).
 
 ```bash
 # Machine-to-machine only
@@ -70,17 +70,18 @@ When `--oauth-mode` is enabled, the following are added:
 
 The server is an OAuth 2.0 proxy to Entra ID, not a full authorization server. User tokens issued by Entra land on `/mcp` and are validated on each call:
 
-| Check                  | Value                                                                                              |
-| ---------------------- | -------------------------------------------------------------------------------------------------- |
-| Algorithm              | `RS256` (only)                                                                                     |
-| Issuer (`iss`)         | `https://login.microsoftonline.com/<tenant>/v2.0` or `https://sts.windows.net/<tenant>/`           |
-| Tenant (`tid`)         | Must match `MS365_ADMIN_MCP_TENANT_ID`                                                             |
-| Audience (`aud`)       | One of: `<server-app-id>`, `api://<server-app-id>`, `00000003-0000-0000-c000-000000000000` (Graph) |
-| User object ID (`oid`) | Must be present and, if `--authorized-users` is set, in the allowlist                              |
-| Signature              | Verified via `https://login.microsoftonline.com/<tenant>/discovery/v2.0/keys`                      |
-| Clock tolerance        | 30 seconds                                                                                         |
+| Check                  | Value                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Algorithm              | `RS256` (only)                                                                                                                        |
+| Issuer (`iss`)         | `https://login.microsoftonline.com/<tenant>/v2.0` or `https://sts.windows.net/<tenant>/`                                              |
+| Tenant (`tid`)         | Must match `MS365_ADMIN_MCP_TENANT_ID`                                                                                                |
+| Audience (`aud`)       | One of: `<server-app-id>`, `api://<server-app-id>`, `00000003-0000-0000-c000-000000000000` (Graph)                                    |
+| User object ID (`oid`) | Must be present. Must be in `--authorized-users` when that flag is set, otherwise `--allow-any-tenant-user` is required (SEC-F01).    |
+| Scopes (`scp`)         | Must contain every scope listed in `--required-user-scopes` (default: `access_as_user`; pass `--required-user-scopes ""` to disable). |
+| Signature              | Verified via `https://login.microsoftonline.com/<tenant>/discovery/v2.0/keys`                                                         |
+| Clock tolerance        | 30 seconds                                                                                                                            |
 
-**Important**: the user's token is used only as an **authN gate**. The server does not call Graph on behalf of the user — it calls Graph with its own client-credentials (application permissions), so tool results are identical regardless of which user authenticated.
+**Important**: the user's token is used only as an **authN gate**. The server does not call Graph on behalf of the user — it calls Graph with its own client-credentials (application permissions), so tool results are identical regardless of which user authenticated. Because of this, the user allowlist and required-scope checks are the **only** layers between an authenticated tenant user and the server's full Graph capability — keep them tight.
 
 #### Entra ID setup for OAuth mode
 

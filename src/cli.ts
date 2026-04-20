@@ -51,6 +51,14 @@ program
     'Comma-separated Entra user object IDs (oid) allowed to authenticate via OAuth mode'
   )
   .option(
+    '--allow-any-tenant-user',
+    'Accept any authenticated user in the configured tenant (SEC-F01 opt-in). Required when --oauth-mode is set without --authorized-users.'
+  )
+  .option(
+    '--required-user-scopes <scopes>',
+    'Comma-separated scopes user tokens must contain in their scp claim (SEC-F03). Default: access_as_user. Empty string disables the check.'
+  )
+  .option(
     '--no-dynamic-registration',
     'Disable the OAuth Dynamic Client Registration endpoint (default: enabled with --oauth-mode)'
   );
@@ -73,6 +81,8 @@ export interface CommandOptions {
   oauthMode?: boolean;
   publicUrl?: string;
   authorizedUsers?: string;
+  allowAnyTenantUser?: boolean;
+  requiredUserScopes?: string;
   dynamicRegistration?: boolean;
   [key: string]: unknown;
 }

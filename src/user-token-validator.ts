@@ -1,33 +1,19 @@
 import jwt from 'jsonwebtoken';
 import jwksRsa from 'jwks-rsa';
 import logger from './logger.js';
+import {
+  authorizeUserClaims,
+  type UserTokenClaims,
+  type UserTokenPayload,
+  type UserTokenValidatorOptions,
+} from './user-token-authorization.js';
 
-export interface UserTokenValidatorOptions {
-  tenantId: string;
-  expectedAudiences: string[];
-  authorizedUserOids: string[];
-}
-
-export interface UserTokenClaims {
-  oid: string;
-  upn?: string;
-  name?: string;
-  appid?: string;
-}
-
-interface UserTokenPayload {
-  iss?: string;
-  aud?: string | string[];
-  exp?: number;
-  oid?: string;
-  upn?: string;
-  preferred_username?: string;
-  name?: string;
-  tid?: string;
-  appid?: string;
-  azp?: string;
-  scp?: string;
-}
+export { authorizeUserClaims } from './user-token-authorization.js';
+export type {
+  UserTokenClaims,
+  UserTokenPayload,
+  UserTokenValidatorOptions,
+} from './user-token-authorization.js';
 
 const jwksClients = new Map<string, jwksRsa.JwksClient>();
 
@@ -59,12 +45,6 @@ function getSigningKey(client: jwksRsa.JwksClient, header: jwt.JwtHeader): Promi
   });
 }
 
-function audienceMatches(tokenAud: string | string[] | undefined, expected: string[]): boolean {
-  if (!tokenAud || expected.length === 0) return false;
-  const list = Array.isArray(tokenAud) ? tokenAud : [tokenAud];
-  return list.some((a) => expected.includes(a));
-}
-
 export async function validateUserToken(
   token: string,
   options: UserTokenValidatorOptions
@@ -89,37 +69,7 @@ export async function validateUserToken(
       clockTolerance: 30,
     }) as UserTokenPayload;
 
-    if (payload.tid && payload.tid !== options.tenantId) {
-      logger.warn(`User token tenant mismatch: tid=${payload.tid}, expected=${options.tenantId}`);
-      return null;
-    }
-
-    if (!audienceMatches(payload.aud, options.expectedAudiences)) {
-      logger.warn(
-        `User token audience not in expected list: aud=${JSON.stringify(payload.aud)}, expected=${JSON.stringify(options.expectedAudiences)}`
-      );
-      return null;
-    }
-
-    const oid = payload.oid;
-    if (!oid) {
-      logger.warn('User token missing oid claim');
-      return null;
-    }
-
-    if (options.authorizedUserOids.length > 0 && !options.authorizedUserOids.includes(oid)) {
-      logger.warn(
-        `User oid ${oid} (${payload.upn || payload.preferred_username || 'no upn'}) not in authorized-users allowlist`
-      );
-      return null;
-    }
-
-    return {
-      oid,
-      upn: payload.upn || payload.preferred_username,
-      name: payload.name,
-      appid: payload.appid || payload.azp,
-    };
+    return authorizeUserClaims(payload, options);
   } catch (error) {
     logger.error(`User token validation failed: ${(error as Error).message}`);
     return null;
