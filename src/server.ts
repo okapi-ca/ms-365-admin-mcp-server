@@ -95,7 +95,13 @@ class AdminGraphServer {
             tenantId: this.secrets!.tenantId,
             clientId: this.secrets!.clientId,
             clientSecret: this.secrets!.clientSecret,
-            scopes: ['openid', 'profile', 'email', 'offline_access', 'User.Read'],
+            scopes: [
+              'openid',
+              'profile',
+              'email',
+              'offline_access',
+              `api://${this.secrets!.clientId}/access_as_user`,
+            ],
             enableDynamicRegistration: this.options.dynamicRegistration !== false,
           }
         : undefined;
