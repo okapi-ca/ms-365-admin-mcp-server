@@ -10,7 +10,7 @@ Each use case includes:
 - **Key tools** — MCP tools the LLM will invoke
 - **Risk** — relevant for write scenarios
 
-> Read-only is the default. Write operations require `--allow-writes` and are annotated with a risk level (`low`, `medium`, `high`, `critical`).
+> Read-only is the default. Write operations require `--allow-writes` and are annotated with a risk level (`low`, `medium`, `high`, `critical`). Use `--max-risk-level <level>` to cap the exposed tools by risk level (implies `--allow-writes`) — for example `--max-risk-level medium` enables low- and medium-risk writes but hides `critical` operations like `wipe-managed-device`.
 
 > For end-to-end security incident response scenarios with multi-phase procedures, see the [playbooks](playbooks/README.md) catalogue.
 
@@ -131,10 +131,10 @@ node dist/index.js --preset identity,governance
 **Startup command.**
 
 ```bash
-node dist/index.js --preset intune --allow-writes
+node dist/index.js --preset intune --max-risk-level low
 ```
 
-> `--allow-writes` is required because Intune reports (non-compliance, per-setting, per-policy) use POST endpoints even in read mode.
+> Intune reports (non-compliance, per-setting, per-policy) use POST endpoints even in read mode, so `--allow-writes` (or equivalently `--max-risk-level low`) is required. `--max-risk-level low` keeps destructive Intune actions (`wipe-managed-device`, `retire-managed-device`) out of the tool surface while allowing the reports.
 
 **Sample prompt.**
 
@@ -316,7 +316,7 @@ Do not load `--preset all` by default. Each preset loads fewer tools in the LLM 
 
 ### Read-only by default
 
-Always start read-only. Only add `--allow-writes` when the scenario explicitly requires mutations. Combine with `ENABLED_TOOLS` (regex) for even finer filtering.
+Always start read-only. When mutations are required, prefer `--max-risk-level <level>` over `--allow-writes` to cap at the lowest level that unlocks the scenario (e.g. `medium` for most incident-response flows; reserve `critical` for deliberate retire/wipe/delete work). Combine with `ENABLED_TOOLS` (regex) for even finer filtering.
 
 ### Validate before writing
 

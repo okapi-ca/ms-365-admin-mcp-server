@@ -55,7 +55,8 @@
     "method": "get",
     "toolName": "list-sign-ins",
     "appPermissions": ["AuditLog.Read.All"],
-    "llmTip": "Lists Azure AD sign-in logs. Use $filter=createdDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=userPrincipalName eq 'user@domain.com' to filter by user. Use $filter=status/errorCode ne 0 to find failed sign-ins. Each entry has userDisplayName, userPrincipalName, appDisplayName, ipAddress, location, status, conditionalAccessStatus, and riskState."
+    "llmTip": "Lists Azure AD sign-in logs. Use $filter=createdDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=userPrincipalName eq 'user@domain.com' to filter by user. Use $filter=status/errorCode ne 0 to find failed sign-ins. Each entry has userDisplayName, userPrincipalName, appDisplayName, ipAddress, location, status, conditionalAccessStatus, and riskState.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/auditLogs/provisioning",
@@ -143,7 +144,8 @@
     "method": "get",
     "toolName": "list-user-auth-methods",
     "appPermissions": ["UserAuthenticationMethod.Read.All"],
-    "llmTip": "Lists authentication methods registered for a user (phone, email, FIDO2, Microsoft Authenticator, etc.). Useful for MFA coverage audits. Each method has @odata.type to identify the method kind."
+    "llmTip": "Lists authentication methods registered for a user (phone, email, FIDO2, Microsoft Authenticator, etc.). Useful for MFA coverage audits. Each method has @odata.type to identify the method kind.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/users/{user-id}/registeredDevices",
@@ -270,7 +272,7 @@
     "toolName": "disable-user-account",
     "appPermissions": ["User.ReadWrite.All"],
     "riskLevel": "critical",
-    "llmTip": "Disables a user account by setting accountEnabled to false. Body MUST be: {\"accountEnabled\": false}. This blocks all sign-ins immediately. Use for compromised accounts. CRITICAL: verify the user-id carefully \u2014 disabling the wrong account locks out a legitimate user. To re-enable, send {\"accountEnabled\": true}."
+    "llmTip": "Disables a user account by setting accountEnabled to false. Body MUST be: {\"accountEnabled\": false}. This blocks all sign-ins immediately. Use for compromised accounts. CRITICAL: verify the user-id carefully — disabling the wrong account locks out a legitimate user. To re-enable, send {\"accountEnabled\": true}."
   },
   {
     "pathPattern": "/users/{user-id}/revokeSignInSessions",
@@ -278,7 +280,7 @@
     "toolName": "revoke-user-sessions",
     "appPermissions": ["User.ReadWrite.All"],
     "riskLevel": "high",
-    "llmTip": "Revokes all refresh tokens and session cookies for a user, forcing re-authentication everywhere. No request body needed. Use after password reset or account compromise. Effect is not instant \u2014 cached tokens may remain valid for up to 1 hour. Combine with disable-user-account for immediate containment."
+    "llmTip": "Revokes all refresh tokens and session cookies for a user, forcing re-authentication everywhere. No request body needed. Use after password reset or account compromise. Effect is not instant — cached tokens may remain valid for up to 1 hour. Combine with disable-user-account for immediate containment."
   },
   {
     "pathPattern": "/security/alerts_v2/{alert-id}/comments",
@@ -343,35 +345,40 @@
     "method": "get",
     "toolName": "list-risky-users",
     "appPermissions": ["IdentityRiskyUser.Read.All"],
-    "llmTip": "Lists users flagged as risky by Identity Protection. Use $filter=riskLevel eq 'high' to find high-risk users. Each entry has riskLevel (low, medium, high), riskState (atRisk, confirmedCompromised, remediated, dismissed), riskDetail, and riskLastUpdatedDateTime."
+    "llmTip": "Lists users flagged as risky by Identity Protection. Use $filter=riskLevel eq 'high' to find high-risk users. Each entry has riskLevel (low, medium, high), riskState (atRisk, confirmedCompromised, remediated, dismissed), riskDetail, and riskLastUpdatedDateTime.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/identityProtection/riskyUsers/{riskyUser-id}",
     "method": "get",
     "toolName": "get-risky-user",
     "appPermissions": ["IdentityRiskyUser.Read.All"],
-    "llmTip": "Gets details for a specific risky user. Returns full risk information including riskLevel, riskState, riskDetail, and history."
+    "llmTip": "Gets details for a specific risky user. Returns full risk information including riskLevel, riskState, riskDetail, and history.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/identityProtection/riskyUsers/{riskyUser-id}/history",
     "method": "get",
     "toolName": "list-risky-user-history",
     "appPermissions": ["IdentityRiskyUser.Read.All"],
-    "llmTip": "Lists the risk history for a specific user. Shows how risk level changed over time and what triggered each risk event."
+    "llmTip": "Lists the risk history for a specific user. Shows how risk level changed over time and what triggered each risk event.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/identityProtection/riskyServicePrincipals",
     "method": "get",
     "toolName": "list-risky-service-principals",
     "appPermissions": ["IdentityRiskyServicePrincipal.Read.All"],
-    "llmTip": "Lists service principals flagged as risky. Useful for detecting compromised applications and service accounts."
+    "llmTip": "Lists service principals flagged as risky. Useful for detecting compromised applications and service accounts.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/identityProtection/riskyServicePrincipals/{riskyServicePrincipal-id}",
     "method": "get",
     "toolName": "get-risky-service-principal",
     "appPermissions": ["IdentityRiskyServicePrincipal.Read.All"],
-    "llmTip": "Gets details for a specific risky service principal. Returns riskLevel, riskState, and riskDetail."
+    "llmTip": "Gets details for a specific risky service principal. Returns riskLevel, riskState, and riskDetail.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/policies/authenticationMethodsPolicy",
@@ -427,14 +434,16 @@
     "method": "get",
     "toolName": "list-risk-detections",
     "appPermissions": ["IdentityRiskEvent.Read.All"],
-    "llmTip": "Lists individual risk detections from Identity Protection. Use $filter=riskLevel eq 'high' to find high-risk events. Use $filter=detectedDateTime ge 2024-01-01T00:00:00Z to filter by date. Each detection has riskEventType (e.g. anonymizedIPAddress, leakedCredentials, malwareInfectedIPAddress), riskLevel, riskState, userPrincipalName, ipAddress, location, and activityType (signin, user)."
+    "llmTip": "Lists individual risk detections from Identity Protection. Use $filter=riskLevel eq 'high' to find high-risk events. Use $filter=detectedDateTime ge 2024-01-01T00:00:00Z to filter by date. Each detection has riskEventType (e.g. anonymizedIPAddress, leakedCredentials, malwareInfectedIPAddress), riskLevel, riskState, userPrincipalName, ipAddress, location, and activityType (signin, user).",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/identityProtection/riskDetections/{riskDetection-id}",
     "method": "get",
     "toolName": "get-risk-detection",
     "appPermissions": ["IdentityRiskEvent.Read.All"],
-    "llmTip": "Gets a specific risk detection by ID. Returns full details including riskEventType, riskLevel, detectionTimingType (realtime, offline), source, ipAddress, location, userPrincipalName, and additionalInfo."
+    "llmTip": "Gets a specific risk detection by ID. Returns full details including riskEventType, riskLevel, detectionTimingType (realtime, offline), source, ipAddress, location, userPrincipalName, and additionalInfo.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/directory/deletedItems/graph.user",
@@ -644,7 +653,7 @@
     "method": "get",
     "toolName": "list-access-package-assignments",
     "appPermissions": ["EntitlementManagement.Read.All"],
-    "llmTip": "Lists access package assignments \u2014 who has been granted which access packages. Use $filter=state eq 'Delivered' to find active assignments. Use $filter=targetId eq '{user-id}' to find all packages assigned to a user. Use $expand=target,accessPackage to get user and package details. Each assignment has state (Delivering, Delivered, Expired, DeliveryFailed), schedule, and targetId."
+    "llmTip": "Lists access package assignments — who has been granted which access packages. Use $filter=state eq 'Delivered' to find active assignments. Use $filter=targetId eq '{user-id}' to find all packages assigned to a user. Use $expand=target,accessPackage to get user and package details. Each assignment has state (Delivering, Delivered, Expired, DeliveryFailed), schedule, and targetId."
   },
   {
     "pathPattern": "/identityGovernance/entitlementManagement/assignmentRequests",
@@ -917,7 +926,7 @@
     "method": "get",
     "toolName": "get-apple-push-certificate",
     "appPermissions": ["DeviceManagementServiceConfig.Read.All"],
-    "llmTip": "Gets the Apple Push Notification certificate info. Returns appleIdentifier, topicIdentifier, lastModifiedDateTime, expirationDateTime, and certificateSerialNumber. CRITICAL: monitor expirationDateTime \u2014 if it expires, all iOS/macOS device management stops."
+    "llmTip": "Gets the Apple Push Notification certificate info. Returns appleIdentifier, topicIdentifier, lastModifiedDateTime, expirationDateTime, and certificateSerialNumber. CRITICAL: monitor expirationDateTime — if it expires, all iOS/macOS device management stops."
   },
   {
     "pathPattern": "/deviceManagement/roleDefinitions",
@@ -973,14 +982,16 @@
     "method": "get",
     "toolName": "list-message-traces",
     "appPermissions": ["MailboxSettings.Read"],
-    "llmTip": "Lists Exchange message traces for auditing mail flow. Each trace has senderAddress, recipientAddress, subject, messageId, receivedDateTime, status (Delivered, Failed, Quarantined, FilteredAsSpam, Expanded, etc.), and size. Use $filter=receivedDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=senderAddress eq 'user@domain.com' to filter by sender."
+    "llmTip": "Lists Exchange message traces for auditing mail flow. Each trace has senderAddress, recipientAddress, subject, messageId, receivedDateTime, status (Delivered, Failed, Quarantined, FilteredAsSpam, Expanded, etc.), and size. Use $filter=receivedDateTime ge 2024-01-01T00:00:00Z to filter by date. Use $filter=senderAddress eq 'user@domain.com' to filter by sender.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/admin/exchange/tracing/messageTraces/{exchangeMessageTrace-id}",
     "method": "get",
     "toolName": "get-message-trace",
     "appPermissions": ["MailboxSettings.Read"],
-    "llmTip": "Gets a specific message trace by ID. Returns full details including senderAddress, recipientAddress, subject, messageId, receivedDateTime, status, size, and additional routing information."
+    "llmTip": "Gets a specific message trace by ID. Returns full details including senderAddress, recipientAddress, subject, messageId, receivedDateTime, status, size, and additional routing information.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/admin/exchange/mailboxes",
@@ -1022,7 +1033,7 @@
     "method": "get",
     "toolName": "list-threat-intel-host-pairs",
     "appPermissions": ["ThreatIntelligence.Read.All"],
-    "llmTip": "Lists host pairs for a given host \u2014 relationships between parent and child hosts (redirects, iframes, scripts, etc.). Each has parentHost, childHost, linkKind (redirect, script, etc.), firstSeenDateTime, lastSeenDateTime. Useful for mapping infrastructure."
+    "llmTip": "Lists host pairs for a given host — relationships between parent and child hosts (redirects, iframes, scripts, etc.). Each has parentHost, childHost, linkKind (redirect, script, etc.), firstSeenDateTime, lastSeenDateTime. Useful for mapping infrastructure."
   },
   {
     "pathPattern": "/security/threatIntelligence/articles",
@@ -1198,14 +1209,16 @@
     "method": "get",
     "toolName": "list-app-federated-credentials",
     "appPermissions": ["Application.Read.All"],
-    "llmTip": "Lists federated identity credentials for an app (workload identity federation). Each has name, issuer, subject, audiences, and description. These allow external workloads (GitHub Actions, Kubernetes, etc.) to authenticate as the app without a secret. Audit to ensure only authorized external identities are trusted."
+    "llmTip": "Lists federated identity credentials for an app (workload identity federation). Each has name, issuer, subject, audiences, and description. These allow external workloads (GitHub Actions, Kubernetes, etc.) to authenticate as the app without a secret. Audit to ensure only authorized external identities are trusted.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/applications/{application-id}/federatedIdentityCredentials/{federatedIdentityCredential-id}",
     "method": "get",
     "toolName": "get-app-federated-credential",
     "appPermissions": ["Application.Read.All"],
-    "llmTip": "Gets a specific federated identity credential. Returns name, issuer (e.g. https://token.actions.githubusercontent.com), subject (e.g. repo:org/repo:ref:refs/heads/main), audiences, and description."
+    "llmTip": "Gets a specific federated identity credential. Returns name, issuer (e.g. https://token.actions.githubusercontent.com), subject (e.g. repo:org/repo:ref:refs/heads/main), audiences, and description.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/servicePrincipals/{servicePrincipal-id}",
@@ -1247,7 +1260,8 @@
     "method": "get",
     "toolName": "list-ediscovery-cases",
     "appPermissions": ["eDiscovery.Read.All"],
-    "llmTip": "Lists eDiscovery cases in Microsoft Purview. Each case has displayName, description, status (active, closed, closedWithError), createdBy, createdDateTime, lastModifiedBy, lastModifiedDateTime, and externalId. Use $filter=status eq 'active' to see active cases. Use $top to limit results."
+    "llmTip": "Lists eDiscovery cases in Microsoft Purview. Each case has displayName, description, status (active, closed, closedWithError), createdBy, createdDateTime, lastModifiedBy, lastModifiedDateTime, and externalId. Use $filter=status eq 'active' to see active cases. Use $top to limit results.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/communications/callRecords",
@@ -1352,7 +1366,8 @@
     "method": "get",
     "toolName": "list-bitlocker-recovery-keys",
     "appPermissions": ["BitlockerKey.Read.All"],
-    "llmTip": "Lists BitLocker recovery keys stored in Entra ID. Each has id, createdDateTime, deviceId, volumeType (operatingSystemVolume, fixedDataVolume, removableDataVolume). The actual key value is NOT returned by default for security; use $select=key to include it (requires BitlockerKey.ReadBasic.All or BitlockerKey.Read.All). Use $filter=deviceId eq 'xxx' to find keys for a specific device."
+    "llmTip": "Lists BitLocker recovery keys stored in Entra ID. Each has id, createdDateTime, deviceId, volumeType (operatingSystemVolume, fixedDataVolume, removableDataVolume). The actual key value is NOT returned by default for security; use $select=key to include it (requires BitlockerKey.ReadBasic.All or BitlockerKey.Read.All). Use $filter=deviceId eq 'xxx' to find keys for a specific device.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/informationProtection/threatAssessmentRequests",
@@ -1945,7 +1960,8 @@
     "method": "get",
     "toolName": "list-service-principal-risk-detections",
     "appPermissions": ["IdentityRiskEvent.Read.All"],
-    "llmTip": "Lists risk detections for service principals. Each has riskEventType, riskLevel, riskState, riskDetail, detectedDateTime, activity, source, servicePrincipalId, and appId. Use $filter=riskState eq 'atRisk' to see active risks."
+    "llmTip": "Lists risk detections for service principals. Each has riskEventType, riskLevel, riskState, riskDetail, detectedDateTime, activity, source, servicePrincipalId, and appId. Use $filter=riskState eq 'atRisk' to see active risks.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/identityProtection/riskyUsers/confirmSafe",
@@ -2003,7 +2019,8 @@
     "method": "get",
     "toolName": "list-subject-rights-requests",
     "appPermissions": ["SubjectRightsRequest.Read.All"],
-    "llmTip": "Lists data subject rights requests (DSAR) for privacy compliance. Each has displayName, type (access, delete, export, tagForAction), status (active, closed), dataSubjectType, createdDateTime, createdBy, stages, and regulation. Used for GDPR/privacy compliance."
+    "llmTip": "Lists data subject rights requests (DSAR) for privacy compliance. Each has displayName, type (access, delete, export, tagForAction), status (active, closed), dataSubjectType, createdDateTime, createdBy, stages, and regulation. Used for GDPR/privacy compliance.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/security/attackSimulation/simulationAutomations",
@@ -2094,7 +2111,8 @@
     "method": "get",
     "toolName": "list-user-registration-details",
     "appPermissions": ["UserAuthenticationMethod.Read.All"],
-    "llmTip": "Lists MFA/SSPR registration details for all users. Each has userPrincipalName, userDisplayName, isMfaRegistered, isMfaCapable, isSsprRegistered, isSsprEnabled, isSsprCapable, isPasswordlessCapable, methodsRegistered, and defaultMfaMethod. Powerful for MFA adoption reporting."
+    "llmTip": "Lists MFA/SSPR registration details for all users. Each has userPrincipalName, userDisplayName, isMfaRegistered, isMfaCapable, isSsprRegistered, isSsprEnabled, isSsprCapable, isPasswordlessCapable, methodsRegistered, and defaultMfaMethod. Powerful for MFA adoption reporting.",
+    "riskLevel": "medium"
   },
   {
     "pathPattern": "/reports/dailyPrintUsageByPrinter",
@@ -2157,7 +2175,8 @@
     "method": "get",
     "toolName": "list-device-local-credentials",
     "appPermissions": ["DeviceLocalCredential.Read.All"],
-    "llmTip": "Lists device local admin credentials managed by Entra ID (LAPS - Local Admin Password Solution). Each has deviceName, lastBackupDateTime, and refreshDateTime. The actual password requires DeviceLocalCredential.Read.All and a separate GET by ID."
+    "llmTip": "Lists device local admin credentials managed by Entra ID (LAPS - Local Admin Password Solution). Each has deviceName, lastBackupDateTime, and refreshDateTime. The actual password requires DeviceLocalCredential.Read.All and a separate GET by ID.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/directory/federationConfigurations",
@@ -2635,7 +2654,7 @@
     "toolName": "wipe-managed-device",
     "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
     "riskLevel": "critical",
-    "llmTip": "Wipes a managed device (factory reset). IRREVERSIBLE \u2014 all data on the device will be erased. Optional body: {\"keepEnrollmentData\":false,\"keepUserData\":false,\"macOsUnlockCode\":\"pin\"}. Always confirm with operator before executing."
+    "llmTip": "Wipes a managed device (factory reset). IRREVERSIBLE — all data on the device will be erased. Optional body: {\"keepEnrollmentData\":false,\"keepUserData\":false,\"macOsUnlockCode\":\"pin\"}. Always confirm with operator before executing."
   },
   {
     "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/retire",
@@ -2771,7 +2790,7 @@
     "toolName": "update-conditional-access-policy",
     "appPermissions": ["Policy.ReadWrite.ConditionalAccess"],
     "riskLevel": "high",
-    "llmTip": "Updates a Conditional Access policy. Body can include displayName, state, conditions, grantControls, sessionControls. Changing state to 'enabled' activates enforcement \u2014 verify conditions before enabling."
+    "llmTip": "Updates a Conditional Access policy. Body can include displayName, state, conditions, grantControls, sessionControls. Changing state to 'enabled' activates enforcement — verify conditions before enabling."
   },
   {
     "pathPattern": "/identity/conditionalAccess/policies/{conditionalAccessPolicy-id}",
@@ -2946,7 +2965,7 @@
     "toolName": "delete-exchange-mailbox",
     "appPermissions": ["Exchange.ManageAsApp"],
     "riskLevel": "critical",
-    "llmTip": "Deletes an Exchange mailbox (admin). IRREVERSIBLE \u2014 all mailbox data will be permanently removed. Always confirm with operator before executing."
+    "llmTip": "Deletes an Exchange mailbox (admin). IRREVERSIBLE — all mailbox data will be permanently removed. Always confirm with operator before executing."
   },
   {
     "pathPattern": "/users",
@@ -3236,7 +3255,6 @@
     "riskLevel": "high",
     "llmTip": "Deletes a Cloud PC provisioning policy. Existing Cloud PCs provisioned with this policy are not affected."
   },
-
   {
     "pathPattern": "/applications",
     "method": "post",
@@ -3325,7 +3343,6 @@
     "riskLevel": "high",
     "llmTip": "Sets the verified publisher MPN ID on an application. Body: {\"verifiedPublisherId\":\"<mpn-id>\"}. Requires a verified MPN account in Partner Center. Impacts the consent UX for every user across every tenant that sees the app."
   },
-
   {
     "pathPattern": "/servicePrincipals",
     "method": "post",
@@ -3406,7 +3423,6 @@
     "riskLevel": "high",
     "llmTip": "Assigns an app role to a user, group, or service principal. Body: {\"principalId\":\"<user-or-group-id>\",\"resourceId\":\"<servicePrincipal-id>\",\"appRoleId\":\"<role-guid-or-00000000-0000-0000-0000-000000000000>\"}."
   },
-
   {
     "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests",
     "method": "post",
@@ -3487,7 +3503,6 @@
     "riskLevel": "high",
     "llmTip": "Updates a PIM role management policy (activation duration, MFA/justification requirements, approval rules, etc.)."
   },
-
   {
     "pathPattern": "/identityGovernance/entitlementManagement/accessPackages",
     "method": "post",
@@ -3584,7 +3599,6 @@
     "riskLevel": "medium",
     "llmTip": "Cancels a pending assignment request."
   },
-
   {
     "pathPattern": "/identityGovernance/lifecycleWorkflows/workflows",
     "method": "post",
@@ -3649,7 +3663,6 @@
     "riskLevel": "high",
     "llmTip": "Deletes a custom task extension. Will fail if any workflow still references it."
   },
-
   {
     "pathPattern": "/identityGovernance/accessReviews/definitions",
     "method": "post",
@@ -3714,13 +3727,13 @@
     "riskLevel": "medium",
     "llmTip": "Accepts all system-generated recommendations (approve/deny) for decisions not yet made by reviewers. No body required."
   },
-
   {
     "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}",
     "method": "get",
     "toolName": "get-ediscovery-case",
     "appPermissions": ["eDiscovery.Read.All"],
-    "llmTip": "Gets a specific eDiscovery (Premium) case by id."
+    "llmTip": "Gets a specific eDiscovery (Premium) case by id.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/security/cases/ediscoveryCases",
@@ -3767,7 +3780,8 @@
     "method": "get",
     "toolName": "list-ediscovery-custodians",
     "appPermissions": ["eDiscovery.Read.All"],
-    "llmTip": "Lists custodians in an eDiscovery case. Each custodian preserves data for a specific user's mailbox, OneDrive, and Teams."
+    "llmTip": "Lists custodians in an eDiscovery case. Each custodian preserves data for a specific user's mailbox, OneDrive, and Teams.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians",
@@ -3798,7 +3812,8 @@
     "method": "get",
     "toolName": "list-ediscovery-searches",
     "appPermissions": ["eDiscovery.Read.All"],
-    "llmTip": "Lists searches defined in an eDiscovery case."
+    "llmTip": "Lists searches defined in an eDiscovery case.",
+    "riskLevel": "high"
   },
   {
     "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches",

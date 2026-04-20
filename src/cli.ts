@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getCombinedPresetPattern, listPresets } from './tool-categories.js';
+import { parseMaxRiskLevel, type RiskLevel } from './risk-level.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -19,6 +20,10 @@ program
   .option('--verify-login', 'Verify login by testing client credentials against Graph API')
   .option('--read-only', 'Start server in read-only mode, disabling write operations (default)')
   .option('--allow-writes', 'Enable write operations (server is read-only by default)')
+  .option(
+    '--max-risk-level <level>',
+    'Cap the risk level of registered tools (SEC-G01): low|medium|high|critical. Applies to both reads and writes. Implies --allow-writes. Default: no cap (equivalent to critical) when --allow-writes is set.'
+  )
   .option(
     '--enabled-tools <pattern>',
     'Filter tools using regex pattern (e.g., "security|audit" to enable only security and audit tools)'
@@ -68,6 +73,7 @@ export interface CommandOptions {
   verifyLogin?: boolean;
   readOnly?: boolean;
   allowWrites?: boolean;
+  maxRiskLevel?: RiskLevel;
   enabledTools?: string;
   preset?: string;
   listPresets?: boolean;
@@ -107,7 +113,18 @@ export function parseArgs(): CommandOptions {
     }
   }
 
-  // Default to read-only. Only --allow-writes (or READ_ONLY=false) enables mutations.
+  // SEC-G01: parse and validate --max-risk-level. Implies --allow-writes.
+  if (options.maxRiskLevel) {
+    try {
+      options.maxRiskLevel = parseMaxRiskLevel(String(options.maxRiskLevel));
+    } catch (error) {
+      console.error(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+    options.allowWrites = true;
+  }
+
+  // Default to read-only. --allow-writes (or --max-risk-level, or READ_ONLY=false) enables mutations.
   if (options.allowWrites) {
     options.readOnly = false;
   } else if (process.env.READ_ONLY === 'false' || process.env.READ_ONLY === '0') {
