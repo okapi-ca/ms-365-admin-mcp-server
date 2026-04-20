@@ -8,20 +8,41 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
-### Security
+## [0.3.0] — 2026-04-20
 
-- **SEC-F01 (breaking)** — OAuth mode now fails closed when no per-user allowlist is configured. Previously an empty `--authorized-users` list silently accepted every authenticated tenant user; now the server refuses to start unless either `--authorized-users <oids>` is provided or the explicit opt-in `--allow-any-tenant-user` is passed.
-- **SEC-F02 (breaking)** — `--public-url` is now mandatory when `--oauth-mode` is enabled, validated at startup and again at OAuth-route registration. The header-derived fallback (X-Forwarded-Proto / Host) in `resolveIssuer` and `resourceMetadataUrl` has been removed; the advertised OAuth issuer is deterministic and immune to metadata poisoning via request headers.
-- **SEC-F03** — User tokens must now contain every scope listed in `--required-user-scopes` (default `access_as_user`) in their `scp` claim. Pass `--required-user-scopes ""` to restore the previous no-scope-check behaviour.
-- **SEC-F04 (partial)** — `/token` is now rate-limited at 10 req/min per IP, bounding brute-force throughput against stolen refresh tokens. The architectural residual (single stolen refresh token is still redeemable) is tracked as SEC-F04b for a proof-of-possession follow-up.
-- **SEC-F05 (mitigated)** — [infra/main.bicep](infra/main.bicep) now defaults `maxReplicas = 1` because the PKCE bridge is in-memory per process. Operators scaling beyond one replica must explicitly override the parameter — and should first externalise the bridge. Architectural externalisation tracked as a follow-up under the same SEC-F05 ID.
-- **SEC-F06** — OAuth routes (`/authorize`, `/token`, `/register`) now have dedicated rate limiters: 30 req/min on `/authorize`, 10 req/min on `/token` and `/register`. Previously only `/mcp` was rate-limited.
-- **SEC-F07** — `/token` upstream error logging extracted into `src/upstream-error.ts`. Only the RFC 6749 fields `error`, `error_description` (clipped, whitespace-normalised), and the Microsoft `error_codes` numeric array (first 5) are logged; non-JSON bodies log `<unparseable N bytes>` and JSON without recognised fields logs a sentinel. Raw correlation IDs and trace fragments no longer leak into logs.
-- **SEC-F08** — Token validators now serve the stale cached JWKS key on fetch failure instead of failing outright. In-library cache TTL bumped from 10 minutes to 24 hours; a new pure module `src/jwks-stale-cache.ts` keeps a per-tenant `Map<kid, PEM>` of previously-fetched keys and falls back to it only when Entra is unreachable. Unknown `kid`s still fail closed.
-- **SEC-G02** — Every successful Graph tool response is now wrapped in a nonce-delimited `<graph_response_...>` envelope with a preamble instructing the LLM to treat the contents as untrusted data. Defends against prompt injection through user-controlled Graph fields (displayName, mail subject, chat body, file name, site title, OAuth app display name, …). Per-call `crypto.randomBytes(8)` nonce prevents attacker-controlled text from closing the envelope. Error responses pass through unchanged.
-- **SEC-G01** — New `--max-risk-level <low|medium|high|critical>` CLI flag caps the risk level of registered tools. Applies to both reads and writes, implies `--allow-writes`, and surfaces the effective cap in the registration log line. Pure module `src/risk-level.ts` exposes `rank`, `effectiveRiskLevel`, and `isToolAllowed` for testability. Unannotated writes default to `critical` (fail-safe) so any future endpoint missing an annotation is hidden under non-critical caps.
-- **SEC-G03** — 22 sensitive-read GETs annotated with `riskLevel`: 7 `high` (BitLocker recovery keys, LAPS passwords, eDiscovery cases/custodians/searches, subject-rights requests) and 15 `medium` (auth methods, registration details, sign-ins, risky users/service-principals, risk detections, message traces, federated credentials). `graph-tools.ts` now emits read-specific risk copy in tool descriptions instructing the LLM to handle secrets/PII carefully. These annotations also feed `--max-risk-level`, so `--max-risk-level medium` transparently excludes BitLocker and LAPS from the tool surface.
-- Extracted the post-verification authorization logic into `authorizeUserClaims` and added 51 unit tests across `authorizeUserClaims`, `withStaleKeyFallback`, `summarizeUpstreamError`, `wrapUntrustedContent`, and the new `risk-level` gate.
+Substantial security hardening after a two-priority review (P1 OAuth / P2 tool gating) — see [docs/SECURITY_REVIEW_2026-04-20.md](docs/SECURITY_REVIEW_2026-04-20.md) for the full findings register. Nine findings closed across five sprints, two partially mitigated with architectural follow-ups tracked. No critical, high, or medium vulnerabilities remain open across the reviewed surface.
+
+### Breaking changes
+
+Deployments running HTTP / OAuth mode will need configuration updates — see [Migration](#migration) below.
+
+- **`--oauth-mode` now refuses to start** without either `--authorized-users <oids>` or the explicit opt-in `--allow-any-tenant-user` (SEC-F01). Previously an empty allowlist silently accepted every tenant user.
+- **`--public-url` is strictly required with `--oauth-mode`** (SEC-F02). Header-derived issuer fallback removed; was already advertised as required behind a proxy, now validated at startup.
+- **User tokens must carry `access_as_user` in `scp`** by default (SEC-F03). Override via `--required-user-scopes` or disable with `--required-user-scopes ""`.
+- **Bicep `maxReplicas` default dropped from 3 to 1** (SEC-F05) because the PKCE bridge is in-memory per process.
+
+### Security — OAuth / token validation (P1)
+
+- **SEC-F01** — OAuth mode fails closed on empty user allowlist. New `--allow-any-tenant-user` opt-in required to accept every tenant user.
+- **SEC-F02** — `--public-url` mandatory for `--oauth-mode`. `resolveIssuer` / `resourceMetadataUrl` header-based fallbacks removed; advertised issuer is deterministic.
+- **SEC-F03** — New `--required-user-scopes` flag enforces scopes on the `scp` claim (default `access_as_user`).
+- **SEC-F04 (partial)** — `/token` rate-limited at 10 req/min per IP. Architectural follow-up tracked as SEC-F04b (proof-of-possession / confidential client refactor).
+- **SEC-F05 (mitigated)** — `infra/main.bicep` defaults to single replica, with inline note on externalising the PKCE bridge before horizontal scaling.
+- **SEC-F06** — Dedicated rate limiters mounted on OAuth routes: 30/min on `/authorize`, 10/min on `/token` and `/register`.
+- **SEC-F07** — `/token` upstream error logging restricted to RFC 6749 fields (`error`, `error_description`, `error_codes`) via the new pure `src/upstream-error.ts`. No more `correlation_id` / `trace_id` leakage.
+- **SEC-F08** — JWKS cache TTL raised to 24 h and wrapped in a stale-while-revalidate fallback (`src/jwks-stale-cache.ts`). Brief Entra outages no longer cascade into blanket 403s; unknown `kid`s still fail closed.
+
+### Security — Tool invocation gating (P2)
+
+- **SEC-G01** — New `--max-risk-level <low|medium|high|critical>` CLI flag caps the risk level of registered tools (both reads and writes). Implies `--allow-writes`. Unannotated writes default to `critical` (fail-safe). Pure module `src/risk-level.ts` with `rank`, `effectiveRiskLevel`, `isToolAllowed`.
+- **SEC-G02** — Every successful Graph tool response is wrapped in a nonce-delimited `<graph_response_NN>` envelope with an untrusted-data preamble before reaching the LLM. Defends against prompt injection through user-controlled Graph fields (displayName, mail subject, chat body, site title, OAuth app name, …). Per-call `crypto.randomBytes(8)` nonce prevents envelope escape.
+- **SEC-G03** — 22 sensitive-read GETs annotated with `riskLevel`: 7 `high` (BitLocker recovery keys, LAPS passwords, eDiscovery cases/custodians/searches, subject-rights requests) and 15 `medium` (auth methods, sign-ins, risk detections, message traces, federated credentials, …). Tool descriptions now emit read-specific risk copy. Feeds SEC-G01: `--max-risk-level medium` hides BitLocker and LAPS from the tool surface.
+
+### Added
+
+- Pure, testable modules for every security-critical check: `src/user-token-authorization.ts`, `src/jwks-stale-cache.ts`, `src/upstream-error.ts`, `src/untrusted-envelope.ts`, `src/risk-level.ts`.
+- 51 unit tests covering all five modules (up from zero coverage on these paths pre-review).
+- [docs/SECURITY_REVIEW_2026-04-20.md](docs/SECURITY_REVIEW_2026-04-20.md) — traceable P1+P2 findings register with stable `SEC-Fxx` / `SEC-Gxx` identifiers.
 
 ### Migration
 
