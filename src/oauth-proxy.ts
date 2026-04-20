@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import type { Express, Request, Response } from 'express';
 import logger from './logger.js';
+import type { OAuthStorage } from './storage/index.js';
+import { hashClientSecret, verifyClientSecret } from './storage/index.js';
 import { summarizeUpstreamError } from './upstream-error.js';
 
 export interface OAuthProxyOptions {
@@ -15,31 +17,14 @@ export interface OAuthProxyOptions {
   clientSecret?: string;
   scopes: string[];
   enableDynamicRegistration: boolean;
-}
-
-interface PkceEntry {
-  serverVerifier: string;
-  redirectUri: string;
-  expiresAt: number;
+  // SEC-F04b + SEC-F05: externalised storage for PKCE bridge + DCR client
+  // credentials. Replaces the previous in-memory Map so a stolen refresh token
+  // cannot be redeemed without the per-client secret, and so the proxy can run
+  // multi-replica without losing PKCE state between /authorize and /token.
+  storage: OAuthStorage;
 }
 
 const PKCE_TTL_MS = 10 * 60 * 1000;
-const PKCE_MAX_ENTRIES = 1000;
-const pkceBridge = new Map<string, PkceEntry>();
-
-function pruneExpired(): void {
-  const now = Date.now();
-  if (pkceBridge.size <= PKCE_MAX_ENTRIES) {
-    for (const [k, v] of pkceBridge) {
-      if (v.expiresAt < now) pkceBridge.delete(k);
-    }
-    return;
-  }
-  const entries = [...pkceBridge.entries()].sort((a, b) => a[1].expiresAt - b[1].expiresAt);
-  for (let i = 0; i < entries.length - PKCE_MAX_ENTRIES; i++) {
-    pkceBridge.delete(entries[i][0]);
-  }
-}
 
 function base64url(buf: Buffer): string {
   return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -53,8 +38,39 @@ function randomVerifier(): string {
   return base64url(crypto.randomBytes(64));
 }
 
+function randomClientSecret(): string {
+  return base64url(crypto.randomBytes(32));
+}
+
 function stripTrailingSlash(s: string): string {
   return s.endsWith('/') ? s.slice(0, -1) : s;
+}
+
+// RFC 6749 §2.3.1: `client_secret_basic` uses HTTP Basic auth in the
+// Authorization header with form-urlencoded credentials. We also accept
+// `client_secret_post` via the body (advertised as our only supported method).
+function extractClientCredentials(req: Request): { clientId?: string; clientSecret?: string } {
+  const body = req.body ?? {};
+  const bodyId = typeof body.client_id === 'string' ? body.client_id : undefined;
+  const bodySecret = typeof body.client_secret === 'string' ? body.client_secret : undefined;
+  if (bodyId && bodySecret) return { clientId: bodyId, clientSecret: bodySecret };
+
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith('Basic ')) {
+    try {
+      const decoded = Buffer.from(auth.slice(6), 'base64').toString('utf8');
+      const sep = decoded.indexOf(':');
+      if (sep > 0) {
+        return {
+          clientId: decodeURIComponent(decoded.slice(0, sep)),
+          clientSecret: decodeURIComponent(decoded.slice(sep + 1)),
+        };
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  return { clientId: bodyId, clientSecret: bodySecret };
 }
 
 export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): void {
@@ -67,6 +83,17 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
         'The metadata endpoints advertise this as the OAuth issuer and cannot fall back to request headers.'
     );
   }
+  // SEC-F04b: DCR must be enabled so that /token can enforce per-client
+  // credentials. An oauth-mode deployment without DCR has no way to bind
+  // refresh-token redemption to a client authentication factor.
+  if (!options.enableDynamicRegistration) {
+    throw new Error(
+      'OAuth proxy requires Dynamic Client Registration to be enabled (SEC-F04b): ' +
+        '/token enforces per-client credentials issued at /register. ' +
+        'Remove --no-dynamic-registration or disable --oauth-mode.'
+    );
+  }
+  const storage = options.storage;
   const issuer = stripTrailingSlash(options.publicUrl);
   const authority = `https://login.microsoftonline.com/${options.tenantId}`;
   const fallbackScope =
@@ -79,11 +106,13 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       issuer,
       authorization_endpoint: `${issuer}/authorize`,
       token_endpoint: `${issuer}/token`,
-      registration_endpoint: options.enableDynamicRegistration ? `${issuer}/register` : undefined,
+      registration_endpoint: `${issuer}/register`,
       response_types_supported: ['code'],
       grant_types_supported: ['authorization_code', 'refresh_token'],
       code_challenge_methods_supported: ['S256'],
-      token_endpoint_auth_methods_supported: ['none'],
+      // SEC-F04b: confidential clients only. MCP clients obtain a secret at
+      // /register and present it on every /token call.
+      token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic'],
       scopes_supported: options.scopes.length > 0 ? options.scopes : fallbackScope.split(' '),
     });
   });
@@ -96,24 +125,43 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     });
   });
 
-  if (options.enableDynamicRegistration) {
-    app.post('/register', (req: Request, res: Response) => {
-      const body = req.body ?? {};
-      const clientId = `mcp-client-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-      res.status(201).json({
-        client_id: clientId,
-        client_id_issued_at: Math.floor(Date.now() / 1000),
-        redirect_uris: body.redirect_uris ?? [],
-        grant_types: body.grant_types ?? ['authorization_code', 'refresh_token'],
-        response_types: body.response_types ?? ['code'],
-        token_endpoint_auth_method: 'none',
-        scope: body.scope ?? fallbackScope,
-      });
-    });
-  }
+  app.post('/register', async (req: Request, res: Response) => {
+    const body = req.body ?? {};
+    const clientId = `mcp-client-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const clientSecret = randomClientSecret();
+    const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
 
-  app.get('/authorize', (req: Request, res: Response) => {
+    try {
+      await storage.saveClient({
+        clientId,
+        clientSecretHash: hashClientSecret(clientSecret),
+        redirectUris,
+        createdAt: Date.now(),
+      });
+    } catch (error) {
+      logger.error(`DCR saveClient failed: ${(error as Error).message}`);
+      res.status(500).json({ error: 'server_error', error_description: 'Registration failed' });
+      return;
+    }
+
+    logger.info(`DCR registered ${clientId}`);
+    res.status(201).json({
+      client_id: clientId,
+      client_secret: clientSecret,
+      // 0 means "does not expire" per RFC 7591 §3.2.1. Rotation is manual.
+      client_secret_expires_at: 0,
+      client_id_issued_at: Math.floor(Date.now() / 1000),
+      redirect_uris: redirectUris,
+      grant_types: body.grant_types ?? ['authorization_code', 'refresh_token'],
+      response_types: body.response_types ?? ['code'],
+      token_endpoint_auth_method: 'client_secret_post',
+      scope: body.scope ?? fallbackScope,
+    });
+  });
+
+  app.get('/authorize', async (req: Request, res: Response) => {
     const {
+      client_id: clientId,
       redirect_uri: redirectUri,
       state,
       code_challenge: clientChallenge,
@@ -121,11 +169,11 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       scope,
     } = req.query as Record<string, string | undefined>;
 
-    if (!redirectUri || !clientChallenge) {
-      logger.warn('OAuth /authorize rejected: missing redirect_uri or code_challenge');
+    if (!clientId || !redirectUri || !clientChallenge) {
+      logger.warn('OAuth /authorize rejected: missing client_id, redirect_uri or code_challenge');
       res.status(400).json({
         error: 'invalid_request',
-        error_description: 'Missing redirect_uri or code_challenge',
+        error_description: 'Missing client_id, redirect_uri or code_challenge',
       });
       return;
     }
@@ -140,12 +188,23 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       return;
     }
 
-    pruneExpired();
+    // SEC-F04b: /authorize must only accept DCR-issued client_ids. An unknown
+    // client_id would let a caller who doesn't possess the secret still funnel
+    // an auth code through the proxy.
+    const known = await storage.getClient(clientId);
+    if (!known) {
+      logger.warn(`OAuth /authorize rejected: unknown client_id ${clientId}`);
+      res.status(400).json({ error: 'invalid_client', error_description: 'Unknown client_id' });
+      return;
+    }
+
     const serverVerifier = randomVerifier();
     const serverChallenge = sha256Base64url(serverVerifier);
-    pkceBridge.set(clientChallenge, {
+    await storage.savePkce({
+      clientChallenge,
       serverVerifier,
       redirectUri,
+      clientId,
       expiresAt: Date.now() + PKCE_TTL_MS,
     });
 
@@ -160,7 +219,7 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     if (state) upstream.searchParams.set('state', state);
 
     logger.info(
-      `OAuth /authorize → Entra (redirect_uri=${redirectUri}, scope=${scope || fallbackScope})`
+      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${scope || fallbackScope})`
     );
     res.redirect(302, upstream.toString());
   });
@@ -168,6 +227,26 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
   app.post('/token', async (req: Request, res: Response) => {
     const body = req.body ?? {};
     const grantType = body.grant_type;
+
+    // SEC-F04b: require client authentication on every /token call. A stolen
+    // authorization_code or refresh_token is useless without the client_secret
+    // issued at /register.
+    const { clientId: reqClientId, clientSecret: reqClientSecret } = extractClientCredentials(req);
+    if (!reqClientId || !reqClientSecret) {
+      res.status(401).json({
+        error: 'invalid_client',
+        error_description: 'Missing client_id or client_secret',
+      });
+      return;
+    }
+    const registered = await storage.getClient(reqClientId);
+    if (!registered || !verifyClientSecret(reqClientSecret, registered.clientSecretHash)) {
+      logger.warn(`OAuth /token rejected: invalid client credentials for ${reqClientId}`);
+      res
+        .status(401)
+        .json({ error: 'invalid_client', error_description: 'Invalid client credentials' });
+      return;
+    }
 
     const form = new URLSearchParams();
     form.set('client_id', options.clientId);
@@ -187,15 +266,27 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       }
 
       const clientChallenge = sha256Base64url(clientVerifier);
-      const bridge = pkceBridge.get(clientChallenge);
-      if (!bridge || bridge.expiresAt < Date.now()) {
+      const bridge = await storage.consumePkce(clientChallenge);
+      if (!bridge) {
         res.status(400).json({
           error: 'invalid_grant',
           error_description: 'PKCE bridge entry missing or expired',
         });
         return;
       }
-      pkceBridge.delete(clientChallenge);
+      // SEC-F04b: a client cannot redeem a code obtained under a different
+      // client_id. This prevents a compromised client from redeeming another
+      // client's auth code even if it races the PKCE consumption.
+      if (bridge.clientId !== reqClientId) {
+        logger.warn(
+          `OAuth /token rejected: client_id mismatch (bridge=${bridge.clientId}, req=${reqClientId})`
+        );
+        res.status(400).json({
+          error: 'invalid_grant',
+          error_description: 'client_id does not match the one used at /authorize',
+        });
+        return;
+      }
 
       form.set('grant_type', 'authorization_code');
       form.set('code', code);
@@ -230,7 +321,7 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
           `Entra /token returned ${upstream.status} for grant_type=${grantType}: ${summarizeUpstreamError(payload)}`
         );
       } else {
-        logger.info(`Entra /token exchange ok (grant_type=${grantType})`);
+        logger.info(`Entra /token exchange ok (grant_type=${grantType}, client=${reqClientId})`);
       }
       res.status(upstream.status).type('application/json').send(payload);
     } catch (error) {

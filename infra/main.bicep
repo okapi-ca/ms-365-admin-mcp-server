@@ -31,9 +31,9 @@ param logRetentionDays int = 30
 @minValue(0)
 param minReplicas int = 0
 
-@description('Container App max replicas. SEC-F05: default is 1 because the OAuth proxy\'s PKCE bridge is in-memory per process — scaling beyond one replica silently breaks the /authorize → /token flow. Override only after externalising the bridge (Redis / Azure Table).')
+@description('Container App max replicas. SEC-F05: PKCE bridge is now externalised to Azure Table Storage (see storageAccount below), so this can safely scale past 1.')
 @minValue(1)
-param maxReplicas int = 1
+param maxReplicas int = 3
 
 @description('Tags applied to every resource (must satisfy org tag policies)')
 param tags object = {}
@@ -59,9 +59,12 @@ var lawName = '${baseName}-law'
 var appInsightsName = '${baseName}-ai'
 var caeName = '${baseName}-cae'
 var appName = '${baseName}-app'
+var storageAccountName = take('${replace(baseName, '-', '')}st${uniqueString(resourceGroup().id)}', 24)
+var oauthTableName = 'oauthstate'
 
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 var kvSecretsOfficerRoleId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+var storageTableDataContributorRoleId = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
 
 var baseArgs = [
   '--transport'
@@ -144,6 +147,52 @@ resource kvAdmins 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
   }
 ]
 
+// --- Storage Account (OAuth PKCE bridge + DCR client credentials, SEC-F04b / SEC-F05) ---
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  tags: tags
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    defaultToOAuthAuthentication: true
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
+resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2023-05-01' = {
+  parent: storageAccount
+  name: 'default'
+}
+
+resource oauthTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
+  parent: tableService
+  name: oauthTableName
+}
+
+resource uamiTableAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(storageAccount.id, uami.id, storageTableDataContributorRoleId)
+  properties: {
+    principalId: uami.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageTableDataContributorRoleId
+    )
+  }
+}
+
 // --- Log Analytics + Application Insights ---
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -200,6 +249,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   }
   dependsOn: [
     uamiKvAccess
+    uamiTableAccess
   ]
   properties: {
     managedEnvironmentId: containerAppEnv.id
@@ -247,6 +297,14 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               value: appInsights.properties.ConnectionString
             }
+            {
+              name: 'AZURE_STORAGE_ACCOUNT_NAME'
+              value: storageAccount.name
+            }
+            {
+              name: 'AZURE_STORAGE_TABLE_NAME'
+              value: oauthTableName
+            }
           ]
         }
       ]
@@ -260,5 +318,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
 
 output containerAppUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
 output keyVaultName string = keyVault.name
+output storageAccountName string = storageAccount.name
 output uamiPrincipalId string = uami.properties.principalId
 output uamiClientId string = uami.properties.clientId

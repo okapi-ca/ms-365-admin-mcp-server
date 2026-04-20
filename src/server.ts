@@ -131,22 +131,26 @@ class AdminGraphServer {
           }
         : undefined;
 
-      const oauthProxyOptions = this.options.oauthMode
-        ? {
-            publicUrl: this.options.publicUrl || '',
-            tenantId: this.secrets!.tenantId,
-            clientId: this.secrets!.clientId,
-            clientSecret: this.secrets!.clientSecret,
-            scopes: [
-              'openid',
-              'profile',
-              'email',
-              'offline_access',
-              `api://${this.secrets!.clientId}/access_as_user`,
-            ],
-            enableDynamicRegistration: this.options.dynamicRegistration !== false,
-          }
-        : undefined;
+      let oauthProxyOptions: import('./oauth-proxy.js').OAuthProxyOptions | undefined;
+      if (this.options.oauthMode) {
+        const { createOAuthStorage } = await import('./storage/index.js');
+        const storage = await createOAuthStorage();
+        oauthProxyOptions = {
+          publicUrl: this.options.publicUrl || '',
+          tenantId: this.secrets!.tenantId,
+          clientId: this.secrets!.clientId,
+          clientSecret: this.secrets!.clientSecret,
+          scopes: [
+            'openid',
+            'profile',
+            'email',
+            'offline_access',
+            `api://${this.secrets!.clientId}/access_as_user`,
+          ],
+          enableDynamicRegistration: this.options.dynamicRegistration !== false,
+          storage,
+        };
+      }
 
       await startHttpServer({
         port,
