@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   authorizeUserClaims,
   type UserTokenValidatorOptions,
-} from '../src/user-token-validator.js';
+} from '../src/user-token-authorization.js';
 
 const TENANT = '11111111-1111-1111-1111-111111111111';
 const OID_ALICE = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
