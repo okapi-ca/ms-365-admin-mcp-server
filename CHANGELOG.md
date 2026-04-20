@@ -11,12 +11,16 @@ Tool counts in parentheses indicate the cumulative total after the change.
 ### Security
 
 - **SEC-F01 (breaking)** — OAuth mode now fails closed when no per-user allowlist is configured. Previously an empty `--authorized-users` list silently accepted every authenticated tenant user; now the server refuses to start unless either `--authorized-users <oids>` is provided or the explicit opt-in `--allow-any-tenant-user` is passed.
+- **SEC-F02 (breaking)** — `--public-url` is now mandatory when `--oauth-mode` is enabled, validated at startup and again at OAuth-route registration. The header-derived fallback (X-Forwarded-Proto / Host) in `resolveIssuer` and `resourceMetadataUrl` has been removed; the advertised OAuth issuer is deterministic and immune to metadata poisoning via request headers.
 - **SEC-F03** — User tokens must now contain every scope listed in `--required-user-scopes` (default `access_as_user`) in their `scp` claim. Pass `--required-user-scopes ""` to restore the previous no-scope-check behaviour.
+- **SEC-F04 (partial)** — `/token` is now rate-limited at 10 req/min per IP, bounding brute-force throughput against stolen refresh tokens. The architectural residual (single stolen refresh token is still redeemable) is tracked as SEC-F04b for a proof-of-possession follow-up.
+- **SEC-F06** — OAuth routes (`/authorize`, `/token`, `/register`) now have dedicated rate limiters: 30 req/min on `/authorize`, 10 req/min on `/token` and `/register`. Previously only `/mcp` was rate-limited.
 - Extracted the post-verification authorization logic into `authorizeUserClaims` and added 16 unit tests covering tenant, audience, oid allowlist, and scope enforcement paths.
 
 ### Migration
 
 - Deployments relying on the implicit "any authenticated user" behaviour must add `--allow-any-tenant-user` to their startup command (and review whether that is actually intended).
+- Deployments running `--oauth-mode` without `--public-url` must add `--public-url https://<fqdn>`. This was already documented as "required when behind a reverse proxy"; it is now strictly required.
 - Deployments whose Entra app registration does not expose the `access_as_user` scope — or whose callers request a different scope — must pass `--required-user-scopes <their-scopes>` or `--required-user-scopes ""`.
 
 ## [0.2.4] — 2026-04-20

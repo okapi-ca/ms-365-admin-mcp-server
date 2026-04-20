@@ -44,7 +44,7 @@ program
   )
   .option(
     '--public-url <url>',
-    'Public base URL for OAuth metadata (required with --oauth-mode when behind a reverse proxy)'
+    'Public base URL for OAuth metadata, e.g. https://mcp.example.com. Required with --oauth-mode (SEC-F02: no header-based fallback).'
   )
   .option(
     '--authorized-users <oids>',

@@ -44,11 +44,12 @@ Severity rubric mirrors [RISK_MODEL.md](RISK_MODEL.md) but is calibrated to secu
 ### SEC-F02 — `resolveIssuer` trusts `X-Forwarded-*` in the fallback path
 
 - **Severity:** High
-- **Status:** Open
-- **Location:** [src/oauth-proxy.ts:54-59](../src/oauth-proxy.ts), [src/http-server.ts:34-39](../src/http-server.ts).
-- **Description:** When `publicUrl` is not configured, `resolveIssuer` and `resourceMetadataUrl` derive the advertised OAuth issuer from `X-Forwarded-Proto` / `X-Forwarded-Host` / `Host`. `app.set('trust proxy', 1)` bounds that trust to a single upstream hop, which is appropriate only behind a known-and-trusted reverse proxy.
-- **Attack scenario:** In a direct-exposure deploy (no reverse proxy), a client-supplied `Host` header is echoed into `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource`. A victim client performing metadata discovery may be steered to an attacker-controlled issuer and intercepted.
-- **Remediation (proposed):** Make `--public-url` mandatory when `--oauth-mode` is enabled. If a fallback must remain (dev ergonomics), validate the derived host against an allowlist of approved public hostnames.
+- **Status:** Fixed — sprint 2
+- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts), [src/http-server.ts](../src/http-server.ts).
+- **Description:** When `publicUrl` was not configured, the proxy derived the advertised OAuth issuer from `X-Forwarded-Proto` / `X-Forwarded-Host` / `Host`. `app.set('trust proxy', 1)` bounds that trust to a single upstream hop, which is appropriate only behind a known-and-trusted reverse proxy.
+- **Attack scenario:** In a direct-exposure deploy (no reverse proxy), a client-supplied `Host` header was echoed into `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource`. A victim client performing metadata discovery could be steered to an attacker-controlled issuer and intercepted.
+- **Remediation:** `--public-url` is now mandatory when `--oauth-mode` is enabled, validated at startup (`server.ts`) and again at OAuth-route registration (`registerOAuthRoutes` throws). The header-derived fallback was removed from both `oauth-proxy.ts` and `http-server.ts` (`resourceMetadataUrl` now takes a non-optional string). The advertised issuer is deterministic and independent of request headers.
+- **Breaking change:** Yes. Deployments that did not pass `--public-url` must add it.
 
 ### SEC-F03 — `scp` claim parsed but never enforced
 
@@ -64,14 +65,13 @@ Severity rubric mirrors [RISK_MODEL.md](RISK_MODEL.md) but is calibrated to secu
 ### SEC-F04 — `refresh_token` grant requires no MCP-client authentication
 
 - **Severity:** High
-- **Status:** Open
-- **Location:** [src/oauth-proxy.ts:197-207](../src/oauth-proxy.ts).
+- **Status:** Partially mitigated — sprint 2. Residual risk tracked.
+- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts).
 - **Description:** `POST /token` with `grant_type=refresh_token` attaches the server's `client_secret` and forwards the refresh token to Entra. An attacker in possession of a refresh token only needs the public proxy URL to redeem it — the client_secret Entra would normally require is supplied by the proxy on behalf of the caller.
-- **Attack scenario:** Refresh-token exfiltration from an MCP client (local token store, logs, MITM) becomes directly usable via the proxy, without the additional factor of the client_secret.
-- **Remediation (proposed):** One of —
-  - require a valid bearer JWT alongside `refresh_token` on `/token` (binds the grant to the same subject) ;
-  - move the proxy away from `token_endpoint_auth_methods: none` and require per-client credentials ;
-  - add a strict per-IP rate limit on `/token` (partial mitigation).
+- **Attack scenario:** Refresh-token exfiltration from an MCP client (local token store, logs, MITM) is directly usable via the proxy, without the additional factor of the client_secret.
+- **Mitigation delivered (sprint 2):** `/token` is now rate-limited at 10 req/min per IP (see SEC-F06), which bounds brute-force throughput and makes scripted abuse visible in logs. This does **not** close the underlying architectural gap — one stolen refresh token used once is still redeemable.
+- **Residual risk:** Stolen-refresh-token reuse remains possible until either (a) the proxy becomes a confidential client to MCP callers (per-client credentials, moving away from `token_endpoint_auth_methods: none`), or (b) the proxy requires a bound proof-of-possession on refresh (DPoP, mTLS, or a session-bound bearer). Both are architectural changes tracked separately as a future SEC-F04b.
+- **Operational compensations:** keep refresh-token lifetimes short in the Entra app registration (default 90 days is too long for an admin surface; consider dropping to 24h via Conditional Access sign-in frequency); monitor the `10 req/min` rate-limit hits on `/token` for anomalous clients.
 
 ### SEC-F05 — PKCE bridge is in-memory per process
 
@@ -85,11 +85,13 @@ Severity rubric mirrors [RISK_MODEL.md](RISK_MODEL.md) but is calibrated to secu
 ### SEC-F06 — `/token` and `/authorize` have no rate limit
 
 - **Severity:** Medium
-- **Status:** Open
-- **Location:** [src/http-server.ts:49-58](../src/http-server.ts).
-- **Description:** The `express-rate-limit` middleware is mounted on `/mcp` only. `/authorize`, `/token`, and `/register` are uncapped.
-- **Attack scenario:** Brute force of authorization codes, enumeration of refresh tokens (pair with SEC-F04), DoS against Entra's `/token` endpoint via the proxy.
-- **Remediation (proposed):** Add a tighter rate limit on `/token` (e.g. 10 req/min per IP) and `/authorize` (e.g. 30 req/min per IP).
+- **Status:** Fixed — sprint 2
+- **Location:** [src/http-server.ts](../src/http-server.ts).
+- **Description:** The `express-rate-limit` middleware was mounted on `/mcp` only. `/authorize`, `/token`, and `/register` were uncapped, enabling brute force of authorization codes and enumeration of refresh tokens (see SEC-F04).
+- **Remediation:** Added two dedicated rate limiters, both active only when `--oauth-mode` is enabled:
+  - `/authorize`: 30 req/min per IP (user-initiated redirect, looser bound).
+  - `/token` and `/register`: 10 req/min per IP (token exchange is the brute-force target).
+- **Note:** Limits are process-local. In a multi-replica deployment the effective budget scales with the replica count; SEC-F05 (externalize transient state) is the follow-up that would restore a single shared budget.
 
 ### SEC-F07 — `/token` logs up to 500 chars of upstream error payload
 
@@ -149,12 +151,12 @@ No remediation required — recorded so future reviews do not re-litigate alread
 
 ## Remediation order (recommendation)
 
-| Wave            | Findings                         | Rationale                                                      |
-| --------------- | -------------------------------- | -------------------------------------------------------------- |
-| 1 — this review | SEC-F01 (fixed), SEC-F03 (fixed) | Critical + High exploitable at the current deployment state.   |
-| 2 — next sprint | SEC-F02, SEC-F04, SEC-F06        | Harden the public OAuth proxy surface before broader exposure. |
-| 3 — hardening   | SEC-F05, SEC-F07, SEC-F08        | Multi-replica readiness, log hygiene, availability robustness. |
-| Backlog         | SEC-F09, SEC-F10, SEC-F11        | Documentation / cosmetic; no realistic exploit path.           |
+| Wave          | Findings                                                                       | Rationale                                                      |
+| ------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| 1 — PR #44    | SEC-F01 (fixed), SEC-F03 (fixed)                                               | Critical + High exploitable at the current deployment state.   |
+| 2 — PR #45    | SEC-F02 (fixed), SEC-F06 (fixed), SEC-F04 (partial: rate-limited + documented) | Harden the public OAuth proxy surface before broader exposure. |
+| 3 — hardening | SEC-F05, SEC-F07, SEC-F08, SEC-F04b (architectural refresh-token PoP)          | Multi-replica readiness, log hygiene, availability robustness. |
+| Backlog       | SEC-F09, SEC-F10, SEC-F11                                                      | Documentation / cosmetic; no realistic exploit path.           |
 
 ---
 
@@ -162,7 +164,7 @@ No remediation required — recorded so future reviews do not re-litigate alread
 
 The broader audit plan identified six priority areas. Status after this cycle:
 
-- **P1 — Auth / OAuth HTTP mode** — partially remediated (SEC-F01 + SEC-F03 closed; SEC-F02/F04/F05/F06/F07/F08/F09/F10/F11 open).
+- **P1 — Auth / OAuth HTTP mode** — majority remediated. Closed: SEC-F01, SEC-F02, SEC-F03, SEC-F06. Partially mitigated: SEC-F04 (rate-limited + documented; architectural PoP fix tracked as SEC-F04b). Open: SEC-F05, SEC-F07, SEC-F08, SEC-F09, SEC-F10, SEC-F11.
 - **P2 — Tool invocation gating** — not yet reviewed. Verify `--allow-writes` enforcement at dispatch, audit risk-level labels, assess prompt-injection via Graph response content.
 - **P3 — Secret & token hygiene** — pass-level check done (no logging observed); formal pass pending.
 - **P4 — Transport & deploy hardening** — CORS, HSTS, trust-proxy depth, rate-limit breadth.

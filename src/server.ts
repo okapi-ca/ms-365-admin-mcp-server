@@ -89,6 +89,19 @@ class AdminGraphServer {
         );
       }
 
+      // SEC-F02: refuse to start if OAuth mode is enabled without a trusted public URL.
+      // The metadata endpoints advertise this as the OAuth issuer; falling back to
+      // request headers would let a client forge the advertised issuer via Host.
+      if (this.options.oauthMode) {
+        const url = this.options.publicUrl;
+        if (!url || !/^https?:\/\//.test(url)) {
+          throw new Error(
+            'OAuth mode requires --public-url to be a non-empty absolute URL (e.g. https://mcp.example.com). ' +
+              'The OAuth metadata endpoints advertise this URL as the issuer.'
+          );
+        }
+      }
+
       // SEC-F03: default to requiring `access_as_user` in scp. An empty string disables the check.
       const requiredScopes =
         this.options.requiredUserScopes === undefined

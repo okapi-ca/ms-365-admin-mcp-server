@@ -140,14 +140,14 @@ curl -X POST http://localhost:8080/mcp \
 
 The server ships with these defenses enabled by default (see `src/http-server.ts`):
 
-| Defense                 | Detail                                                                                                                                          |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rate limit              | 100 req/min per source IP on `/mcp`                                                                                                             |
-| Body size limit         | 100 KB                                                                                                                                          |
-| Security headers        | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, CSP `default-src 'none'`, `Referrer-Policy: no-referrer` |
-| Default bind            | `127.0.0.1` (loopback)                                                                                                                          |
-| Stateless sessions      | Each request creates a fresh transport; no server-side session state                                                                            |
-| Stack trace suppression | Errors return `500` with generic message; details in logs only                                                                                  |
+| Defense                 | Detail                                                                                                                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rate limit              | `/mcp`: 100 req/min per source IP. `/authorize`: 30 req/min. `/token` and `/register`: 10 req/min. Limits are process-local — multi-replica deployments scale the effective budget per replica. |
+| Body size limit         | 100 KB                                                                                                                                                                                          |
+| Security headers        | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store`, CSP `default-src 'none'`, `Referrer-Policy: no-referrer`                                                 |
+| Default bind            | `127.0.0.1` (loopback)                                                                                                                                                                          |
+| Stateless sessions      | Each request creates a fresh transport; no server-side session state                                                                                                                            |
+| Stack trace suppression | Errors return `500` with generic message; details in logs only                                                                                                                                  |
 
 ## Operator-provided hardening (you must do this)
 
