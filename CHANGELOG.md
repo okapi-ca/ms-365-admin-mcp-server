@@ -8,6 +8,17 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-04-20
+
+Observability fix: logs were written only to files inside the container, so nothing showed up in Log Analytics and post-Entra OAuth failures were invisible.
+
+### Changed
+
+- HTTP transport now auto-enables the Winston Console transport (`-v` still forces it on stdio). stdio mode still keeps stdout clean for the JSON-RPC stream.
+- OAuth proxy logs each `/authorize` redirect (redirect_uri, scope) and each `/token` exchange (`grant_type`, Entra HTTP status and body excerpt on failure).
+- `/mcp` auth middleware logs 401/403 outcomes with the method/path.
+- User-token validator failure logs now include the offending `aud`, `tid`, and `upn` so the root cause of a rejected token is obvious.
+
 ## [0.2.1] — 2026-04-20
 
 Fixes the OAuth 2.0 discovery flow so Claude.ai Web and Claude Desktop can actually complete authorization against an OAuth-mode HTTP deployment.

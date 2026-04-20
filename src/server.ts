@@ -42,7 +42,7 @@ class AdminGraphServer {
   }
 
   async start(): Promise<void> {
-    if (this.options.v) {
+    if (this.options.v || this.options.transport === 'http') {
       enableConsoleLogging();
     }
 

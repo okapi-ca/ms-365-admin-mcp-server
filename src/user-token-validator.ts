@@ -90,12 +90,14 @@ export async function validateUserToken(
     }) as UserTokenPayload;
 
     if (payload.tid && payload.tid !== options.tenantId) {
-      logger.warn('User token tenant mismatch');
+      logger.warn(`User token tenant mismatch: tid=${payload.tid}, expected=${options.tenantId}`);
       return null;
     }
 
     if (!audienceMatches(payload.aud, options.expectedAudiences)) {
-      logger.warn('User token audience not in expected list');
+      logger.warn(
+        `User token audience not in expected list: aud=${JSON.stringify(payload.aud)}, expected=${JSON.stringify(options.expectedAudiences)}`
+      );
       return null;
     }
 
@@ -106,7 +108,9 @@ export async function validateUserToken(
     }
 
     if (options.authorizedUserOids.length > 0 && !options.authorizedUserOids.includes(oid)) {
-      logger.warn(`User oid ${oid} not in authorized-users allowlist`);
+      logger.warn(
+        `User oid ${oid} (${payload.upn || payload.preferred_username || 'no upn'}) not in authorized-users allowlist`
+      );
       return null;
     }
 
