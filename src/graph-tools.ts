@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { wrapUntrustedContent } from './untrusted-envelope.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -197,7 +198,13 @@ async function executeGraphTool(
       }
     }
 
-    return (await graphClient.graphRequest(fullPath, requestOptions)) as CallToolResult;
+    // SEC-G02: wrap Graph response in an untrusted-content envelope before it
+    // becomes part of the LLM context. Errors pass through unchanged.
+    const graphResult = (await graphClient.graphRequest(
+      fullPath,
+      requestOptions
+    )) as CallToolResult;
+    return wrapUntrustedContent(graphResult, tool.alias);
   } catch (error) {
     logger.error(`Error executing tool ${tool.alias}: ${(error as Error).message}`);
     return {

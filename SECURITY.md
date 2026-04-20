@@ -41,6 +41,7 @@ The following are in scope for security reports:
 - Path traversal, SSRF, or command injection via tool parameters
 - Privilege escalation via unexpected Graph API calls
 - Risk-level misclassification of write tools (e.g. `critical` operation marked as `low`)
+- Prompt-injection escapes from the `<graph_response_*>` envelope (SEC-G02) — for example, attacker-controlled Graph response content causing the LLM to issue unauthorised tool calls despite the envelope preamble
 - Supply chain issues in direct dependencies
 
 Out of scope:

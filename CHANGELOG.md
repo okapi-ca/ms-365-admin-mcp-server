@@ -18,7 +18,8 @@ Tool counts in parentheses indicate the cumulative total after the change.
 - **SEC-F06** — OAuth routes (`/authorize`, `/token`, `/register`) now have dedicated rate limiters: 30 req/min on `/authorize`, 10 req/min on `/token` and `/register`. Previously only `/mcp` was rate-limited.
 - **SEC-F07** — `/token` upstream error logging extracted into `src/upstream-error.ts`. Only the RFC 6749 fields `error`, `error_description` (clipped, whitespace-normalised), and the Microsoft `error_codes` numeric array (first 5) are logged; non-JSON bodies log `<unparseable N bytes>` and JSON without recognised fields logs a sentinel. Raw correlation IDs and trace fragments no longer leak into logs.
 - **SEC-F08** — Token validators now serve the stale cached JWKS key on fetch failure instead of failing outright. In-library cache TTL bumped from 10 minutes to 24 hours; a new pure module `src/jwks-stale-cache.ts` keeps a per-tenant `Map<kid, PEM>` of previously-fetched keys and falls back to it only when Entra is unreachable. Unknown `kid`s still fail closed.
-- Extracted the post-verification authorization logic into `authorizeUserClaims` and added 28 unit tests across `authorizeUserClaims`, `withStaleKeyFallback`, and `summarizeUpstreamError`.
+- **SEC-G02** — Every successful Graph tool response is now wrapped in a nonce-delimited `<graph_response_...>` envelope with a preamble instructing the LLM to treat the contents as untrusted data. Defends against prompt injection through user-controlled Graph fields (displayName, mail subject, chat body, file name, site title, OAuth app display name, …). Per-call `crypto.randomBytes(8)` nonce prevents attacker-controlled text from closing the envelope. Error responses pass through unchanged.
+- Extracted the post-verification authorization logic into `authorizeUserClaims` and added 36 unit tests across `authorizeUserClaims`, `withStaleKeyFallback`, `summarizeUpstreamError`, and `wrapUntrustedContent`.
 
 ### Migration
 
