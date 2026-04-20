@@ -31,11 +31,11 @@ function stripTrailingSlash(s: string): string {
   return s.endsWith('/') ? s.slice(0, -1) : s;
 }
 
-function resourceMetadataUrl(req: Request, publicUrl?: string): string {
-  if (publicUrl) return `${stripTrailingSlash(publicUrl)}/.well-known/oauth-protected-resource`;
-  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
-  const host = (req.headers['x-forwarded-host'] as string) || req.headers.host;
-  return `${proto}://${host}/.well-known/oauth-protected-resource`;
+function resourceMetadataUrl(publicUrl: string): string {
+  // SEC-F02: publicUrl is mandatory and validated by registerOAuthRoutes; no
+  // header-derived fallback here either, to keep the WWW-Authenticate challenge
+  // consistent with the advertised metadata.
+  return `${stripTrailingSlash(publicUrl)}/.well-known/oauth-protected-resource`;
 }
 
 export async function startHttpServer(options: HttpServerOptions): Promise<void> {
@@ -62,8 +62,30 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   });
 
   if (options.oauthProxyOptions) {
+    // SEC-F06: OAuth surface is public and must be rate-limited independently
+    // of /mcp. /token is the tightest (brute-forcing auth codes / refresh tokens
+    // lives here); /authorize is looser because it's a user-initiated redirect.
+    app.use(
+      '/authorize',
+      rateLimit({
+        windowMs: 60_000,
+        max: 30,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { error: 'invalid_request', error_description: 'Too many authorize requests' },
+      })
+    );
+    const tokenLimiter = rateLimit({
+      windowMs: 60_000,
+      max: 10,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'invalid_request', error_description: 'Too many token requests' },
+    });
+    app.use('/token', tokenLimiter);
+    app.use('/register', tokenLimiter);
     registerOAuthRoutes(app, options.oauthProxyOptions);
-    logger.info('OAuth proxy routes enabled (/authorize, /token, DCR, metadata)');
+    logger.info('OAuth proxy routes enabled (/authorize, /token, DCR, metadata) with rate limits');
   }
 
   const serviceValidator = options.tokenValidatorOptions;
@@ -78,9 +100,9 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   const oauthPublicUrl = options.oauthProxyOptions?.publicUrl;
   const oauthEnabled = Boolean(options.oauthProxyOptions);
 
-  function setChallengeHeader(req: Request, res: Response, errorCode?: string): void {
-    if (!oauthEnabled) return;
-    const metadata = resourceMetadataUrl(req, oauthPublicUrl);
+  function setChallengeHeader(_req: Request, res: Response, errorCode?: string): void {
+    if (!oauthEnabled || !oauthPublicUrl) return;
+    const metadata = resourceMetadataUrl(oauthPublicUrl);
     const parts = [`resource_metadata="${metadata}"`];
     if (errorCode) parts.push(`error="${errorCode}"`);
     res.setHeader('WWW-Authenticate', `Bearer ${parts.join(', ')}`);

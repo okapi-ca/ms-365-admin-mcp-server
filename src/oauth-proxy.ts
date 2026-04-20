@@ -3,6 +3,11 @@ import type { Express, Request, Response } from 'express';
 import logger from './logger.js';
 
 export interface OAuthProxyOptions {
+  // SEC-F02: must be a non-empty absolute URL. The proxy advertises this as the
+  // OAuth issuer and resource identifier in `/.well-known/...`. Deriving the
+  // issuer from request headers (X-Forwarded-*, Host) is a metadata-poisoning
+  // vector when the server is not behind a strict reverse proxy, so the
+  // fallback was removed and callers must supply a trusted public URL.
   publicUrl: string;
   tenantId: string;
   clientId: string;
@@ -51,22 +56,24 @@ function stripTrailingSlash(s: string): string {
   return s.endsWith('/') ? s.slice(0, -1) : s;
 }
 
-function resolveIssuer(req: Request, configured: string): string {
-  if (configured) return stripTrailingSlash(configured);
-  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
-  const host = (req.headers['x-forwarded-host'] as string) || req.headers.host;
-  return `${proto}://${host}`;
-}
-
 export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): void {
+  // SEC-F02: refuse to register the OAuth surface without a trusted public URL.
+  // The metadata endpoints would otherwise advertise an attacker-controllable
+  // issuer derived from request headers.
+  if (!options.publicUrl || !/^https?:\/\//.test(options.publicUrl)) {
+    throw new Error(
+      'OAuth proxy requires --public-url to be a non-empty absolute URL (e.g. https://mcp.example.com). ' +
+        'The metadata endpoints advertise this as the OAuth issuer and cannot fall back to request headers.'
+    );
+  }
+  const issuer = stripTrailingSlash(options.publicUrl);
   const authority = `https://login.microsoftonline.com/${options.tenantId}`;
   const fallbackScope =
     options.scopes.length > 0
       ? options.scopes.join(' ')
       : `openid profile email offline_access api://${options.clientId}/access_as_user`;
 
-  app.get('/.well-known/oauth-authorization-server', (req: Request, res: Response) => {
-    const issuer = resolveIssuer(req, options.publicUrl);
+  app.get('/.well-known/oauth-authorization-server', (_req: Request, res: Response) => {
     res.json({
       issuer,
       authorization_endpoint: `${issuer}/authorize`,
@@ -80,8 +87,7 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     });
   });
 
-  app.get('/.well-known/oauth-protected-resource', (req: Request, res: Response) => {
-    const issuer = resolveIssuer(req, options.publicUrl);
+  app.get('/.well-known/oauth-protected-resource', (_req: Request, res: Response) => {
     res.json({
       resource: `${issuer}/mcp`,
       authorization_servers: [issuer],
