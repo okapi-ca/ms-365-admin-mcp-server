@@ -24,6 +24,7 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 | Document                                             | Purpose                                                       |
 | ---------------------------------------------------- | ------------------------------------------------------------- |
 | [docs/USE_CASES.md](docs/USE_CASES.md)               | 15 typical admin scenarios with sample prompts and tool lists |
+| [docs/playbooks/](docs/playbooks/README.md)          | End-to-end security incident response playbooks               |
 | [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md) | Step-by-step Azure AD app registration and permission consent |
 | [docs/HTTP_DEPLOYMENT.md](docs/HTTP_DEPLOYMENT.md)   | HTTP transport, JWT validation, Docker, Azure Container Apps  |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)   | Common errors and how to diagnose them                        |
