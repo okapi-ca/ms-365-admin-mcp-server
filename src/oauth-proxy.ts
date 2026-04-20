@@ -112,6 +112,7 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     } = req.query as Record<string, string | undefined>;
 
     if (!redirectUri || !clientChallenge) {
+      logger.warn('OAuth /authorize rejected: missing redirect_uri or code_challenge');
       res.status(400).json({
         error: 'invalid_request',
         error_description: 'Missing redirect_uri or code_challenge',
@@ -119,6 +120,9 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       return;
     }
     if (clientChallengeMethod && clientChallengeMethod !== 'S256') {
+      logger.warn(
+        `OAuth /authorize rejected: unsupported challenge method ${clientChallengeMethod}`
+      );
       res.status(400).json({
         error: 'invalid_request',
         error_description: 'Only S256 code_challenge_method is supported',
@@ -145,6 +149,9 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     upstream.searchParams.set('code_challenge_method', 'S256');
     if (state) upstream.searchParams.set('state', state);
 
+    logger.info(
+      `OAuth /authorize → Entra (redirect_uri=${redirectUri}, scope=${scope || fallbackScope})`
+    );
     res.redirect(302, upstream.toString());
   });
 
@@ -207,6 +214,13 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
         body: form.toString(),
       });
       const payload = await upstream.text();
+      if (upstream.status >= 400) {
+        logger.warn(
+          `Entra /token returned ${upstream.status} for grant_type=${grantType}: ${payload.slice(0, 500)}`
+        );
+      } else {
+        logger.info(`Entra /token exchange ok (grant_type=${grantType})`);
+      }
       res.status(upstream.status).type('application/json').send(payload);
     } catch (error) {
       logger.error(`Entra token exchange failed: ${(error as Error).message}`);

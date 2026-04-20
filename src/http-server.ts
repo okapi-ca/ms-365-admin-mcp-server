@@ -89,6 +89,7 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   app.use('/mcp', async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.info(`MCP ${req.method} ${req.path} → 401 (no bearer)`);
       setChallengeHeader(req, res);
       res.status(401).json({ error: 'Missing or invalid Authorization header' });
       return;
@@ -112,6 +113,7 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
       }
     }
 
+    logger.warn(`MCP ${req.method} ${req.path} → 403 (token validation failed)`);
     setChallengeHeader(req, res, 'invalid_token');
     res.status(403).json({ error: 'Token validation failed' });
   });
