@@ -19,7 +19,7 @@ This admin-focused server does **not** expose per-message mailbox operations (no
 
 What this server **does** give you for phishing:
 
-- Tenant-wide message-trace visibility — *who received what, when, from where*.
+- Tenant-wide message-trace visibility — _who received what, when, from where_.
 - Victim correlation — sign-ins, risk detections, directory audits post-delivery.
 - Security incident / alert lifecycle — classification, comments, closure.
 - Threat intel enrichment — IOC lookups, article cross-reference.
@@ -45,7 +45,7 @@ The playbook ends with a **handoff package** (list of affected UPNs, message IDs
 
 - `SecurityAlert.ReadWrite.All`, `SecurityIncident.ReadWrite.All`
 - `ThreatIntelligence.Read.All`, `ThreatAssessment.Read.All`
-- `Mail.ReadBasic.All` *(for message trace)* or the Exchange Online `MessageTracking` role
+- `Mail.ReadBasic.All` _(for message trace)_ or the Exchange Online `MessageTracking` role
 - `AuditLog.Read.All`, `Directory.Read.All`
 - `IdentityRiskEvent.Read.All`, `IdentityRiskyUser.Read.All`
 
@@ -57,13 +57,13 @@ See [APP_REGISTRATION.md](../APP_REGISTRATION.md).
 
 Goal: turn a single signal into a list of delivered messages, sender infrastructure, and affected recipients.
 
-| # | Objective | MCP tool(s) | Notes |
-|---|---|---|---|
-| 1 | Enumerate related alerts and incidents | `list-security-alerts`, `list-security-incidents`, `get-security-incident` | Filter on `category = Phishing` or keywords from the reported message. |
-| 2 | Pull user-submitted reports | `list-threat-assessment-requests` | Employees using the *Report Phishing* button surface here. |
-| 3 | Match against known campaigns | `list-threat-intel-articles`, `list-threat-intel-article-indicators` | Cross-reference sender domain, URL, IP against Microsoft threat intel articles. |
-| 4 | Measure delivery footprint | `list-message-traces` | Filter by `senderAddress`, `subject`, `fromDateTime`, `toDateTime`. Extract recipient list, delivery status, message IDs. |
-| 5 | Inspect a suspicious delivery in detail | `get-message-trace` | For each high-signal message ID, get the full trace (hops, spam verdict, policy hits). |
+| #   | Objective                               | MCP tool(s)                                                                | Notes                                                                                                                     |
+| --- | --------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Enumerate related alerts and incidents  | `list-security-alerts`, `list-security-incidents`, `get-security-incident` | Filter on `category = Phishing` or keywords from the reported message.                                                    |
+| 2   | Pull user-submitted reports             | `list-threat-assessment-requests`                                          | Employees using the _Report Phishing_ button surface here.                                                                |
+| 3   | Match against known campaigns           | `list-threat-intel-articles`, `list-threat-intel-article-indicators`       | Cross-reference sender domain, URL, IP against Microsoft threat intel articles.                                           |
+| 4   | Measure delivery footprint              | `list-message-traces`                                                      | Filter by `senderAddress`, `subject`, `fromDateTime`, `toDateTime`. Extract recipient list, delivery status, message IDs. |
+| 5   | Inspect a suspicious delivery in detail | `get-message-trace`                                                        | For each high-signal message ID, get the full trace (hops, spam verdict, policy hits).                                    |
 
 ### Sample prompt
 
@@ -77,12 +77,12 @@ A recipient is not yet a victim. Engagement is inferred from sign-in activity, r
 
 For each recipient from Phase 1:
 
-| # | Objective | MCP tool(s) | Notes |
-|---|---|---|---|
-| 6 | Baseline the user | `get-user` | Confirm identity, department, privileged-role membership (privileged targets escalate severity). |
-| 7 | Detect post-delivery suspicious sign-ins | `list-sign-ins` | Window starts at message delivery time. Look for atypical location, anonymous IP, legacy auth, MFA-not-satisfied-but-granted. |
-| 8 | Correlate with Identity Protection | `list-risk-detections`, `list-risky-users` | A detection timestamped just after delivery is a strong engagement signal. |
-| 9 | Spot attacker actions post-click | `list-directory-audits` | Filter `initiatedBy.user.id = <recipientId>` from delivery onward. New OAuth consents and mail rules (visible as audit entries) are the two highest-signal events. |
+| #   | Objective                                | MCP tool(s)                                | Notes                                                                                                                                                              |
+| --- | ---------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 6   | Baseline the user                        | `get-user`                                 | Confirm identity, department, privileged-role membership (privileged targets escalate severity).                                                                   |
+| 7   | Detect post-delivery suspicious sign-ins | `list-sign-ins`                            | Window starts at message delivery time. Look for atypical location, anonymous IP, legacy auth, MFA-not-satisfied-but-granted.                                      |
+| 8   | Correlate with Identity Protection       | `list-risk-detections`, `list-risky-users` | A detection timestamped just after delivery is a strong engagement signal.                                                                                         |
+| 9   | Spot attacker actions post-click         | `list-directory-audits`                    | Filter `initiatedBy.user.id = <recipientId>` from delivery onward. New OAuth consents and mail rules (visible as audit entries) are the two highest-signal events. |
 
 ### Classification output
 
@@ -116,11 +116,11 @@ The handoff should include:
 
 ## Phase 4 — Documentation and closure
 
-| # | Action | MCP tool | Notes |
-|---|---|---|---|
-| 10 | Bind related alerts to a single incident | `update-security-incident` | Classification `truePositivePhishing`, assignee, status `inProgress`. |
-| 11 | Narrative on each alert | `add-security-alert-comment` | Timeline bullet points — detection, scope, victims, handoff sent. |
-| 12 | Audit trail of the investigation window | `list-directory-audits` | Capture every operation the responder performed through the server. Attach to the incident record. |
+| #   | Action                                   | MCP tool                     | Notes                                                                                              |
+| --- | ---------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| 10  | Bind related alerts to a single incident | `update-security-incident`   | Classification `truePositivePhishing`, assignee, status `inProgress`.                              |
+| 11  | Narrative on each alert                  | `add-security-alert-comment` | Timeline bullet points — detection, scope, victims, handoff sent.                                  |
+| 12  | Audit trail of the investigation window  | `list-directory-audits`      | Capture every operation the responder performed through the server. Attach to the incident record. |
 
 ---
 
@@ -149,6 +149,6 @@ The handoff should include:
 ## Related playbooks
 
 - [Compromised Account](compromised-account.md) — triggered per confirmed victim.
-- OAuth illicit consent — *draft*. Often a phishing lure leads to consent phishing instead of credential theft — that flow is covered separately.
+- OAuth illicit consent — _draft_. Often a phishing lure leads to consent phishing instead of credential theft — that flow is covered separately.
 
 See [USE_CASES.md](../USE_CASES.md) for the broader catalogue of scenarios.

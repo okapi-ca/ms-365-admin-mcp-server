@@ -7,7 +7,7 @@ Playbooks are the long-form counterpart to [USE_CASES.md](../USE_CASES.md). A us
 Each playbook follows the same structure:
 
 1. **Trigger signals** — how the scenario is detected.
-2. **Scope boundary** (when relevant) — what the server *can* and *cannot* do for this scenario. Forensic or remediation steps that live outside this server are called out and handed off explicitly.
+2. **Scope boundary** (when relevant) — what the server _can_ and _cannot_ do for this scenario. Forensic or remediation steps that live outside this server are called out and handed off explicitly.
 3. **Prerequisites** — presets, delegated permissions, guardrails.
 4. **Phased procedure** — investigation → containment → hardening → documentation. Each step maps to a concrete MCP tool with its risk level.
 5. **Sample prompts** — per phase + a full-run single-shot prompt.
@@ -17,12 +17,12 @@ Each playbook follows the same structure:
 
 ## Catalogue
 
-| # | Playbook | Scope | Tool families | Completeness |
-|---|---|---|---|---|
-| 1 | [Compromised Account](compromised-account.md) | A single user identity is suspected compromised. | `identity`, `audit`, `security`, `response` | End-to-end (investigation → containment → audit). |
-| 2 | [Phishing Campaign (Tenant-Wide)](phishing-tenant-wide.md) | A phishing email reached multiple mailboxes. | `security`, `exchange`, `audit`, `identity` | Scoping + handoff (purge happens outside the server). |
-| 3 | [OAuth Illicit Consent](oauth-illicit-consent.md) | A malicious OAuth application holds delegated or application permissions. | `identity`, `audit`, `security`, `compliance`, `response` | End-to-end + prevention (permission-grant policy review). |
-| 4 | [SharePoint / OneDrive Exfiltration](sharepoint-exfiltration.md) | Anomalous external sharing or mass download on a SharePoint site or OneDrive. | `sharepointadmin`, `audit`, `security`, `identity`, `reports`, `response` | End-to-end at the site level + handoff to Purview for file-level forensics. |
+| #   | Playbook                                                         | Scope                                                                         | Tool families                                                             | Completeness                                                                |
+| --- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1   | [Compromised Account](compromised-account.md)                    | A single user identity is suspected compromised.                              | `identity`, `audit`, `security`, `response`                               | End-to-end (investigation → containment → audit).                           |
+| 2   | [Phishing Campaign (Tenant-Wide)](phishing-tenant-wide.md)       | A phishing email reached multiple mailboxes.                                  | `security`, `exchange`, `audit`, `identity`                               | Scoping + handoff (purge happens outside the server).                       |
+| 3   | [OAuth Illicit Consent](oauth-illicit-consent.md)                | A malicious OAuth application holds delegated or application permissions.     | `identity`, `audit`, `security`, `compliance`, `response`                 | End-to-end + prevention (permission-grant policy review).                   |
+| 4   | [SharePoint / OneDrive Exfiltration](sharepoint-exfiltration.md) | Anomalous external sharing or mass download on a SharePoint site or OneDrive. | `sharepointadmin`, `audit`, `security`, `identity`, `reports`, `response` | End-to-end at the site level + handoff to Purview for file-level forensics. |
 
 ---
 
@@ -70,7 +70,7 @@ Selected to showcase distinct capability surfaces of the server in the shortest 
 
 - **#1 Compromised Account** — end-to-end on a single identity. The baseline demo.
 - **#2 Phishing** — shows the server's honesty about scope boundaries. Stops at a handoff package instead of pretending to purge.
-- **#3 OAuth Illicit Consent** — shows sophistication (order of operations matters: disable SP *before* revoking sessions) and closes the prevention loop.
+- **#3 OAuth Illicit Consent** — shows sophistication (order of operations matters: disable SP _before_ revoking sessions) and closes the prevention loop.
 - **#4 SharePoint Exfiltration** — widens the narrative beyond identity into data governance. Exercises a completely different preset family.
 
 Together they exercise 9 of the 15 tool-category presets defined in [src/tool-categories.ts](../../src/tool-categories.ts).
@@ -81,7 +81,7 @@ Together they exercise 9 of the 15 tool-category presets defined in [src/tool-ca
 
 When adding a playbook:
 
-1. Confirm every MCP tool referenced actually exists in [src/endpoints.json](../../src/endpoints.json). Do not include tools that *should* exist — add them to the server first, or handle the gap with an explicit handoff section.
+1. Confirm every MCP tool referenced actually exists in [src/endpoints.json](../../src/endpoints.json). Do not include tools that _should_ exist — add them to the server first, or handle the gap with an explicit handoff section.
 2. Follow the 5-section structure listed at the top of this page. Consistency matters more than length.
 3. Classify each write tool's risk (`low` / `medium` / `high` / `critical`) in line with [docs/RISK_MODEL.md](../RISK_MODEL.md).
-4. Add the playbook to the catalogue table above and to any relevant *Related playbooks* section in existing files.
+4. Add the playbook to the catalogue table above and to any relevant _Related playbooks_ section in existing files.
