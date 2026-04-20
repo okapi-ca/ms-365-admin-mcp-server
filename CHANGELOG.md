@@ -8,6 +8,14 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.2.4] — 2026-04-20
+
+Fixes the StreamableHTTP transport so more than one `/mcp` request per process actually works. With the shared `McpServer` instance, the second call to `server.connect(transport)` threw `Already connected to a transport`, which surfaced as repeated 500s after the OAuth flow finally succeeded.
+
+### Fixed
+
+- HTTP mode now builds a fresh `McpServer` + `StreamableHTTPServerTransport` per request and closes both on `res.close`. The `server` parameter of `startHttpServer` is replaced with a `createServer: () => McpServer` factory.
+
 ## [0.2.3] — 2026-04-20
 
 Fixes the OAuth 2.0 flow end-to-end: access tokens can now actually be validated by the MCP server. v0.2.0 → v0.2.2 produced `invalid signature` failures because Microsoft Graph access tokens (`aud=00000003-…`) are opaque and cannot be verified by third parties against the public JWKS.
