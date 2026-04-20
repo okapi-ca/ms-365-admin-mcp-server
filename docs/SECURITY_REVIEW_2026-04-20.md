@@ -3,7 +3,7 @@
 Internal security review covering the highest-value portions of the codebase. Finding IDs are stable (`SEC-Fxx` for Priority 1 / OAuth, `SEC-Gxx` for Priority 2 / tool invocation gating) so remediation PRs and future reviews can reference them cleanly.
 
 **Reviewer:** Marc Bourget (VP IT, LCI Education) with Claude Code assistance.
-**Commit reviewed:** P1 against `main` @ `418ee16`; P2 against `main` @ `e7617c4` (post-sprint-3).
+**Commit reviewed:** P1 against `main` @ `418ee16`; P2 against `main` @ `e7617c4` (post-sprint-3); P1 architectural follow-ups (SEC-F04b, SEC-F05) against `main` @ `879738a` (post-v0.3.0).
 **Scope delivered:**
 
 - **P1** — Auth / OAuth HTTP mode (`oauth-proxy.ts`, `token-validator.ts`, `user-token-validator.ts`, `http-server.ts`, `auth.ts`). SEC-Fxx findings.
@@ -68,23 +68,38 @@ Severity rubric mirrors [RISK_MODEL.md](RISK_MODEL.md) but is calibrated to secu
 ### SEC-F04 — `refresh_token` grant requires no MCP-client authentication
 
 - **Severity:** High
-- **Status:** Partially mitigated — sprint 2. Residual risk tracked.
+- **Status:** Fixed — sprint 6 (v0.4.0, see SEC-F04b below).
 - **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts).
 - **Description:** `POST /token` with `grant_type=refresh_token` attaches the server's `client_secret` and forwards the refresh token to Entra. An attacker in possession of a refresh token only needs the public proxy URL to redeem it — the client_secret Entra would normally require is supplied by the proxy on behalf of the caller.
 - **Attack scenario:** Refresh-token exfiltration from an MCP client (local token store, logs, MITM) is directly usable via the proxy, without the additional factor of the client_secret.
-- **Mitigation delivered (sprint 2):** `/token` is now rate-limited at 10 req/min per IP (see SEC-F06), which bounds brute-force throughput and makes scripted abuse visible in logs. This does **not** close the underlying architectural gap — one stolen refresh token used once is still redeemable.
-- **Residual risk:** Stolen-refresh-token reuse remains possible until either (a) the proxy becomes a confidential client to MCP callers (per-client credentials, moving away from `token_endpoint_auth_methods: none`), or (b) the proxy requires a bound proof-of-possession on refresh (DPoP, mTLS, or a session-bound bearer). Both are architectural changes tracked separately as a future SEC-F04b.
-- **Operational compensations:** keep refresh-token lifetimes short in the Entra app registration (default 90 days is too long for an admin surface; consider dropping to 24h via Conditional Access sign-in frequency); monitor the `10 req/min` rate-limit hits on `/token` for anomalous clients.
+- **Mitigation delivered (sprint 2):** `/token` rate-limited at 10 req/min per IP (see SEC-F06) — compensating control, now superseded.
+- **Remediation delivered (sprint 6, v0.4.0):** See SEC-F04b.
+
+### SEC-F04b — Confidential-client enforcement on `/token`
+
+- **Severity:** High (architectural follow-up to SEC-F04)
+- **Status:** Fixed — sprint 6 (v0.4.0)
+- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts), [src/storage/](../src/storage/)
+- **Description:** SEC-F04's residual risk (stolen-refresh-token reuse) required either per-client credentials or a bound proof-of-possession. v0.4.0 ships the first path.
+- **Remediation:**
+  - `/register` now issues a random 256-bit `client_secret` alongside the `client_id`. The plaintext is returned once; the server stores only the SHA-256 hash. Advertised metadata: `token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic']`.
+  - `/token` rejects both `authorization_code` and `refresh_token` grants with `401 invalid_client` when `client_id` + `client_secret` are missing or do not match the stored hash. Constant-time comparison via `crypto.timingSafeEqual`.
+  - `/authorize` rejects unknown `client_id`s and binds the PKCE entry to the caller's `client_id`. `/token authorization_code` then verifies the stored `client_id` matches the authenticated caller — a compromised client cannot redeem another client's auth code even in a PKCE-race window.
+  - `/register` is mandatory: the proxy refuses to start with `--oauth-mode --no-dynamic-registration`, since DCR is the issuance point for the per-client secret.
+- **Tests:** `test/oauth-proxy.test.ts` — `SEC-F04b /register`, `SEC-F04b /authorize`, `SEC-F04b /token` blocks (9 cases).
+- **Residual risk:** MCP clients that store their `client_secret` on disk remain vulnerable to local token-store theft — but an attacker must now exfiltrate both the refresh_token AND the secret, rather than just the refresh_token. For a fully PoP approach (DPoP), the MCP SDK upstream would need to implement it; out of scope for this cycle.
+- **Operational note:** Existing MCP clients that registered under the old `token_endpoint_auth_method: none` regime will re-DCR automatically on their next reconnect. Users may need to re-authorise once.
 
 ### SEC-F05 — PKCE bridge is in-memory per process
 
 - **Severity:** Medium
-- **Status:** Mitigated — sprint 3 (infra + documentation). Architectural externalisation tracked.
-- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts).
-- **Description:** A process-local `Map<string, PkceEntry>` holds the server-side PKCE verifier between `/authorize` and `/token`. In a multi-replica deployment, the two requests may land on different instances and the bridge lookup fails.
-- **Attack scenario:** No direct exploit, but the availability failure creates pressure for ad-hoc fixes that degrade security (e.g. shortening `PKCE_TTL_MS`, removing PKCE, or relaxing the bridge lookup).
-- **Mitigation delivered (sprint 3):** [infra/main.bicep](../infra/main.bicep) now defaults `maxReplicas = 1` with an inline SEC-F05 note explaining why. Operators who scale past one replica must explicitly override the parameter — forcing them to acknowledge the broken flow before they break it. Documented in [HTTP_DEPLOYMENT.md](HTTP_DEPLOYMENT.md).
-- **Residual risk:** This is an availability/operational constraint, not a remediation. A horizontally-scalable deployment still requires externalising the bridge (Redis / Azure Cosmos / Azure Table with the same 10-minute TTL). Tracked as a follow-up under the same SEC-F05 ID; re-open on this document when the feature is scheduled.
+- **Status:** Fixed — sprint 6 (v0.4.0)
+- **Location:** [src/oauth-proxy.ts](../src/oauth-proxy.ts), [src/storage/table-storage.ts](../src/storage/table-storage.ts), [infra/main.bicep](../infra/main.bicep)
+- **Description:** A process-local `Map<string, PkceEntry>` held the server-side PKCE verifier between `/authorize` and `/token`. In a multi-replica deployment, the two requests could land on different instances and the bridge lookup fails.
+- **Attack scenario:** No direct exploit, but the availability failure created pressure for ad-hoc fixes that degrade security (shortening `PKCE_TTL_MS`, removing PKCE, relaxing the bridge lookup).
+- **Remediation delivered (sprint 6, v0.4.0):** The PKCE bridge and the DCR client credentials (SEC-F04b) now live in Azure Table Storage (`oauthstate` table, two partitions: `pkce` and `dcr`). Atomic consume implemented via `getEntity` + `deleteEntity(ETag)` with 412 Precondition Failed treated as "already consumed". Bicep provisions a Storage Account (Standard_LRS, `allowSharedKeyAccess: false`, `defaultToOAuthAuthentication: true`, TLS 1.2 minimum) and grants the UAMI `Storage Table Data Contributor` on it. Container App receives `AZURE_STORAGE_ACCOUNT_NAME` + `AZURE_STORAGE_TABLE_NAME` via env and authenticates with `DefaultAzureCredential`. `maxReplicas` default restored to 3.
+- **Tests:** `test/storage-memory.test.ts` covers the storage contract; the Table implementation uses the same interface and is smoke-tested via Azurite during local dev (no live-Azure test in CI to keep it hermetic).
+- **Residual risk:** None identified for the reviewed threat. Single-table design keeps PKCE + DCR in the same operational surface; a rogue operator with `Storage Table Data Contributor` on the SA can read DCR hashes (not plaintext secrets — SHA-256), which is the same trust level as the app itself.
 
 ### SEC-F06 — `/token` and `/authorize` have no rate limit
 
@@ -222,15 +237,15 @@ No remediation required — recorded so future reviews do not re-litigate alread
 
 ## Remediation order (recommendation)
 
-| Wave       | Findings                                                                               | Rationale                                                                                                |
-| ---------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| 1 — PR #44 | SEC-F01 (fixed), SEC-F03 (fixed)                                                       | Critical + High exploitable at the current deployment state.                                             |
-| 2 — PR #46 | SEC-F02 (fixed), SEC-F06 (fixed), SEC-F04 (partial: rate-limited + documented)         | Harden the public OAuth proxy surface before broader exposure.                                           |
-| 3 — PR #47 | SEC-F07 (fixed), SEC-F08 (fixed), SEC-F05 (mitigated via single-replica Bicep default) | Log hygiene, availability robustness, multi-replica guardrail.                                           |
-| 4 — PR #48 | SEC-G02 (fixed)                                                                        | Output-side prompt-injection defence — the only P2 finding exploitable remotely.                         |
-| 5 — PR #49 | SEC-G01 (fixed), SEC-G03 (fixed)                                                       | Granular write cap + sensitive-read risk annotations feeding the cap.                                    |
-| Follow-ups | SEC-F04b (refresh-token PoP), SEC-F05 architectural (externalise PKCE bridge)          | Architectural work — larger PRs with new runtime dependencies. Track separately when scheduling arrives. |
-| Backlog    | SEC-G04, SEC-F09, SEC-F10, SEC-F11                                                     | Documentation / cosmetic; no realistic exploit path.                                                     |
+| Wave       | Findings                                                                               | Rationale                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1 — PR #44 | SEC-F01 (fixed), SEC-F03 (fixed)                                                       | Critical + High exploitable at the current deployment state.                                            |
+| 2 — PR #46 | SEC-F02 (fixed), SEC-F06 (fixed), SEC-F04 (partial: rate-limited + documented)         | Harden the public OAuth proxy surface before broader exposure.                                          |
+| 3 — PR #47 | SEC-F07 (fixed), SEC-F08 (fixed), SEC-F05 (mitigated via single-replica Bicep default) | Log hygiene, availability robustness, multi-replica guardrail.                                          |
+| 4 — PR #48 | SEC-G02 (fixed)                                                                        | Output-side prompt-injection defence — the only P2 finding exploitable remotely.                        |
+| 5 — PR #49 | SEC-G01 (fixed), SEC-G03 (fixed)                                                       | Granular write cap + sensitive-read risk annotations feeding the cap.                                   |
+| 6 — v0.4.0 | SEC-F04b (fixed), SEC-F04 (fixed), SEC-F05 (fixed architectural)                       | Confidential-client DCR + Azure Table externalisation of PKCE/DCR state. Closes all architectural debt. |
+| Backlog    | SEC-G04, SEC-F09, SEC-F10, SEC-F11                                                     | Documentation / cosmetic; no realistic exploit path.                                                    |
 
 ---
 
@@ -238,7 +253,7 @@ No remediation required — recorded so future reviews do not re-litigate alread
 
 The broader audit plan identified six priority areas. Status after this cycle:
 
-- **P1 — Auth / OAuth HTTP mode** — substantially remediated. Closed: SEC-F01, SEC-F02, SEC-F03, SEC-F06, SEC-F07, SEC-F08. Partially mitigated: SEC-F04 (rate-limited; architectural PoP fix as SEC-F04b) and SEC-F05 (single-replica default; architectural externalisation still open). Open-backlog: SEC-F09, SEC-F10, SEC-F11.
+- **P1 — Auth / OAuth HTTP mode** — fully remediated. Closed: SEC-F01, SEC-F02, SEC-F03, SEC-F04, SEC-F04b, SEC-F05, SEC-F06, SEC-F07, SEC-F08. Open-backlog: SEC-F09, SEC-F10, SEC-F11.
 - **P2 — Tool invocation gating** — substantially remediated. Closed: SEC-G01 (granular `--max-risk-level`), SEC-G02 (prompt-injection envelope), SEC-G03 (sensitive-read annotations). Open-backlog: SEC-G04 (path-parameter allowlist — hygiene only).
 - **P3 — Secret & token hygiene** — pass-level check done (no logging observed); formal pass pending.
 - **P4 — Transport & deploy hardening** — CORS, HSTS, trust-proxy depth, rate-limit breadth.

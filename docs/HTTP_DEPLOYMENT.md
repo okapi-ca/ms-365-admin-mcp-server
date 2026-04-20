@@ -60,7 +60,7 @@ When `--oauth-mode` is enabled, the following are added:
 
 - `GET /.well-known/oauth-authorization-server` — AS metadata advertising this server as an OAuth 2.0 authorization server (proxying Entra).
 - `GET /.well-known/oauth-protected-resource` — RS metadata for MCP spec compliance.
-- `POST /register` — Dynamic Client Registration (stub; returns a synthesized `client_id` — all OAuth traffic actually flows through the server's single Entra app).
+- `POST /register` — Dynamic Client Registration. Returns a `client_id` + `client_secret` per MCP client; the plaintext secret is shown once and stored as a SHA-256 hash in the `oauthstate` table. Every `/token` call must authenticate with these credentials (SEC-F04b). All OAuth traffic flows through the server's single Entra app for upstream authentication.
 - `GET /authorize` — 302-redirects to Entra `/oauth2/v2.0/authorize` using a server-side PKCE verifier that bridges to the client's code_challenge.
 - `POST /token` — exchanges authorization codes / refresh tokens against Entra, substituting the server's PKCE verifier.
 
@@ -157,7 +157,28 @@ The server does not terminate TLS or add caller allowlisting beyond JWT. You mus
 2. **Restrict network exposure** — bind the server to loopback or a private network, front it with the proxy.
 3. **Forward `X-Forwarded-For`** so rate limits attribute correctly.
 4. **Monitor logs** — all auth failures are logged at `warn`/`error` levels.
-5. **Keep OAuth mode on a single replica (SEC-F05)** — the PKCE bridge between `/authorize` and `/token` lives in process memory. The shipped Bicep template defaults `maxReplicas = 1`; if you scale up, externalise the bridge first (Redis / Azure Table) or the OAuth flow will fail intermittently.
+5. **Provision the OAuth state table** (SEC-F04b + SEC-F05) — OAuth mode persists the PKCE bridge and DCR client credentials in Azure Table Storage. The shipped Bicep template creates a Storage Account + `oauthstate` table and grants the UAMI `Storage Table Data Contributor`. If you run outside that template, set `AZURE_STORAGE_ACCOUNT_NAME` (managed identity, recommended) or `AZURE_STORAGE_CONNECTION_STRING` (Azurite / dev) and ensure the caller has table data-contributor rights. Without either env var, the server falls back to in-process memory — safe only for single-replica or stdio deployments.
+
+### OAuth state storage (SEC-F04b + SEC-F05)
+
+The OAuth proxy keeps two classes of short-lived state that are now externalised:
+
+- **PKCE bridge** — one row per active `/authorize` call, TTL 10 min, consumed atomically at `/token`.
+- **DCR client credentials** — one row per MCP client registration (`client_id` + SHA-256 hash of `client_secret` + redirect URIs). Long-lived; rotation is manual today.
+
+Storage Account provisioning in the shipped Bicep:
+
+| Property                       | Value                                                 |
+| ------------------------------ | ----------------------------------------------------- |
+| SKU                            | `Standard_LRS`                                        |
+| Kind                           | `StorageV2`                                           |
+| `allowSharedKeyAccess`         | `false` (managed-identity only)                       |
+| `minimumTlsVersion`            | `TLS1_2`                                              |
+| `defaultToOAuthAuthentication` | `true`                                                |
+| Table name                     | `oauthstate` (PartitionKeys: `pkce`, `dcr`)           |
+| RBAC                           | `Storage Table Data Contributor` → Container App UAMI |
+
+Cost: Table Storage at this volume is ~\$0.00/month (storage < 1 MB, transactions well under 10k/month).
 
 ### JWKS resilience (SEC-F08)
 

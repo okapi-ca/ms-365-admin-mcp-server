@@ -1,6 +1,6 @@
 {
   "name": "@okapi-ca/ms-365-admin-mcp-server",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Model Context Protocol (MCP) server for Microsoft 365 admin operations via Graph API application permissions",
   "type": "module",
   "main": "dist/index.js",
@@ -61,6 +61,7 @@
     "zod": "^3.24.2"
   },
   "optionalDependencies": {
+    "@azure/data-tables": "^13.3.2",
     "@azure/identity": "^4.5.0",
     "@azure/keyvault-secrets": "^4.9.0"
   },

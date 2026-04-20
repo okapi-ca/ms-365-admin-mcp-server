@@ -8,6 +8,38 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-20
+
+Closes the two architectural follow-ups left open by v0.3.0 (SEC-F04b refresh-token proof-of-possession, SEC-F05 PKCE bridge externalisation) by moving OAuth state to Azure Table Storage and turning the MCP DCR layer into a confidential-client issuer. A stolen refresh token is no longer redeemable without the per-client secret issued at `/register`, and the proxy can now run multi-replica.
+
+### Breaking changes
+
+Deployments running HTTP / OAuth mode will need configuration updates — see [Migration](#migration-040) below.
+
+- **MCP clients must re-run Dynamic Client Registration.** Every `/register` call now returns a `client_secret`, and `/token` rejects any call (both `authorization_code` and `refresh_token` grants) missing valid `client_id` + `client_secret`. Existing clients that cached a `client_id` with `token_endpoint_auth_method: none` will get `invalid_client` on the next refresh — they must re-register. The MCP SDK handles this transparently at reconnect.
+- **`--oauth-mode` now requires DCR** and refuses to start with `--no-dynamic-registration`. DCR is the issuance point for per-client credentials; disabling it defeats SEC-F04b.
+- **`--oauth-mode` requires Azure Table Storage** in production (single-replica in-memory fallback still works for local dev/tests). Configure via env: `AZURE_STORAGE_ACCOUNT_NAME` (managed identity, recommended) or `AZURE_STORAGE_CONNECTION_STRING` (Azurite / dev).
+- **Bicep `maxReplicas` default restored to 3** (SEC-F05 resolved). Storage Account + `oauthstate` table provisioned automatically, with `Storage Table Data Contributor` role granted to the UAMI.
+
+### Security — OAuth / token validation (P1 architectural)
+
+- **SEC-F04b** — `/token` now enforces per-client authentication on every grant (both `authorization_code` and `refresh_token`) using `client_secret_post` or `client_secret_basic`. `/register` issues a random 256-bit `client_secret` (stored as SHA-256 hash, compared via `crypto.timingSafeEqual`). `/authorize` rejects unknown `client_id`s and binds the PKCE entry to the `client_id`; `/token authorization_code` verifies the bound `client_id` matches the caller, preventing cross-client code redemption.
+- **SEC-F05 (resolved)** — PKCE bridge + DCR client credentials are persisted in Azure Table Storage (`oauthstate` table, two partitions: `pkce`, `dcr`). Atomic consume via optimistic ETag delete. Managed-identity-only access (`allowSharedKeyAccess: false`).
+
+### Added
+
+- `src/storage/` — new `OAuthStorage` abstraction with `MemoryStorage` (tests/dev) and `TableStorage` (prod) implementations. Resolved by env at startup via `createOAuthStorage()`.
+- 18 new unit tests covering storage behaviour, DCR secret issuance, `/authorize` client validation, `/token` client authentication (body + Basic auth), and cross-client PKCE rejection. Total: 72 tests (up from 54).
+- `@azure/data-tables` ^13.3.2 as optional dependency. `@azure/identity` was already optional.
+- Bicep: Storage Account (Standard_LRS, TLS 1.2, `allowSharedKeyAccess: false`, `defaultToOAuthAuthentication: true`), default table `oauthstate`, `Storage Table Data Contributor` role assignment to UAMI, `AZURE_STORAGE_ACCOUNT_NAME` / `AZURE_STORAGE_TABLE_NAME` env vars injected into the Container App.
+
+### Migration {#migration-040}
+
+- **Existing deployments**: run `az deployment group create` with the updated Bicep to provision the Storage Account + Table + role assignment. No data migration needed — PKCE entries are short-lived (10 min) and DCR re-registration is automatic.
+- **MCP clients**: at next reconnect, the SDK will re-run DCR and receive a `client_secret`. Users may need to re-authorise once.
+- **Local dev / tests**: works out of the box with `MemoryStorage` when neither `AZURE_STORAGE_ACCOUNT_NAME` nor `AZURE_STORAGE_CONNECTION_STRING` is set. For Azurite: set `AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;...;UseDevelopmentStorage=true`.
+- Deployments that explicitly set `--no-dynamic-registration` must remove that flag (or disable `--oauth-mode`).
+
 ## [0.3.0] — 2026-04-20
 
 Substantial security hardening after a two-priority review (P1 OAuth / P2 tool gating) — see [docs/SECURITY_REVIEW_2026-04-20.md](docs/SECURITY_REVIEW_2026-04-20.md) for the full findings register. Nine findings closed across five sprints, two partially mitigated with architectural follow-ups tracked. No critical, high, or medium vulnerabilities remain open across the reviewed surface.
