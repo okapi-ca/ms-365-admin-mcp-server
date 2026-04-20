@@ -8,6 +8,15 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-04-20
+
+Fixes the OAuth 2.0 discovery flow so Claude.ai Web and Claude Desktop can actually complete authorization against an OAuth-mode HTTP deployment.
+
+### Fixed
+
+- `/mcp` now returns `WWW-Authenticate: Bearer resource_metadata="…"` on `401` (missing token) and `WWW-Authenticate: Bearer resource_metadata="…", error="invalid_token"` on `403` (token validation failure). Without this header Claude clients could not discover the protected-resource metadata and surfaced `Authorization with the MCP server failed` before ever reaching `/authorize`.
+- Express `trust proxy` is now set to `1` so `X-Forwarded-For` from the Container Apps / reverse-proxy edge stops tripping the `express-rate-limit` validator (`ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`).
+
 ## [0.2.0] — 2026-04-19
 
 Adds OAuth 2.0 proxy support to the HTTP transport so Claude Desktop, Claude Code, and Claude.ai Web remote MCP connectors can authenticate users through Entra ID without any client-side configuration beyond the server URL.

@@ -27,9 +27,21 @@ function securityHeaders(_req: Request, res: Response, next: NextFunction): void
   next();
 }
 
+function stripTrailingSlash(s: string): string {
+  return s.endsWith('/') ? s.slice(0, -1) : s;
+}
+
+function resourceMetadataUrl(req: Request, publicUrl?: string): string {
+  if (publicUrl) return `${stripTrailingSlash(publicUrl)}/.well-known/oauth-protected-resource`;
+  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+  const host = (req.headers['x-forwarded-host'] as string) || req.headers.host;
+  return `${proto}://${host}/.well-known/oauth-protected-resource`;
+}
+
 export async function startHttpServer(options: HttpServerOptions): Promise<void> {
   const app = express();
 
+  app.set('trust proxy', 1);
   app.use(securityHeaders);
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
@@ -63,9 +75,21 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     );
   }
 
+  const oauthPublicUrl = options.oauthProxyOptions?.publicUrl;
+  const oauthEnabled = Boolean(options.oauthProxyOptions);
+
+  function setChallengeHeader(req: Request, res: Response, errorCode?: string): void {
+    if (!oauthEnabled) return;
+    const metadata = resourceMetadataUrl(req, oauthPublicUrl);
+    const parts = [`resource_metadata="${metadata}"`];
+    if (errorCode) parts.push(`error="${errorCode}"`);
+    res.setHeader('WWW-Authenticate', `Bearer ${parts.join(', ')}`);
+  }
+
   app.use('/mcp', async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      setChallengeHeader(req, res);
       res.status(401).json({ error: 'Missing or invalid Authorization header' });
       return;
     }
@@ -88,6 +112,7 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
       }
     }
 
+    setChallengeHeader(req, res, 'invalid_token');
     res.status(403).json({ error: 'Token validation failed' });
   });
 
