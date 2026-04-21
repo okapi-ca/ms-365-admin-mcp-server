@@ -11,7 +11,7 @@ import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
 export interface HttpServerOptions {
   port: number;
   host?: string;
-  createServer: () => McpServer;
+  createServer: (userToken?: string) => McpServer;
   tokenValidatorOptions?: TokenValidatorOptions;
   userTokenValidatorOptions?: UserTokenValidatorOptions;
   oauthProxyOptions?: OAuthProxyOptions;
@@ -122,6 +122,8 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
       const userClaims = await validateUserToken(token, userValidator);
       if (userClaims) {
         logger.info(`MCP request authenticated as user ${userClaims.upn ?? userClaims.oid}`);
+        // Store the raw bearer token so OBO can use it as the user assertion downstream.
+        res.locals.userToken = token;
         next();
         return;
       }
@@ -141,7 +143,7 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   });
 
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
-    const server = options.createServer();
+    const server = options.createServer(res.locals.userToken as string | undefined);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on('close', () => {
       void transport.close().catch(() => {});
