@@ -40,12 +40,19 @@ class AdminGraphServer {
       ? () => this.authManager.getTokenOnBehalfOf(userToken)
       : () => this.authManager.getToken();
     const graphClient = new GraphClient(getToken, this.secrets!);
+    // In OBO mode some tools require permissions that have no delegated equivalent
+    // (e.g. Exchange.ManageAsApp, BitlockerKey.Read.All). Those tools fall back to
+    // the app-only client so they continue to function while all other tools use OBO.
+    const appOnlyGraphClient = userToken
+      ? new GraphClient(() => this.authManager.getToken(), this.secrets!)
+      : undefined;
     registerGraphTools(
       server,
       graphClient,
       this.options.readOnly,
       this.options.enabledTools,
-      this.options.maxRiskLevel
+      this.options.maxRiskLevel,
+      appOnlyGraphClient
     );
     return server;
   }
