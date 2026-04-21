@@ -53,54 +53,66 @@ param publicUrl string = ''
 @description('Optional Azure Container Registry login server (e.g., myacr.azurecr.io). Leave empty for public images (ghcr, mcr).')
 param acrLoginServer string = ''
 
-// --- Private endpoint parameters ---
+// --- VNet integration parameters ---
 //
-// When true: adds a Private Endpoint on the Container Apps Environment via an external
-// hub VNet, wires it to a centralized Private DNS zone, and disables public ingress on
-// the CAE. All hub-specific values (subscription, VNet, subnet, DNS RG) must be supplied
-// via a parameters file — see infra/parameters.example.jsonc.
+// When vnetIntegrated=true: deploys a workload-profiles Container Apps Environment
+// into a pre-existing infrastructure subnet (delegated to Microsoft.App/environments).
+// The CAE is internal-only — clients reach /mcp from inside the VNet (or from a peered
+// VNet, e.g. via VPN gateway). No public ingress, no Private Endpoint needed.
+// The hub VNet + subnet must be pre-created by the network team.
 
-@description('Add a Private Endpoint on the Container Apps Environment and disable public ingress. Requires a hub VNet + pre-created subnet + centralized DNS zone.')
-param enablePrivateEndpoint bool = false
+@description('Integrate the Container Apps Environment with a pre-existing hub VNet (workload-profiles SKU + internal ingress). Requires hubSubscriptionId, hubVnetRg, hubVnetName, infrastructureSubnetName.')
+param vnetIntegrated bool = false
 
-@description('Subscription ID hosting the hub VNet and centralized Private DNS zones. Required when enablePrivateEndpoint=true.')
+@description('Subscription ID hosting the hub VNet. Required when vnetIntegrated=true.')
 param hubSubscriptionId string = ''
 
-@description('Resource group of the hub VNet. Required when enablePrivateEndpoint=true.')
+@description('Resource group of the hub VNet. Required when vnetIntegrated=true.')
 param hubVnetRg string = ''
 
-@description('Hub VNet name. Required when enablePrivateEndpoint=true.')
+@description('Hub VNet name. Required when vnetIntegrated=true.')
 param hubVnetName string = ''
 
-@description('Subnet name in the hub VNet hosting the Private Endpoint NIC (must be pre-created by infra team). Required when enablePrivateEndpoint=true.')
-param peSubnetName string = ''
+@description('Subnet in the hub VNet pre-delegated to Microsoft.App/environments, used as CAE infrastructure subnet. Required when vnetIntegrated=true.')
+param infrastructureSubnetName string = ''
 
-@description('Resource group hosting the centralized Private DNS zones. Required when enablePrivateEndpoint=true.')
-param privateDnsZoneRg string = ''
+// --- Resource name overrides ---
+//
+// Every Azure resource has a default name derived from baseName. Operators with strict
+// naming conventions (e.g. Azure CAF or org-specific rules) can override each name via
+// a parameters file. Leave empty to use the default.
 
-@description('Region for the Private Endpoint NIC (may differ from CAE region). Required when enablePrivateEndpoint=true.')
-param privateEndpointLocation string = ''
+@description('Container Apps Environment name. If empty, derived from baseName.')
+param containerAppEnvName string = ''
 
-@description('Private Endpoint resource name. If empty, derived from baseName.')
-param privateEndpointName string = ''
+@description('Container App name. If empty, derived from baseName.')
+param containerAppName string = ''
 
-@description('Application Security Group name attached to the Private Endpoint NIC. If empty, derived from baseName.')
-param applicationSecurityGroupName string = ''
+@description('User-Assigned Managed Identity name. If empty, derived from baseName.')
+param uamiName string = ''
 
-var uamiName = '${baseName}-uami'
-var kvName = take('${replace(baseName, '-', '')}kv${uniqueString(resourceGroup().id)}', 24)
-var lawName = '${baseName}-law'
-var appInsightsName = '${baseName}-ai'
-var caeName = '${baseName}-cae'
-var appName = '${baseName}-app'
-var storageAccountName = take('${replace(baseName, '-', '')}st${uniqueString(resourceGroup().id)}', 24)
+@description('Key Vault name (must be globally unique, 3-24 chars, lowercase+numbers+hyphens). If empty, derived from baseName + uniqueString.')
+param keyVaultName string = ''
+
+@description('Storage Account name (must be globally unique, 3-24 chars, lowercase+numbers only). If empty, derived from baseName + uniqueString.')
+param storageAccountName string = ''
+
+@description('Log Analytics Workspace name. If empty, derived from baseName.')
+param logAnalyticsWorkspaceName string = ''
+
+@description('Application Insights name. If empty, derived from baseName.')
+param appInsightsName string = ''
+
+var effectiveUamiName = empty(uamiName) ? '${baseName}-uami' : uamiName
+var effectiveKeyVaultName = empty(keyVaultName) ? take('${replace(baseName, '-', '')}kv${uniqueString(resourceGroup().id)}', 24) : keyVaultName
+var effectiveLawName = empty(logAnalyticsWorkspaceName) ? '${baseName}-law' : logAnalyticsWorkspaceName
+var effectiveAppInsightsName = empty(appInsightsName) ? '${baseName}-ai' : appInsightsName
+var effectiveCaeName = empty(containerAppEnvName) ? '${baseName}-cae' : containerAppEnvName
+var effectiveAppName = empty(containerAppName) ? '${baseName}-app' : containerAppName
+var effectiveStorageAccountName = empty(storageAccountName) ? take('${replace(baseName, '-', '')}st${uniqueString(resourceGroup().id)}', 24) : storageAccountName
 var oauthTableName = 'oauthstate'
 
-var peName = empty(privateEndpointName) ? '${baseName}-cae-pe' : privateEndpointName
-var asgName = empty(applicationSecurityGroupName) ? '${baseName}-pe-asg' : applicationSecurityGroupName
-var caeDnsZoneName = 'privatelink.${location}.azurecontainerapps.io'
-var hubVnetId = enablePrivateEndpoint ? resourceId(hubSubscriptionId, hubVnetRg, 'Microsoft.Network/virtualNetworks', hubVnetName) : ''
-var peSubnetId = enablePrivateEndpoint ? '${hubVnetId}/subnets/${peSubnetName}' : ''
+var infrastructureSubnetId = vnetIntegrated ? resourceId(hubSubscriptionId, hubVnetRg, 'Microsoft.Network/virtualNetworks/subnets', hubVnetName, infrastructureSubnetName) : ''
 
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 var kvSecretsOfficerRoleId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
@@ -134,7 +146,7 @@ var containerArgs = concat(baseArgs, serviceAuthArgs, oauthArgs, publicUrlArgs, 
 // --- User-Assigned Managed Identity ---
 
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: uamiName
+  name: effectiveUamiName
   location: location
   tags: tags
 }
@@ -142,7 +154,7 @@ resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
 // --- Key Vault (RBAC, purge protection, 90-day soft-delete) ---
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: kvName
+  name: effectiveKeyVaultName
   location: location
   tags: tags
   properties: {
@@ -190,7 +202,7 @@ resource kvAdmins 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
 // --- Storage Account (OAuth PKCE bridge + DCR client credentials, SEC-F04b / SEC-F05) ---
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageAccountName
+  name: effectiveStorageAccountName
   location: location
   tags: tags
   sku: {
@@ -236,7 +248,7 @@ resource uamiTableAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
 // --- Log Analytics + Application Insights ---
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: lawName
+  name: effectiveLawName
   location: location
   tags: tags
   properties: {
@@ -248,7 +260,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
 }
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightsName
+  name: effectiveAppInsightsName
   location: location
   tags: tags
   kind: 'web'
@@ -261,7 +273,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 // --- Container App Environment ---
 
 resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
-  name: caeName
+  name: effectiveCaeName
   location: location
   tags: tags
   properties: {
@@ -272,82 +284,23 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
         sharedKey: logAnalytics.listKeys().primarySharedKey
       }
     }
-    publicNetworkAccess: enablePrivateEndpoint ? 'Disabled' : 'Enabled'
-  }
-}
-
-// --- Private Endpoint on Container Apps Environment ---
-//
-// Deploys PE + ASG in this RG, plus DNS zone + VNet link in the centralized DNS RG.
-// All hub-specific IDs arrive via parameters (see infra/parameters.example.jsonc).
-
-resource asg 'Microsoft.Network/applicationSecurityGroups@2023-09-01' = if (enablePrivateEndpoint) {
-  name: asgName
-  location: privateEndpointLocation
-  tags: tags
-  properties: {}
-}
-
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-09-01' = if (enablePrivateEndpoint) {
-  name: peName
-  location: privateEndpointLocation
-  tags: tags
-  properties: {
-    subnet: {
-      id: peSubnetId
-    }
-    customNetworkInterfaceName: '${peName}-nic'
-    privateLinkServiceConnections: [
+    workloadProfiles: vnetIntegrated ? [
       {
-        name: peName
-        properties: {
-          privateLinkServiceId: containerAppEnv.id
-          groupIds: [
-            'managedEnvironments'
-          ]
-        }
+        name: 'Consumption'
+        workloadProfileType: 'Consumption'
       }
-    ]
-    applicationSecurityGroups: [
-      {
-        id: asg.id
-      }
-    ]
+    ] : null
+    vnetConfiguration: vnetIntegrated ? {
+      infrastructureSubnetId: infrastructureSubnetId
+      internal: true
+    } : null
   }
-}
-
-module privateDnsZone 'modules/private-dns.bicep' = if (enablePrivateEndpoint) {
-  name: 'private-dns-${uniqueString(resourceGroup().id, caeName)}'
-  scope: resourceGroup(hubSubscriptionId, privateDnsZoneRg)
-  params: {
-    zoneName: caeDnsZoneName
-    virtualNetworkId: hubVnetId
-    tags: tags
-  }
-}
-
-resource dnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-09-01' = if (enablePrivateEndpoint) {
-  parent: privateEndpoint
-  name: 'default'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: replace(caeDnsZoneName, '.', '-')
-        properties: {
-          privateDnsZoneId: resourceId(hubSubscriptionId, privateDnsZoneRg, 'Microsoft.Network/privateDnsZones', caeDnsZoneName)
-        }
-      }
-    ]
-  }
-  dependsOn: [
-    privateDnsZone
-  ]
 }
 
 // --- Container App ---
 
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
-  name: appName
+  name: effectiveAppName
   location: location
   tags: tags
   identity: {
@@ -362,6 +315,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   ]
   properties: {
     managedEnvironmentId: containerAppEnv.id
+    workloadProfileName: vnetIntegrated ? 'Consumption' : null
     configuration: {
       ingress: {
         external: true
@@ -426,10 +380,10 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
 }
 
 output containerAppUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
+output containerAppEnvDefaultDomain string = containerAppEnv.properties.defaultDomain
 output keyVaultName string = keyVault.name
 output storageAccountName string = storageAccount.name
 output uamiPrincipalId string = uami.properties.principalId
 output uamiClientId string = uami.properties.clientId
-output privateEndpointEnabled bool = enablePrivateEndpoint
-output privateEndpointName string = enablePrivateEndpoint ? privateEndpoint.name : ''
-output privateDnsZoneName string = enablePrivateEndpoint ? caeDnsZoneName : ''
+output vnetIntegrated bool = vnetIntegrated
+output infrastructureSubnetId string = infrastructureSubnetId

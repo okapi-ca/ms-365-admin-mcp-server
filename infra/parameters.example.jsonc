@@ -2,23 +2,22 @@
   // Parameters file template for infra/main.bicep.
   //
   // Copy to infra/parameters.<tenant>.jsonc (ignored by git) and fill in the
-  // values for your environment. Deploy with:
+  // values for your environment. Convert to strict JSON (remove comments) when
+  // deploying — `az deployment group create --parameters @file.json` does not
+  // support JSONC. Deploy with:
   //
   //   az deployment group create \
   //     --resource-group <your-rg> \
   //     --template-file infra/main.bicep \
-  //     --parameters @infra/parameters.<tenant>.jsonc \
-  //     --parameters containerImage=ghcr.io/okapi-ca/ms-365-admin-mcp-server:0.5.0
+  //     --parameters @infra/parameters.<tenant>.json \
+  //     --parameters containerImage=ghcr.io/okapi-ca/ms-365-admin-mcp-server:0.5.1 \
+  //     --parameters kvAdminObjectIds="['<operator-oid>']"
   //
-  // Any value left as "<...>" below is a placeholder you must replace when
-  // creating your real parameters file.
+  // Any value left as "<...>" below is a placeholder you must replace.
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "baseName": { "value": "<3-20 chars, lowercase, used as prefix for all resources>" },
-    "kvAdminObjectIds": {
-      "value": ["<oid of the operator performing the deployment (Key Vault Secrets Officer)>"]
-    },
+    "baseName": { "value": "<3-20 chars, lowercase, used as prefix for default resource names>" },
     "tags": {
       "value": {
         "Environment": "PROD",
@@ -27,7 +26,7 @@
       }
     },
 
-    // --- OAuth + auth gating ---
+    // --- OAuth + auth gating (SEC-F01, SEC-F02) ---
     "oauthMode": { "value": true },
     "publicUrl": { "value": "<https://<your-mcp-fqdn>>" },
     "authorizedUsers": {
@@ -38,23 +37,27 @@
     },
     "acrLoginServer": { "value": "" },
 
-    // --- Private Endpoint (set enablePrivateEndpoint=true to activate) ---
-    // All six hub-* parameters below are required when enablePrivateEndpoint=true.
-    // Ask your network team for the values.
-    "enablePrivateEndpoint": { "value": false },
+    // --- VNet integration (set vnetIntegrated=true to deploy an internal CAE) ---
+    // Requires a pre-existing subnet delegated to Microsoft.App/environments.
+    // When true: CAE runs workload-profiles + internal ingress (clients must reach
+    // the VNet via VPN, ExpressRoute, or VNet peering). No public ingress, no PE.
+    "vnetIntegrated": { "value": false },
     "hubSubscriptionId": { "value": "<subscription id hosting the hub VNet>" },
     "hubVnetRg": { "value": "<resource group of the hub VNet>" },
     "hubVnetName": { "value": "<hub VNet name>" },
-    "peSubnetName": {
-      "value": "<subnet name (pre-created by your network team) hosting the PE NIC>"
+    "infrastructureSubnetName": {
+      "value": "<subnet delegated to Microsoft.App/environments, pre-created by network team>"
     },
-    "privateDnsZoneRg": {
-      "value": "<resource group hosting the centralized Private DNS zones>"
-    },
-    "privateEndpointLocation": {
-      "value": "<region for the PE NIC, may differ from CAE region>"
-    },
-    "privateEndpointName": { "value": "" },
-    "applicationSecurityGroupName": { "value": "" }
+
+    // --- Resource name overrides (optional) ---
+    // Leave empty to derive from baseName. Override when your org has strict
+    // naming conventions (e.g. Azure CAF, internal rules).
+    "containerAppEnvName": { "value": "" },
+    "containerAppName": { "value": "" },
+    "uamiName": { "value": "" },
+    "keyVaultName": { "value": "" },
+    "storageAccountName": { "value": "" },
+    "logAnalyticsWorkspaceName": { "value": "" },
+    "appInsightsName": { "value": "" }
   }
 }
