@@ -1,0 +1,60 @@
+{
+  // Parameters file template for infra/main.bicep.
+  //
+  // Copy to infra/parameters.<tenant>.jsonc (ignored by git) and fill in the
+  // values for your environment. Deploy with:
+  //
+  //   az deployment group create \
+  //     --resource-group <your-rg> \
+  //     --template-file infra/main.bicep \
+  //     --parameters @infra/parameters.<tenant>.jsonc \
+  //     --parameters containerImage=ghcr.io/okapi-ca/ms-365-admin-mcp-server:0.5.0
+  //
+  // Any value left as "<...>" below is a placeholder you must replace when
+  // creating your real parameters file.
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": { "value": "<3-20 chars, lowercase, used as prefix for all resources>" },
+    "kvAdminObjectIds": {
+      "value": ["<oid of the operator performing the deployment (Key Vault Secrets Officer)>"]
+    },
+    "tags": {
+      "value": {
+        "Environment": "PROD",
+        "DeploymentType": "Bicep",
+        "AppMapping": "<your org app mapping / cost center>"
+      }
+    },
+
+    // --- OAuth + auth gating ---
+    "oauthMode": { "value": true },
+    "publicUrl": { "value": "<https://<your-mcp-fqdn>>" },
+    "authorizedUsers": {
+      "value": "<comma-separated Entra user OIDs authorized to authenticate>"
+    },
+    "allowedClients": {
+      "value": "<comma-separated Entra app IDs for machine-to-machine access, or empty>"
+    },
+    "acrLoginServer": { "value": "" },
+
+    // --- Private Endpoint (set enablePrivateEndpoint=true to activate) ---
+    // All six hub-* parameters below are required when enablePrivateEndpoint=true.
+    // Ask your network team for the values.
+    "enablePrivateEndpoint": { "value": false },
+    "hubSubscriptionId": { "value": "<subscription id hosting the hub VNet>" },
+    "hubVnetRg": { "value": "<resource group of the hub VNet>" },
+    "hubVnetName": { "value": "<hub VNet name>" },
+    "peSubnetName": {
+      "value": "<subnet name (pre-created by your network team) hosting the PE NIC>"
+    },
+    "privateDnsZoneRg": {
+      "value": "<resource group hosting the centralized Private DNS zones>"
+    },
+    "privateEndpointLocation": {
+      "value": "<region for the PE NIC, may differ from CAE region>"
+    },
+    "privateEndpointName": { "value": "" },
+    "applicationSecurityGroupName": { "value": "" }
+  }
+}

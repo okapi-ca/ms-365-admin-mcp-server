@@ -21,18 +21,19 @@ Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365
 
 ## Documentation
 
-| Document                                             | Purpose                                                       |
-| ---------------------------------------------------- | ------------------------------------------------------------- |
-| [docs/USE_CASES.md](docs/USE_CASES.md)               | 15 typical admin scenarios with sample prompts and tool lists |
-| [docs/playbooks/](docs/playbooks/README.md)          | End-to-end security incident response playbooks               |
-| [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md) | Step-by-step Azure AD app registration and permission consent |
-| [docs/HTTP_DEPLOYMENT.md](docs/HTTP_DEPLOYMENT.md)   | HTTP transport, JWT validation, Docker, Azure Container Apps  |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)   | Common errors and how to diagnose them                        |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)         | Internal architecture and code generation pipeline            |
-| [docs/RISK_MODEL.md](docs/RISK_MODEL.md)             | Risk classification rubric for write tools                    |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                   | How to contribute new tools, presets, and fixes               |
-| [SECURITY.md](SECURITY.md)                           | Vulnerability reporting and operator hardening checklist      |
-| [CHANGELOG.md](CHANGELOG.md)                         | Release history                                               |
+| Document                                                               | Purpose                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [docs/USE_CASES.md](docs/USE_CASES.md)                                 | 15 typical admin scenarios with sample prompts and tool lists               |
+| [docs/playbooks/](docs/playbooks/README.md)                            | End-to-end security incident response playbooks                             |
+| [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md)                   | Step-by-step Azure AD app registration and permission consent               |
+| [docs/HTTP_DEPLOYMENT.md](docs/HTTP_DEPLOYMENT.md)                     | HTTP transport, JWT validation, Docker, Azure Container Apps                |
+| [docs/AZURE_DEPLOYMENT_SECURITY.md](docs/AZURE_DEPLOYMENT_SECURITY.md) | Threat model, required controls, and checklist for Azure production deploys |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)                     | Common errors and how to diagnose them                                      |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                           | Internal architecture and code generation pipeline                          |
+| [docs/RISK_MODEL.md](docs/RISK_MODEL.md)                               | Risk classification rubric for write tools                                  |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                     | How to contribute new tools, presets, and fixes                             |
+| [SECURITY.md](SECURITY.md)                                             | Vulnerability reporting and operator hardening checklist                    |
+| [CHANGELOG.md](CHANGELOG.md)                                           | Release history                                                             |
 
 ## Prerequisites
 

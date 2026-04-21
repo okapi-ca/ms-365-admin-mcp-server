@@ -38,3 +38,10 @@ logs/
 
 # OS
 .DS_Store
+
+# Deployment parameters containing tenant-specific values (subscription IDs,
+# hub VNet names, private DNS RG names, etc.). Only the sanitized example file
+# is committed — real values live outside git in the operator's secret store.
+infra/parameters.*.jsonc
+infra/parameters.*.json
+!infra/parameters.example.jsonc
