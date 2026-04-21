@@ -33,6 +33,7 @@ const endpointsData = JSON.parse(
 // Tools requiring any of these permissions must use an app-only token even in
 // OBO mode, because the user token cannot be exchanged for one of these scopes.
 const APP_ONLY_PERMISSIONS = new Set([
+  // Confirmed app-only by conception
   'BitlockerKey.Read.All',
   'DeviceLocalCredential.Read.All',
   'OnPremDirectorySynchronization.Read.All',
@@ -41,6 +42,13 @@ const APP_ONLY_PERMISSIONS = new Set([
   'ThreatHunting.Read.All',
   'CopilotSettings-Internal.ReadWrite.All',
   'PrintConnector.Read.All',
+  // Not found as delegated in Graph SP oauth2PermissionScopes (confirmed during CYSEC-1424)
+  'AppRoleAssignment.Read.All',
+  'CallRecords.Read.All',
+  'Device.ReadWrite.All',
+  'InformationProtectionPolicy.Read.All',
+  'Team.ReadWrite.All',
+  'ThreatAssessment.Read.All',
 ]);
 
 function maxTopFromEnv(): number | undefined {

@@ -22,9 +22,9 @@ authentifié (via PKCE + OBO), et non sous le compte de service.
 | Catégorie | Nombre |
 |-----------|--------|
 | Permissions application actuelles | 112 |
-| Permissions déléguées équivalentes | 103 |
-| Permissions application sans équivalent délégué | 9 |
-| Outils affectés par les exceptions app-only | 21 |
+| Permissions déléguées résolues (admin consent accordé — CYSEC-1424) | 97 |
+| Permissions sans équivalent délégué confirmé | 14 |
+| Outils utilisant le chemin app-only hybride | 39 |
 
 ---
 
@@ -32,19 +32,28 @@ authentifié (via PKCE + OBO), et non sous le compte de service.
 
 Ces permissions doivent conserver un chemin **app-only** dans l'implémentation hybride.
 Les outils correspondants continueront d'utiliser `acquireTokenByClientCredential` même en
-mode `--oauth-mode`.
+mode `--oauth-mode`. La liste a été confirmée lors du déploiement du consentement (CYSEC-1424) :
+6 permissions supplémentaires étaient absentes de `oauth2PermissionScopes` du SP Graph.
 
 | Permission | Outils (n) | Raison |
 |------------|-----------|--------|
-| `BitlockerKey.Read.All` | 1 | Application-only par conception — clés BitLocker inaccessibles en délégué |
+| `BitlockerKey.Read.All` | 1 | Application-only par conception — clés BitLocker |
 | `DeviceLocalCredential.Read.All` | 1 | Application-only par conception — LAPS credentials |
-| `OnPremDirectorySynchronization.Read.All` | 1 | Application-only par conception — état sync AD Connect |
-| `Exchange.ManageAsApp` | 7 | Application-only — gestion Exchange Online via REST (pas d'équivalent délégué pour EXO admin) |
+| `OnPremDirectorySynchronization.Read.All` | 1 | Application-only par conception — sync AD Connect |
+| `Exchange.ManageAsApp` | 9 | Application-only — gestion Exchange Online via REST |
 | `SecurityIdentitiesHealth.Read.All` | 3 | Application-only — Defender for Identity (MDI) |
-| `ThreatHunting.Read.All` | 1 | Application-only — Microsoft 365 Defender Advanced Hunting |
-| `Application.ReadWrite.OwnedBy` | 4 | Pas d'équivalent délégué `.OwnedBy` ; utiliser `Application.ReadWrite.All` en délégué |
-| `CopilotSettings-Internal.ReadWrite.All` | 2 | Permission interne non documentée publiquement — app-only |
-| `PrintConnector.Read.All` | 1 | Application-only — Universal Print connector management |
+| `ThreatHunting.Read.All` | 1 | Application-only — Advanced Hunting |
+| `CopilotSettings-Internal.ReadWrite.All` | 2 | Permission interne non documentée — app-only |
+| `PrintConnector.Read.All` | 1 | Application-only — Universal Print connector |
+| `CallRecords.Read.All` | 11 | Absent du SP Graph en délégué (CYSEC-1424) |
+| `AppRoleAssignment.Read.All` | 1 | Absent du SP Graph en délégué (CYSEC-1424) |
+| `Device.ReadWrite.All` | 1 | Absent du SP Graph en délégué (CYSEC-1424) |
+| `InformationProtectionPolicy.Read.All` | 5 | Absent du SP Graph en délégué (CYSEC-1424) |
+| `Team.ReadWrite.All` | 3 | Absent du SP Graph en délégué (CYSEC-1424) |
+| `ThreatAssessment.Read.All` | 1 | Application-only confirmé |
+
+> **Note** : `Application.ReadWrite.OwnedBy` a été remplacée par la permission déléguée
+> `Application.ReadWrite.All` (déjà dans les 97 accordées).
 
 ### Détail des outils app-only
 
