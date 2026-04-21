@@ -29,6 +29,28 @@ const endpointsData = JSON.parse(
   readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
 ) as EndpointConfig[];
 
+// Permissions that have no delegated equivalent in Microsoft Graph.
+// Tools requiring any of these permissions must use an app-only token even in
+// OBO mode, because the user token cannot be exchanged for one of these scopes.
+const APP_ONLY_PERMISSIONS = new Set([
+  // Confirmed app-only by conception
+  'BitlockerKey.Read.All',
+  'DeviceLocalCredential.Read.All',
+  'OnPremDirectorySynchronization.Read.All',
+  'Exchange.ManageAsApp',
+  'SecurityIdentitiesHealth.Read.All',
+  'ThreatHunting.Read.All',
+  'CopilotSettings-Internal.ReadWrite.All',
+  'PrintConnector.Read.All',
+  // Not found as delegated in Graph SP oauth2PermissionScopes (confirmed during CYSEC-1424)
+  'AppRoleAssignment.Read.All',
+  'CallRecords.Read.All',
+  'Device.ReadWrite.All',
+  'InformationProtectionPolicy.Read.All',
+  'Team.ReadWrite.All',
+  'ThreatAssessment.Read.All',
+]);
+
 function maxTopFromEnv(): number | undefined {
   const raw = process.env.MS365_ADMIN_MCP_MAX_TOP;
   if (raw === undefined || raw === '') return undefined;
@@ -220,7 +242,8 @@ export function registerGraphTools(
   graphClient: GraphClient,
   readOnly: boolean = false,
   enabledToolsPattern?: string,
-  maxRiskLevel: RiskLevel = 'critical'
+  maxRiskLevel: RiskLevel = 'critical',
+  appOnlyGraphClient?: GraphClient
 ): number {
   let registeredCount = 0;
   let skippedCount = 0;
@@ -333,6 +356,10 @@ export function registerGraphTools(
       toolDescription += `\n\nRISK LEVEL: ${endpointConfig.riskLevel.toUpperCase()}. ${riskCopy}`;
     }
 
+    const requiresAppOnly =
+      endpointConfig?.appPermissions?.some((p) => APP_ONLY_PERMISSIONS.has(p)) ?? false;
+    const clientForTool = requiresAppOnly && appOnlyGraphClient ? appOnlyGraphClient : graphClient;
+
     try {
       server.tool(
         tool.alias,
@@ -344,7 +371,7 @@ export function registerGraphTools(
           destructiveHint: ['POST', 'PATCH', 'DELETE'].includes(tool.method.toUpperCase()),
           openWorldHint: true,
         },
-        async (params) => executeGraphTool(tool, endpointConfig, graphClient, params)
+        async (params) => executeGraphTool(tool, endpointConfig, clientForTool, params)
       );
       registeredCount++;
     } catch (error) {

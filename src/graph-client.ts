@@ -1,5 +1,4 @@
 import logger from './logger.js';
-import AuthManager from './auth.js';
 import type { AppSecrets } from './secrets.js';
 import { getCloudEndpoints } from './cloud-config.js';
 
@@ -24,11 +23,11 @@ interface McpResponse {
 }
 
 class GraphClient {
-  private authManager: AuthManager;
+  private getAccessToken: () => Promise<string>;
   private secrets: AppSecrets;
 
-  constructor(authManager: AuthManager, secrets: AppSecrets) {
-    this.authManager = authManager;
+  constructor(getAccessToken: () => Promise<string>, secrets: AppSecrets) {
+    this.getAccessToken = getAccessToken;
     this.secrets = secrets;
   }
 
@@ -47,7 +46,7 @@ class GraphClient {
   }
 
   private async makeRequest(endpoint: string, options: GraphRequestOptions = {}): Promise<unknown> {
-    const accessToken = await this.authManager.getToken();
+    const accessToken = await this.getAccessToken();
     const cloudEndpoints = getCloudEndpoints(this.secrets.cloudType);
     const url = `${cloudEndpoints.graphApi}/v1.0${endpoint}`;
 

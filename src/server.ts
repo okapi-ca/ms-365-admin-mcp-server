@@ -10,7 +10,6 @@ import { getSecrets, type AppSecrets } from './secrets.js';
 class AdminGraphServer {
   private authManager: AuthManager;
   private options: CommandOptions;
-  private graphClient: GraphClient | null;
   private server: McpServer | null;
   private secrets: AppSecrets | null;
   private version: string = '0.1.0';
@@ -18,7 +17,6 @@ class AdminGraphServer {
   constructor(authManager: AuthManager, options: CommandOptions = {}) {
     this.authManager = authManager;
     this.options = options;
-    this.graphClient = null;
     this.server = null;
     this.secrets = null;
   }
@@ -26,22 +24,35 @@ class AdminGraphServer {
   async initialize(version: string): Promise<void> {
     this.secrets = await getSecrets();
     this.version = version;
-    this.graphClient = new GraphClient(this.authManager, this.secrets);
-
+    // stdio transport uses app-only (no user token available)
     this.server = this.createServer();
   }
 
-  private createServer(): McpServer {
+  createServer(userToken?: string): McpServer {
     const server = new McpServer({
       name: 'Microsoft365AdminMCP',
       version: this.version,
     });
+    // OBO: when a user token is present (HTTP + --oauth-mode), exchange it for a
+    // Graph token scoped to the caller's Entra permissions. App-only is used for
+    // stdio transport and service-to-service tokens (--allowed-clients).
+    const getToken = userToken
+      ? () => this.authManager.getTokenOnBehalfOf(userToken)
+      : () => this.authManager.getToken();
+    const graphClient = new GraphClient(getToken, this.secrets!);
+    // In OBO mode some tools require permissions that have no delegated equivalent
+    // (e.g. Exchange.ManageAsApp, BitlockerKey.Read.All). Those tools fall back to
+    // the app-only client so they continue to function while all other tools use OBO.
+    const appOnlyGraphClient = userToken
+      ? new GraphClient(() => this.authManager.getToken(), this.secrets!)
+      : undefined;
     registerGraphTools(
       server,
-      this.graphClient!,
+      graphClient,
       this.options.readOnly,
       this.options.enabledTools,
-      this.options.maxRiskLevel
+      this.options.maxRiskLevel,
+      appOnlyGraphClient
     );
     return server;
   }
@@ -52,7 +63,13 @@ class AdminGraphServer {
     }
 
     logger.info('Microsoft 365 Admin MCP Server starting...');
-    logger.info('Auth mode: client credentials (application permissions)');
+    if (this.options.oauthMode) {
+      logger.info(
+        'Auth mode: OBO delegated (user tokens forwarded to Graph via on-behalf-of flow)'
+      );
+    } else {
+      logger.info('Auth mode: client credentials (application permissions)');
+    }
 
     if (this.options.readOnly) {
       logger.info('Server running in READ-ONLY mode.');
@@ -155,7 +172,7 @@ class AdminGraphServer {
       await startHttpServer({
         port,
         host: this.options.host || '127.0.0.1',
-        createServer: () => this.createServer(),
+        createServer: (userToken?: string) => this.createServer(userToken),
         tokenValidatorOptions,
         userTokenValidatorOptions,
         oauthProxyOptions,

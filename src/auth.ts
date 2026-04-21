@@ -122,6 +122,20 @@ class AuthManager {
     return this.accessToken;
   }
 
+  async getTokenOnBehalfOf(userAssertion: string): Promise<string> {
+    const cloudEndpoints = getCloudEndpoints(this.secrets.cloudType);
+    logger.info('Acquiring Graph token via OBO flow...');
+    const result = await this.msalApp.acquireTokenOnBehalfOf({
+      oboAssertion: userAssertion,
+      scopes: [`${cloudEndpoints.graphApi}/.default`],
+    });
+    if (!result) {
+      throw new Error('OBO token exchange failed: MSAL returned no result');
+    }
+    logger.info('OBO Graph token acquired');
+    return result.accessToken;
+  }
+
   async testLogin(): Promise<{ success: boolean; message: string; tenantInfo?: unknown }> {
     try {
       const token = await this.getToken();
