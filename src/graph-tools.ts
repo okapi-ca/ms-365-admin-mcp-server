@@ -358,8 +358,7 @@ export function registerGraphTools(
 
     const requiresAppOnly =
       endpointConfig?.appPermissions?.some((p) => APP_ONLY_PERMISSIONS.has(p)) ?? false;
-    const clientForTool =
-      requiresAppOnly && appOnlyGraphClient ? appOnlyGraphClient : graphClient;
+    const clientForTool = requiresAppOnly && appOnlyGraphClient ? appOnlyGraphClient : graphClient;
 
     try {
       server.tool(

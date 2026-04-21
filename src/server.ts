@@ -64,7 +64,9 @@ class AdminGraphServer {
 
     logger.info('Microsoft 365 Admin MCP Server starting...');
     if (this.options.oauthMode) {
-      logger.info('Auth mode: OBO delegated (user tokens forwarded to Graph via on-behalf-of flow)');
+      logger.info(
+        'Auth mode: OBO delegated (user tokens forwarded to Graph via on-behalf-of flow)'
+      );
     } else {
       logger.info('Auth mode: client credentials (application permissions)');
     }

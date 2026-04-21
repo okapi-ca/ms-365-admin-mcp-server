@@ -76,30 +76,31 @@ Public internet access: **blocked** (ingress set to internal).
 
 ## What Saad Needs to Confirm
 
-| # | Question | Impact |
-|---|----------|--------|
-| 1 | Available CIDR range within `LCI-Servers_Prod_Backend` for `/27` + `/28`? | IaC cannot be finalized without this |
-| 2 | Any NSG rules on `LCI-Servers_Prod_Backend` that would block Container App→Graph outbound (TCP 443)? | Must allow `AzureContainerAppsInfra` service tag + Graph endpoints |
-| 3 | VPN P2S client pool CIDR — is it in the routing table of `vWANhub_CanadaCentral_1`? | Required for admin workstation → Private Endpoint routing |
-| 4 | Subscription to deploy the new resources: `LCI Education - Servers` (same as `LCI-Servers_Prod_Backend`)? | Affects Terraform state backend and RBAC scope |
-| 5 | Any existing Private DNS zone `privatelink.canadaeast.azurecontainerapps.io` linked to this VNet? | Avoids DNS conflict if already present |
+| #   | Question                                                                                                  | Impact                                                             |
+| --- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1   | Available CIDR range within `LCI-Servers_Prod_Backend` for `/27` + `/28`?                                 | IaC cannot be finalized without this                               |
+| 2   | Any NSG rules on `LCI-Servers_Prod_Backend` that would block Container App→Graph outbound (TCP 443)?      | Must allow `AzureContainerAppsInfra` service tag + Graph endpoints |
+| 3   | VPN P2S client pool CIDR — is it in the routing table of `vWANhub_CanadaCentral_1`?                       | Required for admin workstation → Private Endpoint routing          |
+| 4   | Subscription to deploy the new resources: `LCI Education - Servers` (same as `LCI-Servers_Prod_Backend`)? | Affects Terraform state backend and RBAC scope                     |
+| 5   | Any existing Private DNS zone `privatelink.canadaeast.azurecontainerapps.io` linked to this VNet?         | Avoids DNS conflict if already present                             |
 
 ---
 
 ## Resources to Create (pending CIDR confirmation)
 
-| Resource | Name (proposed) | Location |
-|----------|----------------|----------|
-| Subnet (CAE) | `snet-ms365admin-cae` | Canada East (in `LCI-Servers_Prod_Backend`) |
-| Subnet (PE) | `snet-ms365admin-pe` | Canada East (in `LCI-Servers_Prod_Backend`) |
-| Container App Environment | `prd-cae-ms365admin-cae-01` | Canada East |
-| Container App | `prd-cae-ms365admin-app-01` | Canada East |
-| Private Endpoint | `prd-cae-ms365admin-pe-01` | Canada East |
-| Private DNS Zone | `privatelink.canadaeast.azurecontainerapps.io` | Global |
-| Private DNS VNet link | `link-lci-servers-prod-backend` | — |
-| Log Analytics Workspace | (reuse existing or new `prd-cae-ms365admin-law-01`) | Canada East |
+| Resource                  | Name (proposed)                                     | Location                                    |
+| ------------------------- | --------------------------------------------------- | ------------------------------------------- |
+| Subnet (CAE)              | `snet-ms365admin-cae`                               | Canada East (in `LCI-Servers_Prod_Backend`) |
+| Subnet (PE)               | `snet-ms365admin-pe`                                | Canada East (in `LCI-Servers_Prod_Backend`) |
+| Container App Environment | `prd-cae-ms365admin-cae-01`                         | Canada East                                 |
+| Container App             | `prd-cae-ms365admin-app-01`                         | Canada East                                 |
+| Private Endpoint          | `prd-cae-ms365admin-pe-01`                          | Canada East                                 |
+| Private DNS Zone          | `privatelink.canadaeast.azurecontainerapps.io`      | Global                                      |
+| Private DNS VNet link     | `link-lci-servers-prod-backend`                     | —                                           |
+| Log Analytics Workspace   | (reuse existing or new `prd-cae-ms365admin-law-01`) | Canada East                                 |
 
 Tags on all resources:
+
 ```
 Environment = Production
 Owner       = cybersecurity
@@ -121,11 +122,11 @@ Compliance  = Loi25
 
 ## Estimated Cost Delta
 
-| Resource | Estimated monthly cost (CAD) |
-|----------|------------------------------|
-| Container App Environment (Consumption) | ~$0 base + workload metered |
-| Private Endpoint | ~$12 (2 zones × $0.01/hr) |
-| Private DNS Zone | ~$1 |
-| **Total delta** | **~$13–15/month** |
+| Resource                                | Estimated monthly cost (CAD) |
+| --------------------------------------- | ---------------------------- |
+| Container App Environment (Consumption) | ~$0 base + workload metered  |
+| Private Endpoint                        | ~$12 (2 zones × $0.01/hr)    |
+| Private DNS Zone                        | ~$1                          |
+| **Total delta**                         | **~$13–15/month**            |
 
 No new VNet, no new vWAN hub → **no additional peering or gateway cost**.
