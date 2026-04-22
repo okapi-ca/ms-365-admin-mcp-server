@@ -208,18 +208,29 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       expiresAt: Date.now() + PKCE_TTL_MS,
     });
 
+    // Entra only issues a refresh token when offline_access is in the requested
+    // scope. MCP clients (Claude Desktop, claude.ai, etc.) often send their own
+    // scope list that omits it — without this merge, access tokens expire after
+    // 60-90 min and users re-authenticate on every call. See Softeria PR #407.
+    const requestedScope = scope || fallbackScope;
+    const scopeList = requestedScope.split(/\s+/).filter(Boolean);
+    if (!scopeList.includes('offline_access')) {
+      scopeList.push('offline_access');
+    }
+    const upstreamScope = scopeList.join(' ');
+
     const upstream = new URL(`${authority}/oauth2/v2.0/authorize`);
     upstream.searchParams.set('client_id', options.clientId);
     upstream.searchParams.set('response_type', 'code');
     upstream.searchParams.set('redirect_uri', redirectUri);
     upstream.searchParams.set('response_mode', 'query');
-    upstream.searchParams.set('scope', scope || fallbackScope);
+    upstream.searchParams.set('scope', upstreamScope);
     upstream.searchParams.set('code_challenge', serverChallenge);
     upstream.searchParams.set('code_challenge_method', 'S256');
     if (state) upstream.searchParams.set('state', state);
 
     logger.info(
-      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${scope || fallbackScope})`
+      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${upstreamScope})`
     );
     res.redirect(302, upstream.toString());
   });
