@@ -228,9 +228,16 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     upstream.searchParams.set('code_challenge', serverChallenge);
     upstream.searchParams.set('code_challenge_method', 'S256');
     if (state) upstream.searchParams.set('state', state);
+    // Force Entra's account picker on every sign-in to prevent silent SSO
+    // reuse of a wrong account. Critical for multi-account admin workflows
+    // where a user has both a standard and an admin identity in the tenant.
+    // Note: ineffective against macOS Platform SSO extension in Safari/WebKit
+    // (the extension injects a PRT before Entra sees the prompt param) —
+    // use a non-WebKit browser (Chrome, Firefox) to bypass that layer.
+    upstream.searchParams.set('prompt', 'select_account');
 
     logger.info(
-      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${upstreamScope})`
+      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${upstreamScope}, prompt=select_account)`
     );
     res.redirect(302, upstream.toString());
   });
