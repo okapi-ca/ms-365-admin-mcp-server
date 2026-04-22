@@ -160,6 +160,19 @@ describe('SEC-F04b /authorize — unknown client_id rejected', () => {
     const offlineCount = upstreamScope.filter((s) => s === 'offline_access').length;
     expect(offlineCount).toBe(1);
   });
+
+  it('forces prompt=select_account on the upstream authorize URL', async () => {
+    const { clientId } = await register();
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    const upstream = new URL(res.headers.get('location')!);
+    expect(upstream.searchParams.get('prompt')).toBe('select_account');
+  });
 });
 
 describe('SEC-F04b /token — client authentication required', () => {
