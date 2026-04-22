@@ -59,23 +59,23 @@ This is not a tutorial. For the operational how-to, see [HTTP_DEPLOYMENT.md](HTT
     |             Hub Virtual Network (operator)            |
     |                                                       |
     |   +------------------------------------------------+  |
-    |   |           Private Endpoint subnet              |  |
+    |   |  Infrastructure subnet                         |  |
+    |   |  (delegated to Microsoft.App/environments)     |  |
     |   |  +------------------------------------------+  |  |
-    |   |  |  PE_CAE (managedEnvironments sub-res)    |  |  |
-    |   |  |  NSG + Application Security Group        |  |  |
-    |   |  +--------------+---------------------------+  |  |
-    |   +-----------------|------------------------------+  |
-    |                     | Azure Private Link backbone     |
-    +---------------------|-----------------------------+---+
-                          v
+    |   |  |  Container Apps Environment (internal)   |  |  |
+    |   |  |    workload-profiles SKU                 |  |  |
+    |   |  |                                          |  |  |
+    |   |  |  Container App (mcp-admin, UAMI)         |  |  |
+    |   |  |    --oauth-mode --authorized-users ...   |  |  |
+    |   |  +------------------------------------------+  |  |
+    |   +------------------------------------------------+  |
+    +-------------------------------------------------------+
+                              |
+                              | managed identity → Azure
+                              v
     +------------------------------------------------------+
-    |  Container App Environment (publicNetworkAccess=Off) |
-    |                                                      |
-    |   Container App (mcp-admin, UAMI)                    |
-    |     args: --oauth-mode --authorized-users ...        |
-    |     env: AZURE_CLIENT_ID (UAMI), KV URL, Storage     |
-    |                                                      |
-    |   -> Key Vault (publicNetworkAccess=Off, RBAC)       |
+    |  Supporting resources (same RG as CAE, or shared)    |
+    |   -> Key Vault (RBAC, purge protection)              |
     |   -> Storage Account Table (allowSharedKeyAccess=No) |
     |   -> Log Analytics workspace                         |
     +------------------------------------------------------+
@@ -88,17 +88,17 @@ This is not a tutorial. For the operational how-to, see [HTTP_DEPLOYMENT.md](HTT
               +----------------------------+
 ```
 
-The key property: **the MCP server is not reachable from the public internet**. Every authenticated caller arrives via corporate VPN → hub VNet → Private Endpoint → CAE. Conditional Access on the user's delegated token enforces MFA, compliant device, and location policies against the user's real identity, not an opaque service principal.
+The key property: **the MCP server is not reachable from the public internet**. The CAE is deployed with `vnetConfiguration.internal: true` into an infrastructure subnet on the operator's hub VNet. Every authenticated caller arrives via corporate VPN → hub VNet → CAE. Conditional Access on the user's delegated token enforces MFA, compliant device, and location policies against the user's real identity, not an opaque service principal.
 
 ## Required controls (MUST)
 
-These are non-negotiable for any tenant where admin compromise is unacceptable. The `infra/main.bicep` template enforces all of them when `enablePrivateEndpoint=true`.
+These are non-negotiable for any tenant where admin compromise is unacceptable. The `infra/main.bicep` template enforces all of them when `vnetIntegrated=true`.
 
 | #   | Control                                                                                                                                    | How it's enforced in this repo                                                                                                                                                                            |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R1  | **`--oauth-mode` with `--authorized-users` allowlist** — no anonymous tenant users can authenticate                                        | `oauthMode=true` + non-empty `authorizedUsers` parameter; server refuses to start otherwise (SEC-F01)                                                                                                     |
 | R2  | **OBO delegated Graph calls** — admin actions logged under the user's UPN in the Unified Audit Log, not the app identity                   | Built-in since v0.5.0; activated by `--oauth-mode`                                                                                                                                                        |
-| R3  | **Private Endpoint on the Container Apps Environment** — public ingress disabled                                                           | `enablePrivateEndpoint=true` param + `publicNetworkAccess: 'Disabled'` on the CAE                                                                                                                         |
+| R3  | **CAE workload-profiles SKU with `vnetConfiguration.internal: true`** — no public ingress, clients reach the server only from the hub VNet | `vnetIntegrated=true` param + `workloadProfiles` array + `vnetConfiguration.{infrastructureSubnetId, internal: true}` on the CAE                                                                          |
 | R4  | **Network access to the server gated by VPN or ExpressRoute only** — the hub VNet holds the PE; spokes/clients reach it via peering or VPN | Operator responsibility (hub + VPN are outside this template)                                                                                                                                             |
 | R5  | **Key Vault with RBAC + purge protection** — no access-policy authorization; managed identity scoped to `Key Vault Secrets User`           | Enforced in `main.bicep`: `enableRbacAuthorization: true`, `enablePurgeProtection: true`, UAMI gets `Secrets User` only                                                                                   |
 | R6  | **Storage Account with `allowSharedKeyAccess: false`** — UAMI reads OAuth state via Entra, no account keys                                 | Enforced in `main.bicep`                                                                                                                                                                                  |
@@ -111,31 +111,31 @@ These are non-negotiable for any tenant where admin compromise is unacceptable. 
 
 Defense-in-depth. The template does not enforce these, but you should consider them for any long-lived production deployment.
 
-| #   | Control                                                                                                                                                                   | Notes                                                                                                                                                                                                              |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S1  | Private Endpoints on Key Vault and Storage Account as well                                                                                                                | Not emitted by the current template. Hardens lateral movement if the Container App is ever compromised. Requires hub subnet + DNS zones `privatelink.vaultcore.azure.net` and `privatelink.table.core.windows.net` |
-| S2  | Conditional Access policy requiring **compliant device + MFA** for the MCP app registration                                                                               | Applied at the tenant level against the `authorizedUsers` oids                                                                                                                                                     |
-| S3  | `--max-risk-level low` or `medium` for read-heavy / helpdesk personas                                                                                                     | CLI arg enforced per deployment (SEC-G01). See [RISK_MODEL.md](RISK_MODEL.md)                                                                                                                                      |
-| S4  | Separate app registrations for service-to-service vs human OAuth                                                                                                          | Lets you revoke machine access without breaking humans and vice versa                                                                                                                                              |
-| S5  | Log Analytics export to a SIEM with alerting on `/mcp` 401/403 bursts, `/token` 401 bursts, and high-risk tool invocations (role grants, password resets, mailbox grants) | Operator responsibility; the server already emits structured logs with redacted secrets (SEC-F07)                                                                                                                  |
-| S6  | Periodic rotation of the Entra client secret (≤ 1 year) and UAMI token cache eviction                                                                                     | See rotation runbook in [HTTP_DEPLOYMENT.md](HTTP_DEPLOYMENT.md)                                                                                                                                                   |
-| S7  | Pin the container image to a SHA digest, not a tag                                                                                                                        | Prevents silent upstream supply-chain compromise of the `:0.x.y` tag                                                                                                                                               |
-| S8  | Custom domain + WAF (Front Door or App Gateway) in front of the PE                                                                                                        | Only useful if you expose the server outside the VPN; otherwise the CAE's internal FQDN is sufficient                                                                                                              |
+| #   | Control                                                                                                                                                                   | Notes                                                                                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | Private Endpoints on Key Vault and Storage Account                                                                                                                        | Not emitted by the current template. Hardens lateral movement if the Container App is ever compromised. Requires hub subnet(s) + DNS zones `privatelink.vaultcore.azure.net` and `privatelink.table.core.windows.net` |
+| S2  | Conditional Access policy requiring **compliant device + MFA** for the MCP app registration                                                                               | Applied at the tenant level against the `authorizedUsers` oids                                                                                                                                                        |
+| S3  | `--max-risk-level low` or `medium` for read-heavy / helpdesk personas                                                                                                     | CLI arg enforced per deployment (SEC-G01). See [RISK_MODEL.md](RISK_MODEL.md)                                                                                                                                         |
+| S4  | Separate app registrations for service-to-service vs human OAuth                                                                                                          | Lets you revoke machine access without breaking humans and vice versa                                                                                                                                                 |
+| S5  | Log Analytics export to a SIEM with alerting on `/mcp` 401/403 bursts, `/token` 401 bursts, and high-risk tool invocations (role grants, password resets, mailbox grants) | Operator responsibility; the server already emits structured logs with redacted secrets (SEC-F07)                                                                                                                     |
+| S6  | Periodic rotation of the Entra client secret (≤ 1 year) and UAMI token cache eviction                                                                                     | See rotation runbook in [HTTP_DEPLOYMENT.md](HTTP_DEPLOYMENT.md)                                                                                                                                                      |
+| S7  | Pin the container image to a SHA digest, not a tag                                                                                                                        | Prevents silent upstream supply-chain compromise of the `:0.x.y` tag                                                                                                                                                  |
+| S8  | Custom domain + WAF (Front Door or App Gateway) in front of the PE                                                                                                        | Only useful if you expose the server outside the VPN; otherwise the CAE's internal FQDN is sufficient                                                                                                                 |
 
 ## Anti-patterns (MUST NOT)
 
 Operators have shipped misconfigurations matching each of these in real deployments. Do not replicate them.
 
-| ✗ Bad                                                                                             | ✗ Why                                                                                                                       | ✓ Do instead                                                               |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `--oauth-mode --allow-any-tenant-user` in production                                              | Any tenant user — including guests, service accounts, compromised low-priv users — can authenticate and call admin tools    | Supply `--authorized-users <oid1,oid2,...>` with the explicit admin list   |
-| Deploying with `enablePrivateEndpoint=false` to a tenant that uses the server for real admin work | CAE FQDN resolves publicly; attackers can hit `/authorize`, fuzz PKCE, spray Entra for valid tokens                         | Set `enablePrivateEndpoint=true` and connect clients via VPN               |
-| Granting Graph **application** permissions after v0.5.0 has switched to OBO                       | Re-introduces the anonymous, app-identity attack path you just eliminated                                                   | Grant delegated scopes only, keep the 14 app-only exceptions as documented |
-| Storing the client secret in `.env` or Container App secrets instead of Key Vault                 | Harder to rotate, no audit trail, exfiltrable via a single `az containerapp show`                                           | Secrets live in Key Vault, read by the UAMI at startup                     |
-| Reusing one app registration across dev, staging, and prod                                        | A dev bug that grants extra permissions silently raises prod risk; compromised dev secret = prod compromise                 | One app reg per environment, separate client secrets, separate Key Vaults  |
-| `kvAdminObjectIds` containing group OIDs that include all-tenant admins                           | Widens the blast radius for secret tampering beyond the operator team                                                       | Explicit user oids, or a small dedicated group                             |
-| Opening the CAE ingress to `0.0.0.0/0` just to test a new client                                  | Test setup silently becomes production exposure                                                                             | Spin up an internal-only staging CAE for testing; deny-by-default on prod  |
-| Running with `--max-risk-level critical` for all deployments                                      | Every tool — including destructive ones like `delete-user`, `set-role-assignment` — is available to every authorized caller | Tier the risk cap per persona and per environment                          |
+| ✗ Bad                                                                                      | ✗ Why                                                                                                                          | ✓ Do instead                                                                                      |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `--oauth-mode --allow-any-tenant-user` in production                                       | Any tenant user — including guests, service accounts, compromised low-priv users — can authenticate and call admin tools       | Supply `--authorized-users <oid1,oid2,...>` with the explicit admin list                          |
+| Deploying with `vnetIntegrated=false` to a tenant that uses the server for real admin work | CAE runs on the Consumption SKU with a public ingress; attackers can hit `/authorize`, fuzz PKCE, spray Entra for valid tokens | Set `vnetIntegrated=true`, supply the infra subnet ID, and connect clients via VPN / ExpressRoute |
+| Granting Graph **application** permissions after v0.5.0 has switched to OBO                | Re-introduces the anonymous, app-identity attack path you just eliminated                                                      | Grant delegated scopes only, keep the 14 app-only exceptions as documented                        |
+| Storing the client secret in `.env` or Container App secrets instead of Key Vault          | Harder to rotate, no audit trail, exfiltrable via a single `az containerapp show`                                              | Secrets live in Key Vault, read by the UAMI at startup                                            |
+| Reusing one app registration across dev, staging, and prod                                 | A dev bug that grants extra permissions silently raises prod risk; compromised dev secret = prod compromise                    | One app reg per environment, separate client secrets, separate Key Vaults                         |
+| `kvAdminObjectIds` containing group OIDs that include all-tenant admins                    | Widens the blast radius for secret tampering beyond the operator team                                                          | Explicit user oids, or a small dedicated group                                                    |
+| Opening the CAE ingress to `0.0.0.0/0` just to test a new client                           | Test setup silently becomes production exposure                                                                                | Spin up an internal-only staging CAE for testing; deny-by-default on prod                         |
+| Running with `--max-risk-level critical` for all deployments                               | Every tool — including destructive ones like `delete-user`, `set-role-assignment` — is available to every authorized caller    | Tier the risk cap per persona and per environment                                                 |
 
 ## Deployment checklist
 
@@ -151,18 +151,18 @@ Run through this before every deployment that will receive real admin traffic.
 - [ ] Container image tag corresponds to a released, signed version (or a SHA digest)
 - [ ] `kvAdminObjectIds` contains only the operators who need to rotate secrets
 - [ ] Hub VNet, subnet, and Private DNS zone resource group exist and the deploying principal has `Network Contributor` + `Private DNS Zone Contributor` on them
-- [ ] `enablePrivateEndpoint=true` in your parameters file
+- [ ] `vnetIntegrated=true` in your parameters file, with valid hub subscription / VNet / RG / infrastructure subnet name
 
 ### Deploy
 
-- [ ] `az deployment group what-if` reviewed — the PE, ASG, DNS zone group, and `publicNetworkAccess: Disabled` are all in the diff
+- [ ] `az deployment group what-if` reviewed — CAE has `workloadProfiles`, `vnetConfiguration.infrastructureSubnetId` set, and `internal: true`
 - [ ] `az deployment group create` with `@infra/parameters.<tenant>.json` (never inline tenant values in CI logs)
 - [ ] Key Vault seeded with `client-id`, `tenant-id`, `client-secret`
 - [ ] Container App revision reached `Running` state and `/health` returns 200 (from inside the VPN)
 
 ### Post-deploy validation
 
-- [ ] Public DNS resolution of the CAE FQDN fails (or returns a different IP than private) — confirms `publicNetworkAccess: Disabled`
+- [ ] Public DNS resolution of the CAE FQDN fails (or returns a non-routable IP) — confirms `internal: true`
 - [ ] Private DNS resolution from inside the VPN returns the PE's private IP
 - [ ] `curl -H "Authorization: Bearer <user-token>" https://<fqdn>/mcp` from inside VPN returns 200; from outside returns a timeout or DNS failure
 - [ ] A non-allowlisted tenant user authenticates via `/authorize` → server returns 403 after the Entra redirect (SEC-F01)
@@ -185,4 +185,4 @@ Run through this before every deployment that will receive real admin traffic.
 - [SECURITY_REVIEW_2026-04-20.md](SECURITY_REVIEW_2026-04-20.md) — findings register (SEC-F01..F08, SEC-G01..G03)
 - [infra/main.bicep](../infra/main.bicep) — the reference deployment template
 - [infra/parameters.example.jsonc](../infra/parameters.example.jsonc) — sanitized parameters template
-- Microsoft docs — [Container Apps Private Endpoints](https://learn.microsoft.com/azure/container-apps/networking), [Azure Private Link overview](https://learn.microsoft.com/azure/private-link/private-link-overview)
+- Microsoft docs — [Container Apps workload profiles](https://learn.microsoft.com/azure/container-apps/workload-profiles-overview), [Networking in Container Apps](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env)

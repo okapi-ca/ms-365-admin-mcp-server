@@ -125,6 +125,41 @@ describe('SEC-F04b /authorize — unknown client_id rejected', () => {
     expect(res.status).toBe(302);
     expect(res.headers.get('location')).toContain('login.microsoftonline.com');
   });
+
+  it('injects offline_access into the upstream scope when the client omits it', async () => {
+    const { clientId } = await register();
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+    const clientScope = 'openid profile email';
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent(clientScope)}`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    const location = res.headers.get('location')!;
+    const upstream = new URL(location);
+    const upstreamScope = upstream.searchParams.get('scope')!.split(' ');
+    expect(upstreamScope).toContain('offline_access');
+    expect(upstreamScope).toContain('openid');
+    expect(upstreamScope).toContain('profile');
+    expect(upstreamScope).toContain('email');
+  });
+
+  it('preserves offline_access once and does not duplicate when client already sends it', async () => {
+    const { clientId } = await register();
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+    const clientScope = 'openid offline_access profile';
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent(clientScope)}`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    const upstream = new URL(res.headers.get('location')!);
+    const upstreamScope = upstream.searchParams.get('scope')!.split(' ');
+    const offlineCount = upstreamScope.filter((s) => s === 'offline_access').length;
+    expect(offlineCount).toBe(1);
+  });
 });
 
 describe('SEC-F04b /token — client authentication required', () => {
