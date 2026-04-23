@@ -8,6 +8,8 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-23
+
 ### Added — device_code OAuth flow (RFC 8628)
 
 Closes the last remaining auth friction for admin users whose host can't complete the authorization_code + PKCE flow in a browser. Primary triggers on Marc's infra:
