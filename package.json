@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ms-365-admin-mcp-server": "dist/index.js"
+    "ms-365-admin-mcp-server": "dist/index.js",
+    "ms-365-admin-mcp-auth": "dist/auth-bootstrap.js"
   },
   "files": [
     "dist",
