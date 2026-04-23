@@ -84,8 +84,13 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     });
     app.use('/token', tokenLimiter);
     app.use('/register', tokenLimiter);
+    // /devicecode issues upstream device_codes on behalf of a DCR client;
+    // same blast radius as /token, so it shares the tight limiter.
+    app.use('/devicecode', tokenLimiter);
     registerOAuthRoutes(app, options.oauthProxyOptions);
-    logger.info('OAuth proxy routes enabled (/authorize, /token, DCR, metadata) with rate limits');
+    logger.info(
+      'OAuth proxy routes enabled (/authorize, /token, /devicecode, DCR, metadata) with rate limits'
+    );
   }
 
   const serviceValidator = options.tokenValidatorOptions;

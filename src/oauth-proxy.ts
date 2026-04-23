@@ -25,6 +25,7 @@ export interface OAuthProxyOptions {
 }
 
 const PKCE_TTL_MS = 10 * 60 * 1000;
+const DEVICE_CODE_GRANT = 'urn:ietf:params:oauth:grant-type:device_code';
 
 function base64url(buf: Buffer): string {
   return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -107,8 +108,12 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       authorization_endpoint: `${issuer}/authorize`,
       token_endpoint: `${issuer}/token`,
       registration_endpoint: `${issuer}/register`,
+      // RFC 8628 §3.1: advertised so device_code clients (headless containers,
+      // CI runners, remote dev envs) can discover the endpoint without custom
+      // config. Complementary to authorization_code + PKCE, not a replacement.
+      device_authorization_endpoint: `${issuer}/devicecode`,
       response_types_supported: ['code'],
-      grant_types_supported: ['authorization_code', 'refresh_token'],
+      grant_types_supported: ['authorization_code', 'refresh_token', DEVICE_CODE_GRANT],
       code_challenge_methods_supported: ['S256'],
       // SEC-F04b: confidential clients only. MCP clients obtain a secret at
       // /register and present it on every /token call.
@@ -157,6 +162,71 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       token_endpoint_auth_method: 'client_secret_post',
       scope: body.scope ?? fallbackScope,
     });
+  });
+
+  // RFC 8628 §3.1: device authorization request. Clients that cannot launch a
+  // browser (headless containers, remote SSH dev envs, CI runners) call this
+  // endpoint, relay the user_code + verification_uri to the human operator,
+  // and then poll /token with grant_type=urn:ietf:params:oauth:grant-type:device_code.
+  // This path bypasses macOS Platform SSO / browser-extension interference
+  // entirely: the authentication ceremony happens on any device the user
+  // chooses (phone, laptop) rather than on the host running the MCP client.
+  app.post('/devicecode', async (req: Request, res: Response) => {
+    // SEC-F04b: device_authorization must require the same client
+    // authentication as /token. A stolen device_code is bounded by Entra's
+    // TTL, but an unauthenticated /devicecode would let anyone burn our
+    // upstream rate budget and phish user_codes.
+    const { clientId: reqClientId, clientSecret: reqClientSecret } = extractClientCredentials(req);
+    if (!reqClientId || !reqClientSecret) {
+      res.status(401).json({
+        error: 'invalid_client',
+        error_description: 'Missing client_id or client_secret',
+      });
+      return;
+    }
+    const registered = await storage.getClient(reqClientId);
+    if (!registered || !verifyClientSecret(reqClientSecret, registered.clientSecretHash)) {
+      logger.warn(`OAuth /devicecode rejected: invalid client credentials for ${reqClientId}`);
+      res
+        .status(401)
+        .json({ error: 'invalid_client', error_description: 'Invalid client credentials' });
+      return;
+    }
+
+    const body = req.body ?? {};
+    const requestedScope =
+      typeof body.scope === 'string' && body.scope.length > 0 ? body.scope : fallbackScope;
+    const scopeList = requestedScope.split(/\s+/).filter(Boolean);
+    if (!scopeList.includes('offline_access')) {
+      scopeList.push('offline_access');
+    }
+    const upstreamScope = scopeList.join(' ');
+
+    const form = new URLSearchParams();
+    form.set('client_id', options.clientId);
+    form.set('scope', upstreamScope);
+
+    try {
+      const upstream = await fetch(`${authority}/oauth2/v2.0/devicecode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form.toString(),
+      });
+      const payload = await upstream.text();
+      if (upstream.status >= 400) {
+        logger.warn(
+          `Entra /devicecode returned ${upstream.status} for client=${reqClientId}: ${summarizeUpstreamError(payload)}`
+        );
+      } else {
+        logger.info(`OAuth /devicecode issued (client=${reqClientId}, scope=${upstreamScope})`);
+      }
+      res.status(upstream.status).type('application/json').send(payload);
+    } catch (error) {
+      logger.error(`Entra devicecode request failed: ${(error as Error).message}`);
+      res
+        .status(502)
+        .json({ error: 'server_error', error_description: 'Upstream devicecode request failed' });
+    }
   });
 
   app.get('/authorize', async (req: Request, res: Response) => {
@@ -321,6 +391,20 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       form.set('grant_type', 'refresh_token');
       form.set('refresh_token', refreshToken);
       if (body.scope) form.set('scope', body.scope as string);
+    } else if (grantType === DEVICE_CODE_GRANT) {
+      // RFC 8628 §3.4: token redemption for a device_code. Entra returns
+      // authorization_pending / slow_down / expired_token / access_denied
+      // as standard OAuth errors with 4xx status — we relay them verbatim so
+      // the client-side poller can honour them.
+      const deviceCode = body.device_code as string | undefined;
+      if (!deviceCode) {
+        res
+          .status(400)
+          .json({ error: 'invalid_request', error_description: 'Missing device_code' });
+        return;
+      }
+      form.set('grant_type', DEVICE_CODE_GRANT);
+      form.set('device_code', deviceCode);
     } else {
       res.status(400).json({ error: 'unsupported_grant_type' });
       return;
