@@ -104,6 +104,19 @@ npm run build
 }
 ```
 
+### Remote HTTP server: device_code authentication (RFC 8628)
+
+If the server runs in HTTP / OAuth mode on a remote host (e.g. Azure Container Apps) and the client connects via [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), the standard flow requires a browser to reach `localhost:14543/oauth/callback`. When that isn't possible — macOS Platform SSO hijacks the WebKit flow, Claude Code runs in a headless Docker container, the user is on a remote SSH dev env — use the `ms-365-admin-mcp-auth` bootstrap to pre-seed `mcp-remote`'s token cache instead.
+
+```bash
+npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+  --server https://your-mcp-host.azurecontainerapps.io/mcp
+```
+
+The helper prints a URL and a user code; you sign in on **any device you trust** (phone, another laptop) and the tokens are written to `~/.mcp-auth/mcp-remote-<version>/`. Claude Desktop / Claude Code then launches `mcp-remote` normally and finds the cached tokens without ever opening a browser.
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#oauth--browser-authentication-problems) for Docker / remote-dev patterns and exit code reference.
+
 ## Usage
 
 ### CLI options

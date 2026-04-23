@@ -8,6 +8,38 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-23
+
+### Added — device_code OAuth flow (RFC 8628)
+
+Closes the last remaining auth friction for admin users whose host can't complete the authorization_code + PKCE flow in a browser. Primary triggers on Marc's infra:
+
+- **macOS Platform SSO** intercepts WebKit/Safari OAuth redirects to Entra's broker, breaking the `localhost:14543/oauth/callback` leg.
+- **Headless Docker / devcontainer / Codespaces / remote SSH** have no browser at all.
+- Admin users who prefer doing MFA on a trusted device (phone) rather than on the host running the MCP client.
+
+Server changes:
+
+- `/.well-known/oauth-authorization-server` now advertises `device_authorization_endpoint` and the `urn:ietf:params:oauth:grant-type:device_code` grant.
+- New `POST /devicecode` relays to Entra's devicecode endpoint with the same SEC-F04b client authentication (DCR `client_id` + `client_secret`) required on `/token`. `offline_access` is merged into the upstream scope so refresh tokens are issued.
+- `POST /token` accepts the device_code grant and relays `authorization_pending` / `slow_down` / `expired_token` / `access_denied` verbatim so the poller can react per RFC 8628 §3.5.
+- `/devicecode` shares the tight `/token` rate limiter (10 req/min).
+
+New binary `ms-365-admin-mcp-auth` (shipped alongside the server):
+
+- `npx @okapi-ca/ms-365-admin-mcp-server auth --server <url>` performs the full device_code bootstrap: DCR `/register`, `POST /devicecode`, polls `/token`, writes `<hash>_client_info.json` and `<hash>_tokens.json` into `~/.mcp-auth/mcp-remote-<version>/` (mode 0600).
+- Cache key = `md5(serverUrl)`, matching `mcp-remote`'s `getServerUrlHash` exactly; a regression test locks the hash against the known production URL.
+- Best-effort clipboard copy (`pbcopy` / `clip` / `wl-copy` / `xclip`), auto-disabled under `CI=true` or non-TTY.
+- Documented exit codes (0 ok, 1 usage, 2 network, 3 denied, 4 timeout) for Docker / CI wrappers.
+- `--cache-dir` + `MCP_REMOTE_CONFIG_DIR` env var honoured, so Docker bind mounts and multi-user setups work without patches.
+
+Docs:
+
+- `README.md` — new "Remote HTTP server: device_code authentication" section.
+- `docs/TROUBLESHOOTING.md` — full section covering `Server disconnected`, Platform SSO symptoms, device_code flow walkthrough, Docker bind-mount patterns, Conditional Access caveat.
+
+Tests: 19 new (11 server + 8 helper), 102 total.
+
 ## [0.4.0] — 2026-04-20
 
 Closes the two architectural follow-ups left open by v0.3.0 (SEC-F04b refresh-token proof-of-possession, SEC-F05 PKCE bridge externalisation) by moving OAuth state to Azure Table Storage and turning the MCP DCR layer into a confidential-client issuer. A stolen refresh token is no longer redeemable without the per-client secret issued at `/register`, and the proxy can now run multi-replica.

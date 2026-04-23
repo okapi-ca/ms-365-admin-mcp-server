@@ -11,7 +11,8 @@ export default defineConfig({
   sourcemap: false,
   dts: false,
   publicDir: false,
-  onSuccess: process.platform === 'win32' ? undefined : 'chmod +x dist/index.js',
+  onSuccess:
+    process.platform === 'win32' ? undefined : 'chmod +x dist/index.js dist/auth-bootstrap.js',
   loader: {
     '.json': 'copy',
   },

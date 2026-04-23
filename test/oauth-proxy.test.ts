@@ -298,3 +298,219 @@ describe('SEC-F04b oauth-mode startup — refuses when DCR is disabled', () => {
     ).toThrow(/Dynamic Client Registration/);
   });
 });
+
+describe('RFC 8628 device_code flow — metadata advertises endpoint and grant', () => {
+  it('exposes device_authorization_endpoint and the device_code grant in metadata', async () => {
+    const res = await realFetch(`${baseUrl}/.well-known/oauth-authorization-server`);
+    expect(res.status).toBe(200);
+    const meta = (await res.json()) as {
+      device_authorization_endpoint: string;
+      grant_types_supported: string[];
+    };
+    expect(meta.device_authorization_endpoint).toBe('https://mcp.example.com/devicecode');
+    expect(meta.grant_types_supported).toContain('urn:ietf:params:oauth:grant-type:device_code');
+    expect(meta.grant_types_supported).toContain('authorization_code');
+    expect(meta.grant_types_supported).toContain('refresh_token');
+  });
+});
+
+describe('RFC 8628 /devicecode — client authentication required', () => {
+  it('rejects a request with no client credentials', async () => {
+    const res = await realFetch(`${baseUrl}/devicecode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({}),
+    });
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('invalid_client');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a request for an unknown client_id', async () => {
+    const res = await realFetch(`${baseUrl}/devicecode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: 'mcp-client-does-not-exist',
+        client_secret: 'whatever',
+      }),
+    });
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a request with a wrong client_secret', async () => {
+    const { clientId } = await register();
+    const res = await realFetch(`${baseUrl}/devicecode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: clientId, client_secret: 'wrong' }),
+    });
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('forwards an authenticated request to Entra devicecode endpoint', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          device_code: 'entra-device-code',
+          user_code: 'ABCD-1234',
+          verification_uri: 'https://microsoft.com/devicelogin',
+          expires_in: 900,
+          interval: 5,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+    const res = await realFetch(`${baseUrl}/devicecode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { user_code: string; verification_uri: string };
+    expect(body.user_code).toBe('ABCD-1234');
+    expect(body.verification_uri).toBe('https://microsoft.com/devicelogin');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, { body: string }];
+    expect(calledUrl).toContain('login.microsoftonline.com');
+    expect(calledUrl).toContain('/oauth2/v2.0/devicecode');
+    const forwardedScope = new URLSearchParams(calledInit.body).get('scope') ?? '';
+    expect(forwardedScope).toContain('offline_access');
+  });
+
+  it('preserves offline_access without duplicating when the client sends it', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ device_code: 'x' }), { status: 200 })
+    );
+    const res = await realFetch(`${baseUrl}/devicecode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: 'openid offline_access profile',
+      }),
+    });
+    expect(res.status).toBe(200);
+    const [, calledInit] = fetchMock.mock.calls[0] as [string, { body: string }];
+    const forwardedScope = (new URLSearchParams(calledInit.body).get('scope') ?? '').split(' ');
+    expect(forwardedScope.filter((s) => s === 'offline_access')).toHaveLength(1);
+  });
+
+  it('relays Entra error responses verbatim (e.g. upstream 400)', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: 'invalid_scope', error_description: 'Requested scope is invalid' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+    const res = await realFetch(`${baseUrl}/devicecode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('invalid_scope');
+  });
+});
+
+describe('RFC 8628 /token device_code grant', () => {
+  const GRANT = 'urn:ietf:params:oauth:grant-type:device_code';
+
+  it('rejects device_code grant with no client credentials', async () => {
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: GRANT, device_code: 'x' }),
+    });
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects device_code grant with missing device_code parameter', async () => {
+    const { clientId, clientSecret } = await register();
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: GRANT,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('invalid_request');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('forwards a valid device_code grant to Entra and returns the token bundle', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: 'at',
+          refresh_token: 'rt',
+          expires_in: 3600,
+          token_type: 'Bearer',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: GRANT,
+        device_code: 'entra-device-code',
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { access_token: string; refresh_token: string };
+    expect(body.access_token).toBe('at');
+    expect(body.refresh_token).toBe('rt');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [string, { body: string }];
+    expect(calledUrl).toContain('/oauth2/v2.0/token');
+    const forwarded = new URLSearchParams(calledInit.body);
+    expect(forwarded.get('grant_type')).toBe(GRANT);
+    expect(forwarded.get('device_code')).toBe('entra-device-code');
+  });
+
+  it('relays authorization_pending from Entra verbatim so the client can poll', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: 'authorization_pending',
+          error_description: 'User has not finished authenticating',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: GRANT,
+        device_code: 'pending-code',
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('authorization_pending');
+  });
+});
