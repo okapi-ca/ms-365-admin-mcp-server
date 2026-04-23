@@ -8,6 +8,21 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-04-23
+
+### Fixed — device_code polling hit /token rate limit before MFA could complete
+
+v0.6.0 shipped `/token`, `/register`, and `/devicecode` behind a single tight rate limiter (10 req/min). Observed in prod 2026-04-23T13:29Z during Marc's admin device_code bootstrap: the helper polled `/token` at Entra's advertised 5 s interval, hit the 10/min ceiling after ~50 s with `HTTP 429 invalid_request — Too many token requests`, and aborted before the user could complete Yubikey MFA. This made v0.6.0's device_code flow effectively unusable for interactive admin sign-in.
+
+Fix splits the `/token` limiter by `grant_type`:
+
+- **Tight (10 req/min)** — `authorization_code`, `refresh_token`, unknown / missing grants (safe default). Preserves the existing anti-brute-force posture for stolen codes / refresh tokens.
+- **Loose (60 req/min)** — `urn:ietf:params:oauth:grant-type:device_code`. RFC 8628 §3.5 mandates polling at the server-provided `interval`; Entra returns 5 s → 12 req/min per legitimate bootstrap. 60/min = 1 req/sec average, still bounds brute-force since device codes are high-entropy and `/devicecode` itself stays tight at 10/min.
+
+Limiter setup extracted into `src/oauth-rate-limiters.ts` for isolated testing (no transitive MCP SDK / JWKS imports).
+
+Tests: 6 new (`test/oauth-rate-limit.test.ts`), 100 total.
+
 ## [0.6.0] — 2026-04-23
 
 ### Added — device_code OAuth flow (RFC 8628)

@@ -2,11 +2,12 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import rateLimit from 'express-rate-limit';
 import logger from './logger.js';
 import { validateEntraToken, type TokenValidatorOptions } from './token-validator.js';
 import { validateUserToken, type UserTokenValidatorOptions } from './user-token-validator.js';
 import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
+import { registerOAuthRateLimiters } from './oauth-rate-limiters.js';
+import rateLimit from 'express-rate-limit';
 
 export interface HttpServerOptions {
   port: number;
@@ -63,33 +64,12 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
 
   if (options.oauthProxyOptions) {
     // SEC-F06: OAuth surface is public and must be rate-limited independently
-    // of /mcp. /token is the tightest (brute-forcing auth codes / refresh tokens
-    // lives here); /authorize is looser because it's a user-initiated redirect.
-    app.use(
-      '/authorize',
-      rateLimit({
-        windowMs: 60_000,
-        max: 30,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: { error: 'invalid_request', error_description: 'Too many authorize requests' },
-      })
-    );
-    const tokenLimiter = rateLimit({
-      windowMs: 60_000,
-      max: 10,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: { error: 'invalid_request', error_description: 'Too many token requests' },
-    });
-    app.use('/token', tokenLimiter);
-    app.use('/register', tokenLimiter);
-    // /devicecode issues upstream device_codes on behalf of a DCR client;
-    // same blast radius as /token, so it shares the tight limiter.
-    app.use('/devicecode', tokenLimiter);
+    // of /mcp. Limiter setup lives in registerOAuthRateLimiters for
+    // testability — see that function's docstring for the per-route policy.
+    registerOAuthRateLimiters(app);
     registerOAuthRoutes(app, options.oauthProxyOptions);
     logger.info(
-      'OAuth proxy routes enabled (/authorize, /token, /devicecode, DCR, metadata) with rate limits'
+      'OAuth proxy routes enabled (/authorize, /token [split by grant_type], /devicecode, DCR, metadata) with rate limits'
     );
   }
 
