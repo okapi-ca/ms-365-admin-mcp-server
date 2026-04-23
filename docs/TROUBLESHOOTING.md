@@ -171,6 +171,41 @@ You exceeded 100 req/min on `/mcp` from the source IP. Either back off, reshape 
 - Firewall / NSG rules blocking the port?
 - Check `GET /health` from the same network as the client.
 
+### `Could not resolve host` / DNS lookup fails (VNet-integrated CAE)
+
+Symptom: `npx ms-365-admin-mcp-auth --server https://...` or a plain `curl https://.../health` fails with **Could not resolve host: `<cae-name>.<env-subdomain>.canadacentral.azurecontainerapps.io`** even though the VPN is connected.
+
+**Context.** When the Container App Environment is VNet-integrated and `internal: true`, the CAE only has a private IP (e.g. `172.22.2.113`) reachable through the corporate VPN. DNS resolution for `<env-subdomain>.canadacentral.azurecontainerapps.io` comes from a **Private DNS Zone** linked to the hub VNet, which your VPN profile is supposed to push as your DNS server.
+
+**Quick diagnostic — force the DNS query through the VPN-pushed server**
+
+Windows PowerShell:
+
+```powershell
+# Replace 172.22.2.9 with your hub DNS server IP. Find yours via:
+#   Get-NetIPConfiguration | Where-Object InterfaceAlias -Match 'VPN' | Select DnsServer
+Resolve-DnsName ca-cc-mcpms365admin-p.bravecliff-2d3b4e20.canadacentral.azurecontainerapps.io -Server 172.22.2.9
+```
+
+macOS / Linux:
+
+```bash
+# Get your VPN's pushed DNS first:
+#   scutil --dns | grep -A2 'resolver #' | head
+dig @172.22.2.9 ca-cc-mcpms365admin-p.bravecliff-2d3b4e20.canadacentral.azurecontainerapps.io
+```
+
+**Interpretation**
+
+- **Resolution succeeds with `-Server`/`@` but fails without it** → your OS is using a different DNS server than the VPN pushed. Classic causes:
+  - Hand-edited VPN profile (old troubleshooting sessions) that pinned public DNS instead of the VPN-pushed one.
+  - A local DNS override in the OS (Windows: `Get-DnsClientServerAddress`; macOS: `System Settings > Network > VPN > Details > DNS`).
+  - Split-tunnel DNS config where `canadacentral.azurecontainerapps.io` isn't routed through the VPN's resolver.
+
+  **Fix**: download a fresh VPN configuration from the Azure portal (Virtual Network Gateway → Point-to-site configuration → Download VPN client) and replace your local profile. The fresh profile pushes the correct DNS server for the private DNS zone.
+
+- **Resolution fails even with `-Server`/`@`** → the VPN itself is missing routes, or the Private DNS Zone isn't linked to the hub VNet. Not a client-side issue — escalate to the infra owner (who provisioned the CAE + Private DNS zone).
+
 ---
 
 ## Key Vault
