@@ -217,6 +217,106 @@ RBAC or access policy missing. Grant the identity `Key Vault Secrets User` role 
 
 ---
 
+## OAuth / browser authentication problems
+
+### `Server disconnected` in Claude Desktop with an HTTP-mode MCP
+
+This usually means `mcp-remote`'s OAuth flow failed before it could hand a bearer token to Claude Desktop. Common causes:
+
+1. **macOS Platform SSO intercepts the flow.** The Microsoft Enterprise SSO extension injects a PRT into WebKit (Safari) and sometimes Firefox, hijacking the redirect to Entra's broker. Symptom: the OAuth page loads but the `localhost:14543/oauth/callback` redirect never fires.
+2. **Stale / incompatible cached tokens.** After a server-side OAuth fix, the refresh token cached in `~/.mcp-auth/mcp-remote-*/` can no longer be redeemed.
+3. **Port 14543 already bound.** Another process holds the callback port.
+
+**Quick fixes (in order)**
+
+```bash
+# 1. Purge the cache so mcp-remote does a fresh flow
+rm -rf ~/.mcp-auth/mcp-remote-*
+
+# 2. Fully quit Claude Desktop (⌘Q) and relaunch
+
+# 3. If Platform SSO keeps intercepting, use the device_code bootstrap
+#    (see below). This bypasses the browser entirely.
+```
+
+**Debug logs**
+
+```bash
+ls ~/Library/Logs/Claude/mcp-server-ms-365-admin.log
+ls ~/.mcp-auth/mcp-remote-*/        # *_debug.log is mcp-remote's own log
+```
+
+### Device code flow — bypass the browser entirely
+
+When the browser path is blocked (Platform SSO, headless Docker, remote SSH, devcontainer, GitHub Codespaces, any admin machine without a working browser), use the device_code bootstrap. The server exposes RFC 8628's `device_authorization_endpoint` since v0.6.0; the `ms-365-admin-mcp-auth` binary shipped alongside pre-seeds `mcp-remote`'s cache so Claude Desktop / Claude Code never needs to open a browser.
+
+```bash
+npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+  --server https://your-mcp-host.azurecontainerapps.io/mcp
+```
+
+The helper will:
+
+1. Register a fresh DCR client against the MCP server.
+2. Request a device code from Entra via the server's `/devicecode` proxy.
+3. Print a URL + user code (and copy the code to your clipboard on macOS / Linux / Windows).
+4. Poll `/token` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` until you complete the sign-in **on any trusted device** (phone, another laptop — wherever MFA works).
+5. Write `<hash>_client_info.json` and `<hash>_tokens.json` into `~/.mcp-auth/mcp-remote-<version>/` with mode `0600`.
+
+Then relaunch Claude Desktop / Claude Code — `mcp-remote` finds the cache and skips the browser flow.
+
+**Exit codes** (useful for Docker / CI wrappers):
+
+| Code | Meaning                                                    |
+| ---- | ---------------------------------------------------------- |
+| 0    | Tokens written; ready for Claude Desktop                   |
+| 1    | Usage error (bad flag, server without device_code support) |
+| 2    | Network / upstream error                                   |
+| 3    | `access_denied` or `expired_token` from Entra              |
+| 4    | Poll timed out before user completed auth                  |
+
+**Useful flags**
+
+```
+--scope <scope>              Override the OAuth scope (default: server metadata)
+--cache-dir <path>           Write to a specific directory (useful for Docker bind mounts)
+--mcp-remote-version <ver>   Target an older mcp-remote cache dir naming
+--non-interactive            Skip clipboard copy (auto-detected when piped / under CI=true)
+--timeout <seconds>          Max wait for user (default 900 = Entra TTL)
+```
+
+### Docker / remote dev envs
+
+**Pattern A — bootstrap on host, mount cache into container (simplest)**
+
+```bash
+# On your Mac, once:
+npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+  --server https://your-mcp-host.azurecontainerapps.io/mcp
+
+# Then run Claude Code in Docker with the cache mounted read-only:
+docker run -it \
+  -v ~/.mcp-auth:/root/.mcp-auth:ro \
+  your/claude-code-image
+```
+
+**Pattern B — bootstrap inside a container**
+
+```bash
+docker run -it --rm \
+  -v mcp-auth:/root/.mcp-auth \
+  node:22-alpine \
+  npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+    --server https://your-mcp-host.azurecontainerapps.io/mcp
+
+# Subsequent Claude Code containers reuse the same named volume:
+docker run -it -v mcp-auth:/root/.mcp-auth your/claude-code-image
+```
+
+**Conditional Access caveat** — CA policies requiring a compliant / Entra-joined device can block the device_code flow even when the user authenticates on their phone. Either exempt the MCP app registration (`86f46c1e-…` in the LCI tenant) from the CA policy, or accept that device_code only works from MDM-compliant devices.
+
+---
+
 ## Getting help
 
 1. Run with `-v` and capture the log output.
