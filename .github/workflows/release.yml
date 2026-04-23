@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+  # Manual dispatch as a fallback when GitHub misses a tag push event.
+  # Observed 2026-04-23 with v0.6.1: `git push origin v0.6.1` succeeded,
+  # tag present on remote, but no CreateEvent / workflow trigger fired
+  # even after delete+re-push. Dispatch from a tag ref with:
+  #   gh workflow run release.yml --ref v0.6.1
+  # GITHUB_REF_NAME resolves to the tag name, so the existing release-body
+  # logic (`TAG="${GITHUB_REF_NAME}"`) keeps working unchanged.
+  workflow_dispatch:
 
 permissions:
   contents: write
