@@ -6,7 +6,7 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for Microsoft 365 administration via Graph API **application permissions** (client credentials).
 
-Complementary to [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365-mcp-server) which uses delegated permissions. This server is designed for admin operations: security monitoring, identity audits, incident response, and service health.
+Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365-mcp-server), and complementary to it: Softeria's server uses **delegated** permissions for end-user productivity scenarios, while this one uses **application** permissions for admin operations — security monitoring, identity audits, incident response, and service health. See [Acknowledgments](#acknowledgments) below.
 
 ## Features
 
@@ -1264,6 +1264,19 @@ npm run inspector        # MCP Inspector for interactive testing
 - **Security headers** (nosniff, DENY, no-store, CSP)
 - **Non-root Docker user**
 - **Sensitive data redacted** from logs
+
+## Acknowledgments
+
+This project would not exist without [Softeria/ms-365-mcp-server](https://github.com/Softeria/ms-365-mcp-server). Their work served as the foundation and inspiration for this server — in particular:
+
+- The **endpoint-driven architecture** (`endpoints.json` + auto-registration via `graph-tools.ts`)
+- The **OpenAPI-based code generation** pipeline (`npm run generate` → trimmed Graph spec + Zodios client)
+- The **CLI ergonomics** (presets, `--list-tools`, `--list-permissions`, `--verify-login`, MCP Inspector integration)
+- The **read-only-by-default + `--allow-writes`** safety model
+
+This server diverges from Softeria's by targeting **application permissions** (client credentials via MSAL `ConfidentialClientApplication`) rather than delegated permissions, and by adding admin-specific capabilities — risk classification on write tools, JWT validation via Microsoft JWKS for HTTP mode, Azure Key Vault integration, and incident-response tooling.
+
+Sincere thanks to the Softeria team and contributors for making their work available under an open license, and for setting a high bar for MCP server design in the Microsoft 365 ecosystem.
 
 ## License
 
