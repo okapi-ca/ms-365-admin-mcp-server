@@ -51,7 +51,7 @@
   "dependencies": {
     "@azure/msal-node": "^3.8.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "commander": "^11.1.0",
+    "commander": "^14.0.3",
     "dotenv": "^17.0.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
