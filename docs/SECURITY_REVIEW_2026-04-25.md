@@ -38,28 +38,28 @@ Posture **very strong** for an OSS project of this criticality (the server holds
 
 ## 2. Findings table
 
-| ID | Severity | Category | File:line | Description | Recommendation |
-|---|---|---|---|---|---|
-| [SEC-001](#sec-001--skipencoding-validation-accepts-percent-encoding) | Medium | OWASP A01 / STRIDE-T | `src/graph-tools.ts:137` | `skipEncoding` regex doesn't block percent-encoded forms (`%2E%2E`, `%2F`, `%5C`). | Decode once then validate, or switch to allowlist `^[A-Za-z0-9._:-]+$`. |
-| [SEC-002](#sec-002--no-redirect_uri-validation-at-dcr) | Medium | STRIDE-S | `src/oauth-proxy.ts:232-281` | `/authorize` does not verify received `redirect_uri` is in registered `redirectUris`. | Compare `redirectUri` against `known.redirectUris`; reject if not listed. |
-| [SEC-003](#sec-003--uuid-vulnerabilities-transitive) | Medium | Supply chain / OWASP A06 | `package-lock.json` | `uuid <14.0.0` transitive via `@azure/msal-node@5.1.4` (3 moderate GHSA-w5hq-g745-h8pq). | Track upstream MSAL release; plan `npm audit fix --force` once a non-breaking bump exists. |
-| [SEC-004](#sec-004--upn-persisted-in-logs) | Medium | OWASP A09 / STRIDE-I | `src/user-token-authorization.ts:57,79,85,96` | UPN/oid logged on every auth rejection. PII (work email) ends up in Log Analytics & disk logs without explicit redaction. | Document retention in `SECURITY.md`; consider `--redact-upn` flag or hash identifier in non-investigation logs. |
-| [SEC-005](#sec-005--body-parser-exposed-before-authentication) | Medium | OWASP A04 / STRIDE-D | `src/http-server.ts:46-48` | `express.json({ limit: '100kb' })` runs BEFORE the `/mcp` rate-limiter and BEFORE bearer auth. | Place auth-middleware before `express.json()` on `/mcp`, or pre-rate-limit by IP before body parser. |
-| [SEC-006](#sec-006--replace3dg--in-encoded-paths) | Medium | STRIDE-T | `src/graph-tools.ts:144,189` | `encodeURIComponent(...).replace(/%3D/g, '=')` undoes `=` encoding in paths. | Document intent of `replace(/%3D/g, '=')`; consider per-endpoint allowlist or restrict to function-style segments. |
-| [SEC-007](#sec-007--state-not-bound-to-pkce-bridge) | Medium | STRIDE-T (CSRF / replay) | `src/oauth-proxy.ts:236,300` | `state` is relayed to Entra but not bound to the PKCE bridge entry. | Store `state` in PKCE entry and verify (or at least log) consistency on return; ideally emit a distinct proxy state. |
-| [SEC-008](#sec-008--bicep-default-public-ingress--storage-allow) | Medium | OWASP A05 | `infra/main.bicep:321,219-221` | Container App `external: true` + Storage `networkAcls.defaultAction: 'Allow'` when `vnetIntegrated=false`. | Document `vnetIntegrated=true` as recommended for any deployment processing user data; default `defaultAction: 'Deny'` with `bypass: 'AzureServices'`. |
-| SEC-009 | Low | OWASP A05 | `src/oauth-proxy.ts:133-165` | `/register` (DCR) is open and immediately returns a secret. Rate-limit 10/min mitigates but a bot can still accumulate orphan clients indefinitely. | Add TTL on unused DCR clients (purge after N days); consider optional pre-shared bootstrap secret. |
-| SEC-010 | Low | STRIDE-D | `src/jwks-stale-cache.ts:17-35` | No TTL on stale JWKS keys. A revoked Entra key remains locally valid as long as JWKS endpoint is unreachable — stale-fallback serves it indefinitely. | Add timestamp on `staleCache.set(kid, key)` and refuse fallback beyond 7 days. |
-| SEC-011 | Low | OWASP A02 | `src/auth-bootstrap.ts:343-348` | Tokens persisted at `~/.mcp-auth/...` mode 0600 (correct on Unix), but no protection on Windows (NTFS ACLs untouched). | Document Windows caveat in bootstrap docs; or use DPAPI / Credential Locker. |
-| SEC-012 | Low | OWASP A09 | `src/graph-client.ts:36,71` | `endpoint.split('?')[0]` redacts the path's query — good practice. However `Graph error log` (line 71) includes raw `errorText` that may contain the Graph query string. | Truncate or JSON-parse `errorText` before logging to limit leakage if Graph echoes the query in its message. |
-| SEC-013 | Low | OWASP A09 | `src/storage/table-storage.ts:47-49` | `DefaultAzureCredential` chains available credentials (env, MI, VS, Az CLI…). In dev, may accidentally use a personal account. | Document the chain; recommend explicit `AZURE_CLIENT_ID` in prod (already done in Bicep, line 352-353 — good point). |
-| SEC-014 | Low | OWASP A03 | `src/graph-tools.ts:286` | `paramSchema[param.name] = (param.schema || z.unknown()).optional()` — `z.unknown()` fallback accepts anything. | Inspect proportion of endpoints landing on this fallback; consider `z.record(z.unknown())` to at least force an object. |
-| SEC-015 | Low | OWASP A02 | `src/oauth-proxy.ts:156` | `client_secret_expires_at: 0` (never expires) on DCR secrets. Combined with no auto-purge (SEC-009), DCR secrets are eternal. | Set default rotation at 90 or 180 days (`Date.now()/1000 + N*86400`) and purge expired entries. |
-| SEC-016 | Informational | Process | `.github/workflows/ci.yml:4-5` | CI uses `pull_request` (not `pull_request_target`) — good default, no secret leak to fork PRs. | OK — keep `pull_request`. |
-| SEC-017 | Informational | Process | `.github/workflows/ci.yml:19`, `release.yml:25,37,54,92` | `actions/checkout@v6` not pinned by SHA — current spec is mutable tag. | For an OSS repo publishing binaries (npm provenance + Docker GHCR), pinning by SHA reduces action-supply-chain attack surface. |
-| SEC-018 | Informational | OWASP A09 | `src/logger.ts:8-13` | Log directory (`~/.ms365-admin-mcp/logs`) created with `mode: 0o700` — correct. But `winston.transports.File` doesn't apply file mode (umask default). | Force `options: { mode: 0o600 }` on `File` transports (Winston supports this parameter). |
-| SEC-019 | Informational | STRIDE-I | `src/auth.ts:148-159`, `src/graph-client.ts:69-84` | Graph error sanitization: server-side log of raw `errorText`, parsed return to client. Good pattern. OK. | OK. |
-| SEC-020 | Informational | OWASP A07 | `src/token-validator.ts:92-96` | `clockTolerance: 30` — reasonable. `algorithms: ['RS256']` — protects against `alg=none` and HS256 confusion. OK. | OK. |
+| ID                                                                    | Severity      | Category                 | File:line                                                | Description                                                                                                                                                              | Recommendation                                                                                                                                         |
+| --------------------------------------------------------------------- | ------------- | ------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [SEC-001](#sec-001--skipencoding-validation-accepts-percent-encoding) | Medium        | OWASP A01 / STRIDE-T     | `src/graph-tools.ts:137`                                 | `skipEncoding` regex doesn't block percent-encoded forms (`%2E%2E`, `%2F`, `%5C`).                                                                                       | Decode once then validate, or switch to allowlist `^[A-Za-z0-9._:-]+$`.                                                                                |
+| [SEC-002](#sec-002--no-redirect_uri-validation-at-dcr)                | Medium        | STRIDE-S                 | `src/oauth-proxy.ts:232-281`                             | `/authorize` does not verify received `redirect_uri` is in registered `redirectUris`.                                                                                    | Compare `redirectUri` against `known.redirectUris`; reject if not listed.                                                                              |
+| [SEC-003](#sec-003--uuid-vulnerabilities-transitive)                  | Medium        | Supply chain / OWASP A06 | `package-lock.json`                                      | `uuid <14.0.0` transitive via `@azure/msal-node@5.1.4` (3 moderate GHSA-w5hq-g745-h8pq).                                                                                 | Track upstream MSAL release; plan `npm audit fix --force` once a non-breaking bump exists.                                                             |
+| [SEC-004](#sec-004--upn-persisted-in-logs)                            | Medium        | OWASP A09 / STRIDE-I     | `src/user-token-authorization.ts:57,79,85,96`            | UPN/oid logged on every auth rejection. PII (work email) ends up in Log Analytics & disk logs without explicit redaction.                                                | Document retention in `SECURITY.md`; consider `--redact-upn` flag or hash identifier in non-investigation logs.                                        |
+| [SEC-005](#sec-005--body-parser-exposed-before-authentication)        | Medium        | OWASP A04 / STRIDE-D     | `src/http-server.ts:46-48`                               | `express.json({ limit: '100kb' })` runs BEFORE the `/mcp` rate-limiter and BEFORE bearer auth.                                                                           | Place auth-middleware before `express.json()` on `/mcp`, or pre-rate-limit by IP before body parser.                                                   |
+| [SEC-006](#sec-006--replace3dg--in-encoded-paths)                     | Medium        | STRIDE-T                 | `src/graph-tools.ts:144,189`                             | `encodeURIComponent(...).replace(/%3D/g, '=')` undoes `=` encoding in paths.                                                                                             | Document intent of `replace(/%3D/g, '=')`; consider per-endpoint allowlist or restrict to function-style segments.                                     |
+| [SEC-007](#sec-007--state-not-bound-to-pkce-bridge)                   | Medium        | STRIDE-T (CSRF / replay) | `src/oauth-proxy.ts:236,300`                             | `state` is relayed to Entra but not bound to the PKCE bridge entry.                                                                                                      | Store `state` in PKCE entry and verify (or at least log) consistency on return; ideally emit a distinct proxy state.                                   |
+| [SEC-008](#sec-008--bicep-default-public-ingress--storage-allow)      | Medium        | OWASP A05                | `infra/main.bicep:321,219-221`                           | Container App `external: true` + Storage `networkAcls.defaultAction: 'Allow'` when `vnetIntegrated=false`.                                                               | Document `vnetIntegrated=true` as recommended for any deployment processing user data; default `defaultAction: 'Deny'` with `bypass: 'AzureServices'`. |
+| SEC-009                                                               | Low           | OWASP A05                | `src/oauth-proxy.ts:133-165`                             | `/register` (DCR) is open and immediately returns a secret. Rate-limit 10/min mitigates but a bot can still accumulate orphan clients indefinitely.                      | Add TTL on unused DCR clients (purge after N days); consider optional pre-shared bootstrap secret.                                                     |
+| SEC-010                                                               | Low           | STRIDE-D                 | `src/jwks-stale-cache.ts:17-35`                          | No TTL on stale JWKS keys. A revoked Entra key remains locally valid as long as JWKS endpoint is unreachable — stale-fallback serves it indefinitely.                    | Add timestamp on `staleCache.set(kid, key)` and refuse fallback beyond 7 days.                                                                         |
+| SEC-011                                                               | Low           | OWASP A02                | `src/auth-bootstrap.ts:343-348`                          | Tokens persisted at `~/.mcp-auth/...` mode 0600 (correct on Unix), but no protection on Windows (NTFS ACLs untouched).                                                   | Document Windows caveat in bootstrap docs; or use DPAPI / Credential Locker.                                                                           |
+| SEC-012                                                               | Low           | OWASP A09                | `src/graph-client.ts:36,71`                              | `endpoint.split('?')[0]` redacts the path's query — good practice. However `Graph error log` (line 71) includes raw `errorText` that may contain the Graph query string. | Truncate or JSON-parse `errorText` before logging to limit leakage if Graph echoes the query in its message.                                           |
+| SEC-013                                                               | Low           | OWASP A09                | `src/storage/table-storage.ts:47-49`                     | `DefaultAzureCredential` chains available credentials (env, MI, VS, Az CLI…). In dev, may accidentally use a personal account.                                           | Document the chain; recommend explicit `AZURE_CLIENT_ID` in prod (already done in Bicep, line 352-353 — good point).                                   |
+| SEC-014                                                               | Low           | OWASP A03                | `src/graph-tools.ts:286`                                 | `paramSchema[param.name] = (param.schema                                                                                                                                 |                                                                                                                                                        | z.unknown()).optional()`—`z.unknown()` fallback accepts anything. | Inspect proportion of endpoints landing on this fallback; consider `z.record(z.unknown())` to at least force an object. |
+| SEC-015                                                               | Low           | OWASP A02                | `src/oauth-proxy.ts:156`                                 | `client_secret_expires_at: 0` (never expires) on DCR secrets. Combined with no auto-purge (SEC-009), DCR secrets are eternal.                                            | Set default rotation at 90 or 180 days (`Date.now()/1000 + N*86400`) and purge expired entries.                                                        |
+| SEC-016                                                               | Informational | Process                  | `.github/workflows/ci.yml:4-5`                           | CI uses `pull_request` (not `pull_request_target`) — good default, no secret leak to fork PRs.                                                                           | OK — keep `pull_request`.                                                                                                                              |
+| SEC-017                                                               | Informational | Process                  | `.github/workflows/ci.yml:19`, `release.yml:25,37,54,92` | `actions/checkout@v6` not pinned by SHA — current spec is mutable tag.                                                                                                   | For an OSS repo publishing binaries (npm provenance + Docker GHCR), pinning by SHA reduces action-supply-chain attack surface.                         |
+| SEC-018                                                               | Informational | OWASP A09                | `src/logger.ts:8-13`                                     | Log directory (`~/.ms365-admin-mcp/logs`) created with `mode: 0o700` — correct. But `winston.transports.File` doesn't apply file mode (umask default).                   | Force `options: { mode: 0o600 }` on `File` transports (Winston supports this parameter).                                                               |
+| SEC-019                                                               | Informational | STRIDE-I                 | `src/auth.ts:148-159`, `src/graph-client.ts:69-84`       | Graph error sanitization: server-side log of raw `errorText`, parsed return to client. Good pattern. OK.                                                                 | OK.                                                                                                                                                    |
+| SEC-020                                                               | Informational | OWASP A07                | `src/token-validator.ts:92-96`                           | `clockTolerance: 30` — reasonable. `algorithms: ['RS256']` — protects against `alg=none` and HS256 confusion. OK.                                                        | OK.                                                                                                                                                    |
 
 ---
 
@@ -77,14 +77,15 @@ if (/[/\\?#&]|\.\./.test(raw)) {
 encodedValue = raw;
 ```
 
-**Attack vector:** an LLM operator (or a prompt injection that escaped the SEC-G02 envelope) calls `get-pstn-calls` with `fromDateTime=%2E%2E%2F%2E%2E%2Fusers`. The SEC-A regex inspects the *raw string* — `%2E%2E` is not literal `..` and passes. Microsoft Graph decodes `%2E%2E` server-side as `..`, potentially altering OData resolution.
+**Attack vector:** an LLM operator (or a prompt injection that escaped the SEC-G02 envelope) calls `get-pstn-calls` with `fromDateTime=%2E%2E%2F%2E%2E%2Fusers`. The SEC-A regex inspects the _raw string_ — `%2E%2E` is not literal `..` and passes. Microsoft Graph decodes `%2E%2E` server-side as `..`, potentially altering OData resolution.
 
 **Impact:** limited in practice. The 10 `skipEncoding` endpoints are:
+
 - 4 endpoints `getXxxActivityCounts(period='{period}')` — Graph strictly validates `D7|D30|D90|D180` server-side, an encoded invalid value returns 400.
 - 4 endpoints `getXxxUserDetail(period='{period}')` — same.
 - 2 endpoints `getPstnCalls / getDirectRoutingCalls` — ISO 8601 datetimes, strict Graph validation.
 
-Real exploitation requires a `skipEncoding` endpoint that *would accept* an arbitrary value — none today in `endpoints.json`. But adding a future function-style endpoint with a user identifier in `skipEncoding` would open the door. This is a latent risk, not a current exploit.
+Real exploitation requires a `skipEncoding` endpoint that _would accept_ an arbitrary value — none today in `endpoints.json`. But adding a future function-style endpoint with a user identifier in `skipEncoding` would open the door. This is a latent risk, not a current exploit.
 
 **Recommendation:** replace with allowlist:
 
@@ -120,7 +121,7 @@ await storage.savePkce({
 });
 ```
 
-**Attack vector:** a DCR client registers `redirect_uris: ["http://localhost:3000/cb"]`. Later, an attacker who possesses `client_id + client_secret` (e.g. saw them in a `~/.mcp-auth/...` cache on a multi-user host) calls `/authorize?client_id=...&redirect_uri=https://attacker.example.com/cb`. The proxy doesn't compare — Entra will refuse *if* the upstream app registration is configured with a strict redirect URI allowlist.
+**Attack vector:** a DCR client registers `redirect_uris: ["http://localhost:3000/cb"]`. Later, an attacker who possesses `client_id + client_secret` (e.g. saw them in a `~/.mcp-auth/...` cache on a multi-user host) calls `/authorize?client_id=...&redirect_uri=https://attacker.example.com/cb`. The proxy doesn't compare — Entra will refuse _if_ the upstream app registration is configured with a strict redirect URI allowlist.
 
 **Impact:** downgrade attack mitigated by Entra upstream. But if the operator has configured the upstream app registration with a wildcard or loose schema (common in dev), the MCP proxy becomes an open-redirect / token-leak vector.
 
@@ -130,7 +131,9 @@ await storage.savePkce({
 // After getClient(clientId)
 if (known.redirectUris.length > 0 && !known.redirectUris.includes(redirectUri)) {
   logger.warn(`OAuth /authorize rejected: redirect_uri ${redirectUri} not in registered list`);
-  res.status(400).json({ error: 'invalid_request', error_description: 'redirect_uri not registered' });
+  res
+    .status(400)
+    .json({ error: 'invalid_request', error_description: 'redirect_uri not registered' });
   return;
 }
 ```
@@ -153,6 +156,7 @@ GHSA-w5hq-g745-h8pq — Missing buffer bounds check in v3/v5/v6 when buf is prov
 **Impact:** exploitation requires an attacker to control the destination buffer passed to `uuid.v3/v5/v6` — not the case in this codebase (MSAL uses `uuid.v4()` internally). Real risk = very low but flagged.
 
 **Recommendation:**
+
 - No urgent action. `npm audit fix --force` would break MSAL (downgrade to `@azure/identity@1.x`).
 - Watch the next `@azure/msal-node` release (changelog) — Microsoft should bump `uuid` in the coming weeks.
 - Add a comment in `package.json` or a `RISKS.md` to track the debt.
@@ -164,18 +168,22 @@ GHSA-w5hq-g745-h8pq — Missing buffer bounds check in v3/v5/v6 when buf is prov
 **File:line:** `src/user-token-authorization.ts:57,79,85,96`; `src/http-server.ts:109`; `src/oauth-proxy.ts:332,369`
 
 ```ts
-logger.warn(`User oid ${oid} (${payload.upn || payload.preferred_username || 'no upn'}) not in authorized-users allowlist`);
+logger.warn(
+  `User oid ${oid} (${payload.upn || payload.preferred_username || 'no upn'}) not in authorized-users allowlist`
+);
 logger.info(`MCP request authenticated as user ${userClaims.upn ?? userClaims.oid}`);
 ```
 
 **Attack vector:** not an attack vector; a compliance risk. MCP server logs contain UPN (work email = personal data per GDPR/Loi 25/PIPEDA). The Bicep deployment ships everything to Log Analytics with `logRetentionDays: 30` — short (good for minimization), but undocumented in SECURITY.md or README so an LCI Education operator can't easily complete a DPIA inventory.
 
 **Impact:** GDPR/Loi 25 exposure if:
+
 - An operator deploys this server in a non-EU region for EU users.
 - Logs are exported to a third-party SIEM without DPA.
 - An incident reveals logs were retained beyond necessity.
 
 **Recommendation:**
+
 1. Add a "Personal data logged" section in `SECURITY.md` listing: UPN, Entra oid, source IP (via Express logs).
 2. Document default retention and procedure to lower it in README.
 3. Optional — add `--log-redact-upn` option that replaces UPN by SHA256 hash in all logs except `LOG_LEVEL=debug`.
@@ -198,6 +206,7 @@ app.use('/mcp', rateLimit({ windowMs: 60_000, max: 100, ... }));   // ← gating
 **Impact:** amplified DoS. With a distributed attacker (botnet, or simply multiple `--allowed-clients`), the JSON parser becomes a memory exhaustion surface. Azure Container Apps containers have 1 GiB by default (cf. Bicep line 344), so an unrate-limited attacker can pin the pod.
 
 **Recommendation:**
+
 - Reorder: `rateLimit({ ... })` global (per IP) BEFORE the body parser, with a separate cap (e.g. 200 req/min per IP); keep current `/mcp` rate-limiter.
 - Or simpler: apply the `/mcp` rate-limiter without `app.use('/mcp', ...)` but via a middleware at the very top that filters the path manually before body parsing.
 
@@ -263,12 +272,14 @@ ingress: {
 ```
 
 **Attack vector:** any operator copying `parameters.example.jsonc` without setting `vnetIntegrated=true` deploys:
+
 - a Container App reachable from the Internet (yes, JWT-protected, but exposed attack surface),
 - a Storage Account (PKCE bridge + DCR clients) reachable from any IP (mitigation: `allowSharedKeyAccess: false`, so only the OAuth ManagedIdentity can write — but the OAuth Azure surface remains public).
 
 **Impact:** for LCI Education in particular (PIPEDA + Loi 25), a default deployment potentially creates residency non-compliance when storing in Tables `redirectUris` and `clientChallenge` which are technical data but traceable to a user.
 
 **Recommendation:**
+
 - Force `defaultAction: 'Deny'` with an IP whitelist or `bypass: 'AzureServices'` + Container App MI in the same subscription.
 - Document that `vnetIntegrated=true` is the recommended mode for any deployment processing real users.
 - Add a Bicep check that rejects `vnetIntegrated=false && oauthMode=true` with a warning.
@@ -351,8 +362,8 @@ The 8 Medium findings ([SEC-001](#sec-001--skipencoding-validation-accepts-perce
 - **GitHub issues** (`okapi-ca/ms-365-admin-mcp-server`, `security` label) — engineering follow-up
 - **Jira CYSEC tasks** (parent epic CYSEC-1330) — LCI Education governance follow-up
 
-| Finding | GitHub | Jira |
-|---|---|---|
+| Finding | GitHub                                                               | Jira                                                               |
+| ------- | -------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | SEC-001 | [#68](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/68) | [CYSEC-1473](https://lcieducation.atlassian.net/browse/CYSEC-1473) |
 | SEC-002 | [#69](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/69) | [CYSEC-1474](https://lcieducation.atlassian.net/browse/CYSEC-1474) |
 | SEC-003 | [#70](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/70) | [CYSEC-1475](https://lcieducation.atlassian.net/browse/CYSEC-1475) |
