@@ -8,6 +8,14 @@ export interface PkceEntry {
   // /authorize call. /token then rejects any attempt to redeem a code under a
   // different client_id.
   clientId: string;
+  // SEC-F04d (SEC-007): the client-supplied 'state' parameter from /authorize.
+  // The proxy never sees the redirect callback (Entra → client direct), so we
+  // cannot compare round-trip values. Storing 'state' here closes the finding
+  // by enabling audit-log correlation between /authorize and /token for the
+  // same OAuth session, which is otherwise impossible across the PKCE bridge.
+  // Optional: clients may omit 'state' — its absence is not itself an issue,
+  // RFC 6749 §10.12 only RECOMMENDS it.
+  clientState?: string;
   expiresAt: number;
 }
 
