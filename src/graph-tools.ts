@@ -141,6 +141,12 @@ async function executeGraphTool(
               }
               encodedValue = raw;
             } else {
+              // Function-style Graph paths use 'arg=value' literal. Restore the '=' that
+              // encodeURIComponent escaped, but only inside function-call segments to avoid
+              // altering OData semantics for normal path segments.
+              // Function-style Graph paths use 'arg=value' literal. Restore the '=' that
+              // encodeURIComponent escaped, but only inside function-call segments to avoid
+              // altering OData semantics for normal path segments.
               encodedValue = encodeURIComponent(paramValue as string).replace(/%3D/g, '=');
             }
 
