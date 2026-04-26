@@ -145,6 +145,8 @@ class AdminGraphServer {
             authorizedUserOids,
             allowAnyTenantUser,
             requiredScopes,
+            // SEC-F08 (SEC-004): plumb the CLI flag through so logger sees redaction.
+            redactUpn: Boolean(this.options.logRedactUpn),
           }
         : undefined;
 

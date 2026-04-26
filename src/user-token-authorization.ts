@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import logger from './logger.js';
 
 export interface UserTokenValidatorOptions {
@@ -10,6 +11,30 @@ export interface UserTokenValidatorOptions {
   // SEC-F03: user tokens must contain every scope listed here in their `scp` claim.
   // Default is enforced at the caller (server.ts); an empty list disables the check.
   requiredScopes: string[];
+  // SEC-F08 (SEC-004): when true, log lines emit a stable SHA-256 prefix of the
+  // UPN instead of the plaintext value. Investigation correlation is preserved
+  // (the same UPN always hashes to the same prefix) while the log stream is
+  // safe to ship to a SIEM / forwarder under PIPEDA / RGPD / Loi 25 without a
+  // separate Data Processing Agreement covering work-email PII. The Entra
+  // `oid` (a non-PII GUID) remains in plaintext so operators can still pivot
+  // to a user via the directory.
+  redactUpn?: boolean;
+}
+
+/**
+ * SEC-F08 (SEC-004): format a UPN-like value for emission to logs.
+ *
+ * Returns the value verbatim when `redact` is false (default). When true,
+ * returns a 16-char prefix of the SHA-256 hash, prefixed with `sha256:` so
+ * forwarders and SIEM rules can recognise the format. The hash is keyed only
+ * on the value itself (no salt) — the goal is non-reversibility for casual
+ * log readers, not cryptographic resistance to an attacker who already has
+ * tenant directory access.
+ */
+export function formatUpnForLog(value: string | undefined, redact: boolean | undefined): string {
+  if (!value) return '<none>';
+  if (!redact) return value;
+  return 'sha256:' + crypto.createHash('sha256').update(value, 'utf8').digest('hex').slice(0, 16);
 }
 
 export interface UserTokenClaims {
@@ -74,17 +99,16 @@ export function authorizeUserClaims(
   // SEC-F01: fail-closed when no per-user allowlist is configured.
   // Without this guard, any tenant user who obtains a token with the expected
   // audience would gain the server's full app-permission capability.
+  const upnForLog = formatUpnForLog(payload.upn || payload.preferred_username, options.redactUpn);
   if (options.authorizedUserOids.length === 0) {
     if (!options.allowAnyTenantUser) {
       logger.warn(
-        `User ${payload.upn || payload.preferred_username || oid} rejected: no --authorized-users allowlist configured and --allow-any-tenant-user not set`
+        `User ${upnForLog} (oid ${oid}) rejected: no --authorized-users allowlist configured and --allow-any-tenant-user not set`
       );
       return null;
     }
   } else if (!options.authorizedUserOids.includes(oid)) {
-    logger.warn(
-      `User oid ${oid} (${payload.upn || payload.preferred_username || 'no upn'}) not in authorized-users allowlist`
-    );
+    logger.warn(`User oid ${oid} (${upnForLog}) not in authorized-users allowlist`);
     return null;
   }
 

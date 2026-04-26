@@ -66,6 +66,10 @@ program
   .option(
     '--no-dynamic-registration',
     'Disable the OAuth Dynamic Client Registration endpoint (default: enabled with --oauth-mode)'
+  )
+  .option(
+    '--log-redact-upn',
+    'Replace UPN values in log lines with a SHA-256 prefix (SEC-F08 / SEC-004). Recommended for regulated tenants (PIPEDA, RGPD, Loi 25) when logs are forwarded to a SIEM. The Entra oid (non-PII GUID) stays plaintext for forensic pivots.'
   );
 
 export interface CommandOptions {
@@ -90,6 +94,7 @@ export interface CommandOptions {
   allowAnyTenantUser?: boolean;
   requiredUserScopes?: string;
   dynamicRegistration?: boolean;
+  logRedactUpn?: boolean;
   [key: string]: unknown;
 }
 

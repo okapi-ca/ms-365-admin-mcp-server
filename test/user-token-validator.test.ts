@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   authorizeUserClaims,
+  formatUpnForLog,
   type UserTokenValidatorOptions,
 } from '../src/user-token-authorization.js';
 
@@ -159,5 +160,61 @@ describe('authorizeUserClaims — claims extraction', () => {
     const payload = basePayload({ appid: undefined, azp: 'client-app-id' });
     const claims = authorizeUserClaims(payload, baseOptions({ allowAnyTenantUser: true }));
     expect(claims?.appid).toBe('client-app-id');
+  });
+});
+
+describe('SEC-F08 (SEC-004) — formatUpnForLog', () => {
+  it('returns the value verbatim when redact is false or undefined', () => {
+    expect(formatUpnForLog('alice@contoso.com', false)).toBe('alice@contoso.com');
+    expect(formatUpnForLog('alice@contoso.com', undefined)).toBe('alice@contoso.com');
+  });
+
+  it('returns a sha256-prefixed truncated hash when redact is true', () => {
+    const out = formatUpnForLog('alice@contoso.com', true);
+    expect(out).toMatch(/^sha256:[0-9a-f]{16}$/);
+    expect(out).not.toContain('alice');
+    expect(out).not.toContain('contoso');
+  });
+
+  it('is deterministic — the same UPN always hashes to the same prefix', () => {
+    const a = formatUpnForLog('alice@contoso.com', true);
+    const b = formatUpnForLog('alice@contoso.com', true);
+    expect(a).toBe(b);
+  });
+
+  it('different UPNs produce different prefixes', () => {
+    const alice = formatUpnForLog('alice@contoso.com', true);
+    const bob = formatUpnForLog('bob@contoso.com', true);
+    expect(alice).not.toBe(bob);
+  });
+
+  it('returns <none> for undefined or empty', () => {
+    expect(formatUpnForLog(undefined, true)).toBe('<none>');
+    expect(formatUpnForLog(undefined, false)).toBe('<none>');
+    expect(formatUpnForLog('', true)).toBe('<none>');
+  });
+});
+
+describe('SEC-F08 (SEC-004) — UPN redaction in authorizeUserClaims rejection paths', () => {
+  it('still rejects on missing allowlist regardless of redactUpn', () => {
+    const payload = basePayload();
+    expect(authorizeUserClaims(payload, baseOptions({ redactUpn: false }))).toBeNull();
+    expect(authorizeUserClaims(payload, baseOptions({ redactUpn: true }))).toBeNull();
+  });
+
+  it('still rejects oid-not-in-allowlist regardless of redactUpn', () => {
+    const payload = basePayload({ oid: OID_BOB });
+    const opts = baseOptions({ authorizedUserOids: [OID_ALICE], redactUpn: true });
+    expect(authorizeUserClaims(payload, opts)).toBeNull();
+  });
+
+  it('returned claims still carry plaintext upn (only logs are redacted)', () => {
+    const payload = basePayload({ oid: OID_ALICE });
+    const opts = baseOptions({
+      authorizedUserOids: [OID_ALICE],
+      redactUpn: true,
+    });
+    const claims = authorizeUserClaims(payload, opts);
+    expect(claims?.upn).toBe('alice@contoso.com');
   });
 });
