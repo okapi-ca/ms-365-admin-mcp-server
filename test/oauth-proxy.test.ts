@@ -361,6 +361,59 @@ describe('SEC-F04c (SEC-002) /token — redirect_uri must match the one used at 
   });
 });
 
+describe('SEC-F04d (SEC-007) /authorize — state recorded in PKCE bridge for audit', () => {
+  it('records the client-supplied state in the PKCE entry', async () => {
+    const { clientId } = await register();
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+    const clientStateValue = 'session-abc-' + crypto.randomBytes(8).toString('hex');
+
+    const saveSpy = vi.spyOn(storage, 'savePkce');
+    await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256&state=${encodeURIComponent(clientStateValue)}`,
+      { redirect: 'manual' }
+    );
+
+    expect(saveSpy).toHaveBeenCalled();
+    const entry = saveSpy.mock.calls[0][0];
+    expect(entry.clientState).toBe(clientStateValue);
+    expect(entry.clientChallenge).toBe(challenge);
+    saveSpy.mockRestore();
+  });
+
+  it('relays state unchanged to Entra (no rewriting / proxy-state substitution)', async () => {
+    const { clientId } = await register();
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+    const clientStateValue = 'csrf-token-' + crypto.randomBytes(8).toString('hex');
+
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256&state=${encodeURIComponent(clientStateValue)}`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    const upstream = new URL(res.headers.get('location')!);
+    expect(upstream.searchParams.get('state')).toBe(clientStateValue);
+  });
+
+  it('accepts /authorize without state (state is optional per RFC 6749 §10.12)', async () => {
+    const { clientId } = await register();
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+
+    const saveSpy = vi.spyOn(storage, 'savePkce');
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    expect(saveSpy).toHaveBeenCalled();
+    const entry = saveSpy.mock.calls[0][0];
+    expect(entry.clientState).toBeUndefined();
+    saveSpy.mockRestore();
+  });
+});
+
 describe('SEC-F04b oauth-mode startup — refuses when DCR is disabled', () => {
   it('throws when enableDynamicRegistration is false', () => {
     const app = express();

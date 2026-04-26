@@ -299,6 +299,13 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       serverVerifier,
       redirectUri,
       clientId,
+      // SEC-F04d (SEC-007): record the client's state for audit correlation.
+      // The proxy never observes the redirect callback (Entra → client direct),
+      // so cannot validate round-trip equivalence — but storing state lets us
+      // correlate /authorize and /token entries for the same OAuth session in
+      // the audit logs, which is otherwise impossible across the PKCE bridge.
+      // Optional: clients may omit state per RFC 6749 §10.12.
+      clientState: state,
       expiresAt: Date.now() + PKCE_TTL_MS,
     });
 
@@ -330,8 +337,10 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     // use a non-WebKit browser (Chrome, Firefox) to bypass that layer.
     upstream.searchParams.set('prompt', 'select_account');
 
+    // SEC-F04d (SEC-007): include state in the audit log so /authorize and
+    // /token entries can be correlated to the same OAuth session.
     logger.info(
-      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${upstreamScope}, prompt=select_account)`
+      `OAuth /authorize → Entra (client=${clientId}, redirect_uri=${redirectUri}, scope=${upstreamScope}, prompt=select_account, state=${state ?? '(none)'})`
     );
     res.redirect(302, upstream.toString());
   });
@@ -413,6 +422,14 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
         });
         return;
       }
+
+      // SEC-F04d (SEC-007): log the state recorded at /authorize so audit can
+      // correlate this /token call to the originating session. The proxy never
+      // sees the redirect callback, so this log line is the only record that
+      // ties the two endpoints together for a single OAuth flow.
+      logger.info(
+        `OAuth /token authorization_code redemption (client=${reqClientId}, state=${bridge.clientState ?? '(none)'})`
+      );
 
       form.set('grant_type', 'authorization_code');
       form.set('code', code);

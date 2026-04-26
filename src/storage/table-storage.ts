@@ -11,6 +11,10 @@ interface PkceEntity {
   serverVerifier: string;
   redirectUri: string;
   clientId: string;
+  // SEC-F04d (SEC-007): client-supplied state parameter, kept for audit-log
+  // correlation. Optional — clients may omit it. Stored as '' when absent
+  // because Azure Table Storage does not roundtrip undefined cleanly.
+  clientState: string;
   expiresAt: number;
 }
 
@@ -69,6 +73,7 @@ export class TableStorage implements OAuthStorage {
       serverVerifier: entry.serverVerifier,
       redirectUri: entry.redirectUri,
       clientId: entry.clientId,
+      clientState: entry.clientState ?? '',
       expiresAt: entry.expiresAt,
     };
     await this.client.upsertEntity(entity, 'Replace');
@@ -101,6 +106,7 @@ export class TableStorage implements OAuthStorage {
       serverVerifier: entity.serverVerifier,
       redirectUri: entity.redirectUri,
       clientId: entity.clientId,
+      clientState: entity.clientState || undefined,
       expiresAt: entity.expiresAt,
     };
   }
