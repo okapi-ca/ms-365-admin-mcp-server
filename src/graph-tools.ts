@@ -25,6 +25,28 @@ interface EndpointConfig {
   returnDownloadUrl?: boolean;
 }
 
+// SEC-A (SEC-001): allowlist for skip-encoded path parameters. The previous
+// denylist /[/\\?#&]|\.\./ accepted percent-encoded forms (%2E%2E, %2F, %5C)
+// that Microsoft Graph normalises server-side, leaving a latent path-traversal
+// vector for any future endpoint admitting a wider value space. The allowlist
+// covers the only legitimate skipEncoding values today: 'period' (D7|D30|D90
+// |D180) and ISO 8601 datetimes (fromDateTime/toDateTime). Endpoints needing a
+// wider character set should declare a per-endpoint allowlist in endpoints.json
+// rather than relax this default.
+//
+// Note: '.' is allowed (ISO 8601 fractional seconds need it), but two dots in a
+// row are explicitly rejected — they have no legitimate use in current values
+// and would re-enable literal path-traversal under the allowlist.
+export const SKIP_ENCODING_ALLOWLIST = /^[A-Za-z0-9._:-]+$/;
+
+export function validateSkipEncodingValue(paramName: string, raw: string): void {
+  if (!SKIP_ENCODING_ALLOWLIST.test(raw) || raw.includes('..')) {
+    throw new Error(
+      `Invalid value for path parameter '${paramName}': contains disallowed characters`
+    );
+  }
+}
+
 const endpointsData = JSON.parse(
   readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
 ) as EndpointConfig[];
@@ -132,13 +154,9 @@ async function executeGraphTool(
             const shouldSkipEncoding = config?.skipEncoding?.includes(paramName) ?? false;
             let encodedValue: string;
             if (shouldSkipEncoding) {
-              // SEC-A: Validate skip-encoded params to prevent path traversal
+              // SEC-A (SEC-001): allowlist validation — see validateSkipEncodingValue.
               const raw = paramValue as string;
-              if (/[/\\?#&]|\.\./.test(raw)) {
-                throw new Error(
-                  `Invalid value for path parameter '${paramName}': contains disallowed characters`
-                );
-              }
+              validateSkipEncodingValue(paramName, raw);
               encodedValue = raw;
             } else {
               encodedValue = encodeURIComponent(paramValue as string).replace(/%3D/g, '=');
