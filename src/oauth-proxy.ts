@@ -268,6 +268,30 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       return;
     }
 
+    // SEC-F04c (SEC-002): /authorize must verify that the redirect_uri matches
+    // one of the URIs registered at /register (DCR). Without this, anyone who
+    // possesses a client_id + secret pair (e.g. recovered from a shared
+    // ~/.mcp-auth cache) can swap in an attacker-controlled redirect_uri and
+    // exfiltrate the auth code — Entra's upstream allowlist mitigates only when
+    // the operator has tightly configured their app registration. We enforce at
+    // this proxy regardless. Empty redirectUris means the client registered
+    // none (legacy / minimal DCR call) — we don't enforce in that case to keep
+    // backward compatibility with existing deployments, but log it.
+    if (known.redirectUris.length === 0) {
+      logger.warn(
+        `OAuth /authorize: client ${clientId} has no registered redirect_uris — skipping enforcement`
+      );
+    } else if (!known.redirectUris.includes(redirectUri)) {
+      logger.warn(
+        `OAuth /authorize rejected: redirect_uri ${redirectUri} not in registered list for ${clientId}`
+      );
+      res.status(400).json({
+        error: 'invalid_request',
+        error_description: 'redirect_uri does not match a registered URI',
+      });
+      return;
+    }
+
     const serverVerifier = randomVerifier();
     const serverChallenge = sha256Base64url(serverVerifier);
     await storage.savePkce({
@@ -375,10 +399,24 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
         });
         return;
       }
+      // SEC-F04c (SEC-002): the redirect_uri presented at /token must match
+      // the one bound to the auth code at /authorize. RFC 6749 §4.1.3 requires
+      // this check. Without it, an attacker who steals an auth code could
+      // redeem it pointing at their own redirect target.
+      if (bridge.redirectUri !== redirectUri) {
+        logger.warn(
+          `OAuth /token rejected: redirect_uri mismatch (bridge=${bridge.redirectUri}, req=${redirectUri})`
+        );
+        res.status(400).json({
+          error: 'invalid_grant',
+          error_description: 'redirect_uri does not match the one used at /authorize',
+        });
+        return;
+      }
 
       form.set('grant_type', 'authorization_code');
       form.set('code', code);
-      form.set('redirect_uri', redirectUri);
+      form.set('redirect_uri', bridge.redirectUri);
       form.set('code_verifier', bridge.serverVerifier);
     } else if (grantType === 'refresh_token') {
       const refreshToken = body.refresh_token as string | undefined;
