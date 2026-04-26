@@ -25,6 +25,17 @@ interface EndpointConfig {
   returnDownloadUrl?: boolean;
 }
 
+// SEC-B (SEC-006): path-param encoding for non-skipEncoding params.
+// Microsoft Graph function-style paths that need a literal 'arg=value'
+// (getPstnCalls, getXxxActivityCounts, etc.) all declare 'skipEncoding'
+// — so this helper never sees a legitimate '=' in rawValue. A previous
+// .replace(/%3D/g, '=') was applied here and would have decoded user-
+// supplied '=' (e.g. inside a crafted userId), creating a path-injection
+// vector. Removed; full encodeURIComponent is the correct behavior.
+export function encodePathParamValue(rawValue: string): string {
+  return encodeURIComponent(rawValue);
+}
+
 const endpointsData = JSON.parse(
   readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
 ) as EndpointConfig[];
@@ -141,7 +152,8 @@ async function executeGraphTool(
               }
               encodedValue = raw;
             } else {
-              encodedValue = encodeURIComponent(paramValue as string).replace(/%3D/g, '=');
+              // SEC-B (SEC-006): see encodePathParamValue for rationale.
+              encodedValue = encodePathParamValue(paramValue as string);
             }
 
             path = path
