@@ -76,6 +76,22 @@ param hubVnetName string = ''
 @description('Subnet in the hub VNet pre-delegated to Microsoft.App/environments, used as CAE infrastructure subnet. Required when vnetIntegrated=true.')
 param infrastructureSubnetName string = ''
 
+// --- Storage network access (SEC-008) ---
+//
+// SEC-008: when true, the Storage Account that backs the OAuth PKCE bridge and
+// DCR client credentials switches its network ACL default to 'Deny'. The
+// Container App's user-assigned managed identity continues to access the
+// Storage Tables through the 'AzureServices' bypass — no functional change as
+// long as the deployment stays in the same Azure tenant. Recommended for any
+// regulated-tenant deployment (PIPEDA, RGPD, Loi 25, etc.) where audit
+// frameworks require explicit network-level isolation in addition to the
+// existing identity-based controls (allowSharedKeyAccess: false).
+// Default false to preserve backward compatibility; set true on new and
+// regulated deployments.
+
+@description('SEC-008: switch Storage networkAcls.defaultAction to Deny (recommended for regulated tenants). The Container App UAMI still reaches Storage Tables via the AzureServices bypass + Azure AD trust within the same tenant.')
+param restrictStorageNetworkAccess bool = false
+
 // --- Resource name overrides ---
 //
 // Every Azure resource has a default name derived from baseName. Operators with strict
@@ -216,7 +232,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     supportsHttpsTrafficOnly: true
     defaultToOAuthAuthentication: true
     networkAcls: {
-      defaultAction: 'Allow'
+      // SEC-008: Deny + AzureServices bypass keeps the Storage Tables
+      // unreachable from the public internet while the Container App's UAMI
+      // (a trusted Azure service authenticated via Azure AD in the same
+      // tenant) continues to read/write the OAuth state. Set
+      // restrictStorageNetworkAccess=true on regulated-tenant deployments.
+      defaultAction: restrictStorageNetworkAccess ? 'Deny' : 'Allow'
       bypass: 'AzureServices'
     }
   }
@@ -387,3 +408,14 @@ output uamiPrincipalId string = uami.properties.principalId
 output uamiClientId string = uami.properties.clientId
 output vnetIntegrated bool = vnetIntegrated
 output infrastructureSubnetId string = infrastructureSubnetId
+
+// SEC-008: surface the deployment's security posture so operators can audit
+// it via `az deployment group show` without re-reading the parameters file.
+// Regulated-tenant baseline: vnetIntegrated=true AND restrictStorageNetworkAccess=true.
+output securityPosture object = {
+  vnetIntegrated: vnetIntegrated
+  restrictStorageNetworkAccess: restrictStorageNetworkAccess
+  storageNetworkDefaultAction: restrictStorageNetworkAccess ? 'Deny' : 'Allow'
+  oauthMode: oauthMode
+  regulatedTenantBaseline: vnetIntegrated && restrictStorageNetworkAccess
+}

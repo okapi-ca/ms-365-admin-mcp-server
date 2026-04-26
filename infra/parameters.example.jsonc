@@ -41,6 +41,12 @@
     // Requires a pre-existing subnet delegated to Microsoft.App/environments.
     // When true: CAE runs workload-profiles + internal ingress (clients must reach
     // the VNet via VPN, ExpressRoute, or VNet peering). No public ingress, no PE.
+    //
+    // REGULATED TENANTS (PIPEDA, RGPD, Loi 25, KVKK, UU PDP, etc.):
+    // Set vnetIntegrated=true AND restrictStorageNetworkAccess=true. The
+    // resulting posture has no public ingress on the OAuth surface and the
+    // Storage Account that holds DCR clients + PKCE state is unreachable from
+    // the public internet. Audit frameworks typically require both.
     "vnetIntegrated": { "value": false },
     "hubSubscriptionId": { "value": "<subscription id hosting the hub VNet>" },
     "hubVnetRg": { "value": "<resource group of the hub VNet>" },
@@ -48,6 +54,14 @@
     "infrastructureSubnetName": {
       "value": "<subnet delegated to Microsoft.App/environments, pre-created by network team>"
     },
+
+    // --- Storage network access (SEC-008) ---
+    // When true: Storage Account networkAcls.defaultAction is set to 'Deny'.
+    // The Container App's UAMI continues to access the Storage Tables via the
+    // 'AzureServices' bypass + Azure AD trust within the same tenant — no
+    // functional change for the deployment. Recommended for regulated tenants
+    // (see comment on vnetIntegrated above).
+    "restrictStorageNetworkAccess": { "value": false },
 
     // --- Resource name overrides (optional) ---
     // Leave empty to derive from baseName. Override when your org has strict
