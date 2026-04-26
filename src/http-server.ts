@@ -44,6 +44,20 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
 
   app.set('trust proxy', 1);
   app.use(securityHeaders);
+
+  // SEC-005: global per-IP rate-limiter before body parsers to prevent
+  // unauthenticated DoS via JSON parsing of large payloads.
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      max: 200,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req) => req.ip ?? 'unknown',
+      message: { error: 'Too many requests, please try again later' },
+    }),
+  );
+
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
