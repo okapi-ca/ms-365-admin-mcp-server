@@ -63,6 +63,24 @@ If you run this server, we recommend:
 6. **HTTP mode exposure.** Never expose the HTTP transport on `0.0.0.0` without a reverse proxy enforcing TLS and additional authentication. Always pass `--allowed-clients` with the minimum set of Entra app IDs.
 7. **Audit trail.** Enable verbose logging (`-v`) and forward logs to a SIEM. All Graph mutations are also auditable via `list-directory-audits` and `list-intune-audit-events`.
 8. **Network segmentation.** Run the server in a network segment that only permits egress to `login.microsoftonline.com` and `graph.microsoft.com` (or sovereign equivalents).
+9. **PII-aware logging.** Pass `--log-redact-upn` when logs are forwarded to a SIEM or external log forwarder. The flag replaces UPN values in log lines with a deterministic SHA-256 prefix (`sha256:<16hex>`), preserving forensic correlation while removing the work-email PII (see "Personal data handled by this server" below).
+
+## Personal data handled by this server
+
+When the server runs in `--oauth-mode`, the following user-attributable values appear in normal operation. Operators in regulated jurisdictions (PIPEDA, RGPD, Loi 25, KVKK, UU PDP, etc.) should account for these in their DPIA / records-of-processing:
+
+| Value                                                 | Source                                                         | Where it appears                                                                              | Mitigation                                                                                           |
+| ----------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **UPN** (`user@tenant.onmicrosoft.com` or work email) | User token `upn` / `preferred_username` claim                  | Log lines on auth success and rejection in `user-token-authorization.ts` and `http-server.ts` | `--log-redact-upn` replaces with `sha256:<16hex>`                                                    |
+| **Entra `oid`**                                       | User token `oid` claim                                         | Same log lines                                                                                | None — `oid` is a tenant-scoped GUID, not PII per most regulators; required for incident attribution |
+| **Source IP**                                         | TCP connection / `X-Forwarded-For` (when `trust proxy` is set) | Express access logs, rate-limit accounting                                                    | Sanitize at the reverse proxy / log forwarder if required                                            |
+| **Bearer tokens**                                     | Inbound `/mcp` requests                                        | **Never logged** — only the authentication outcome                                            | n/a                                                                                                  |
+| **Tool call parameters**                              | MCP tool invocations                                           | Logged at `info` level with parameter names only, never values (`graph-tools.ts`)             | n/a                                                                                                  |
+| **Graph API responses**                               | Microsoft Graph                                                | Returned to the caller, never logged                                                          | n/a                                                                                                  |
+
+Default Log Analytics retention in the included Bicep template is **30 days** (parameter `logRetentionDays`). Lower this for stricter data-minimization regimes.
+
+The Entra `oid` is intentionally **not** redacted: it is a non-PII GUID, audit teams need a stable forensic anchor, and pivoting from `oid` to a user requires directory access that an external log forwarder does not have.
 
 ## Known hardening in this codebase
 

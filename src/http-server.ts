@@ -5,6 +5,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import logger from './logger.js';
 import { validateEntraToken, type TokenValidatorOptions } from './token-validator.js';
 import { validateUserToken, type UserTokenValidatorOptions } from './user-token-validator.js';
+import { formatUpnForLog } from './user-token-authorization.js';
 import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
 import { registerOAuthRateLimiters } from './oauth-rate-limiters.js';
 import rateLimit from 'express-rate-limit';
@@ -106,7 +107,13 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     if (userValidator) {
       const userClaims = await validateUserToken(token, userValidator);
       if (userClaims) {
-        logger.info(`MCP request authenticated as user ${userClaims.upn ?? userClaims.oid}`);
+        // SEC-F08 (SEC-004): respect --log-redact-upn here too. The Entra `oid`
+        // (non-PII GUID) stays plain when no UPN is present so operators can
+        // still pivot through the directory.
+        const upnForLog = formatUpnForLog(userClaims.upn, userValidator.redactUpn);
+        logger.info(
+          `MCP request authenticated as user ${userClaims.upn ? upnForLog : userClaims.oid} (oid ${userClaims.oid})`
+        );
         // Store the raw bearer token so OBO can use it as the user assertion downstream.
         res.locals.userToken = token;
         next();
