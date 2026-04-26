@@ -74,11 +74,13 @@ beforeEach(() => {
   }) as typeof fetch;
 });
 
-async function register(): Promise<{ clientId: string; clientSecret: string }> {
+async function register(
+  redirectUris: string[] = ['http://localhost/cb']
+): Promise<{ clientId: string; clientSecret: string }> {
   const res = await realFetch(`${baseUrl}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ redirect_uris: ['http://localhost:3000/cb'] }),
+    body: JSON.stringify({ redirect_uris: redirectUris }),
   });
   expect(res.status).toBe(201);
   const body = (await res.json()) as {
@@ -278,6 +280,83 @@ describe('SEC-F04b /token authorization_code — PKCE client_id binding', () => 
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe('invalid_grant');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('SEC-F04c (SEC-002) /authorize — redirect_uri must match DCR registration', () => {
+  it('rejects /authorize when redirect_uri is not in the registered list', async () => {
+    const { clientId } = await register(['http://localhost/cb']);
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=https%3A%2F%2Fattacker.example.com%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string; error_description: string };
+    expect(body.error).toBe('invalid_request');
+    expect(body.error_description).toMatch(/redirect_uri/);
+  });
+
+  it('accepts /authorize when redirect_uri exactly matches a registered URI', async () => {
+    const { clientId } = await register(['http://localhost/cb', 'http://127.0.0.1/cb']);
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2F127.0.0.1%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    const location = res.headers.get('location') || '';
+    expect(location).toContain('login.microsoftonline.com');
+  });
+
+  it('skips redirect_uri enforcement when client registered with empty redirect_uris (legacy compat)', async () => {
+    const { clientId } = await register([]);
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+
+    const res = await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Fanything%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+  });
+});
+
+describe('SEC-F04c (SEC-002) /token — redirect_uri must match the one used at /authorize', () => {
+  it('rejects /token when redirect_uri differs from the one bound to the auth code', async () => {
+    const { clientId, clientSecret } = await register(['http://localhost/cb']);
+    const verifier = base64url(crypto.randomBytes(64));
+    const challenge = sha256(verifier);
+
+    // /authorize with the registered URI — this binds redirect_uri to the bridge.
+    await realFetch(
+      `${baseUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+
+    // /token with a different redirect_uri — must be rejected before any
+    // upstream call.
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: 'any-code',
+        code_verifier: verifier,
+        redirect_uri: 'http://localhost/different',
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string; error_description: string };
+    expect(body.error).toBe('invalid_grant');
+    expect(body.error_description).toMatch(/redirect_uri/);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
