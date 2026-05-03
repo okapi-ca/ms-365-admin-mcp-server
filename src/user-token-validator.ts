@@ -3,18 +3,23 @@ import jwksRsa from 'jwks-rsa';
 import logger from './logger.js';
 import { withStaleKeyFallback } from './jwks-stale-cache.js';
 import {
-  authorizeUserClaims,
+  authorizeUserClaimsExplain,
+  type AuthorizeUserClaimsResult,
   type UserTokenClaims,
   type UserTokenPayload,
   type UserTokenValidatorOptions,
 } from './user-token-authorization.js';
 
-export { authorizeUserClaims } from './user-token-authorization.js';
+export { authorizeUserClaims, authorizeUserClaimsExplain } from './user-token-authorization.js';
 export type {
+  AuthorizationFailureReason,
+  AuthorizeUserClaimsResult,
   UserTokenClaims,
   UserTokenPayload,
   UserTokenValidatorOptions,
 } from './user-token-authorization.js';
+
+export type ValidateUserTokenResult = AuthorizeUserClaimsResult;
 
 const jwksClients = new Map<string, jwksRsa.JwksClient>();
 // SEC-F08: per-tenant stale-while-revalidate cache of PEM public keys.
@@ -64,17 +69,23 @@ function getSigningKey(
   return withStaleKeyFallback(kid, () => fetchSigningKey(client, kid), getStaleKeyCache(tenantId));
 }
 
-export async function validateUserToken(
+/**
+ * Verify a user token and run authorization checks. Returns a structured
+ * result so the HTTP layer can map failures to the correct RFC 6750 status:
+ * `invalid_token` (signature, JWKS, expiry, audience, allowlist) → 401,
+ * `insufficient_scope` (token valid but `scp` missing a required entry) → 403.
+ */
+export async function validateUserTokenExplain(
   token: string,
   options: UserTokenValidatorOptions
-): Promise<UserTokenClaims | null> {
+): Promise<ValidateUserTokenResult> {
   try {
     const client = getJwksClient(options.tenantId);
 
     const decoded = jwt.decode(token, { complete: true });
     if (!decoded || typeof decoded === 'string') {
       logger.warn('User token could not be decoded');
-      return null;
+      return { ok: false, reason: 'invalid_token' };
     }
 
     const publicKey = await getSigningKey(options.tenantId, client, decoded.header);
@@ -88,9 +99,24 @@ export async function validateUserToken(
       clockTolerance: 30,
     }) as UserTokenPayload;
 
-    return authorizeUserClaims(payload, options);
+    return authorizeUserClaimsExplain(payload, options);
   } catch (error) {
+    // Signature, expiry, JWKS, decode failures all collapse to invalid_token.
+    // jsonwebtoken throws TokenExpiredError, JsonWebTokenError, NotBeforeError —
+    // all are RFC 6750 invalid_token from the wire's point of view.
     logger.error(`User token validation failed: ${(error as Error).message}`);
-    return null;
+    return { ok: false, reason: 'invalid_token' };
   }
+}
+
+/**
+ * Backwards-compatible wrapper. Returns claims on success or `null` on any
+ * failure. Prefer `validateUserTokenExplain` in new callers.
+ */
+export async function validateUserToken(
+  token: string,
+  options: UserTokenValidatorOptions
+): Promise<UserTokenClaims | null> {
+  const result = await validateUserTokenExplain(token, options);
+  return result.ok ? result.claims : null;
 }

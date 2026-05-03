@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   authorizeUserClaims,
+  authorizeUserClaimsExplain,
   formatUpnForLog,
   type UserTokenValidatorOptions,
 } from '../src/user-token-authorization.js';
@@ -192,6 +193,91 @@ describe('SEC-F08 (SEC-004) — formatUpnForLog', () => {
     expect(formatUpnForLog(undefined, true)).toBe('<none>');
     expect(formatUpnForLog(undefined, false)).toBe('<none>');
     expect(formatUpnForLog('', true)).toBe('<none>');
+  });
+});
+
+describe('authorizeUserClaimsExplain — RFC 6750 reason mapping', () => {
+  // These tests guard the wire contract: identity / integrity failures must
+  // surface as `invalid_token` (→ HTTP 401, client refreshes), and only a
+  // missing required scope on an otherwise-valid token may surface as
+  // `insufficient_scope` (→ HTTP 403, refresh would not help). Mis-mapping
+  // expiry / audience to 403 caused infinite reconnect loops with mcp-remote
+  // in the field.
+
+  it('returns ok:true with claims when the token is fully valid', () => {
+    const payload = basePayload();
+    const result = authorizeUserClaimsExplain(
+      payload,
+      baseOptions({ allowAnyTenantUser: true, requiredScopes: ['access_as_user'] })
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.claims.oid).toBe(OID_ALICE);
+    }
+  });
+
+  it('reports invalid_token on tenant mismatch', () => {
+    const payload = basePayload({ tid: 'other-tenant-id' });
+    const result = authorizeUserClaimsExplain(payload, baseOptions({ allowAnyTenantUser: true }));
+    expect(result).toEqual({ ok: false, reason: 'invalid_token' });
+  });
+
+  it('reports invalid_token on audience mismatch', () => {
+    const payload = basePayload({ aud: 'api://some-other-app' });
+    const result = authorizeUserClaimsExplain(payload, baseOptions({ allowAnyTenantUser: true }));
+    expect(result).toEqual({ ok: false, reason: 'invalid_token' });
+  });
+
+  it('reports invalid_token when oid is missing', () => {
+    const payload = basePayload({ oid: undefined });
+    const result = authorizeUserClaimsExplain(payload, baseOptions({ allowAnyTenantUser: true }));
+    expect(result).toEqual({ ok: false, reason: 'invalid_token' });
+  });
+
+  it('reports invalid_token on SEC-F01 fail-closed (no allowlist, allowAnyTenantUser=false)', () => {
+    const payload = basePayload();
+    const result = authorizeUserClaimsExplain(payload, baseOptions());
+    expect(result).toEqual({ ok: false, reason: 'invalid_token' });
+  });
+
+  it('reports invalid_token when oid is not in a non-empty allowlist', () => {
+    const payload = basePayload({ oid: 'cccccccc-cccc-cccc-cccc-cccccccccccc' });
+    const result = authorizeUserClaimsExplain(
+      payload,
+      baseOptions({ authorizedUserOids: [OID_ALICE, OID_BOB], allowAnyTenantUser: true })
+    );
+    expect(result).toEqual({ ok: false, reason: 'invalid_token' });
+  });
+
+  it('reports insufficient_scope when scp is missing a required entry', () => {
+    const payload = basePayload({ scp: 'profile email' });
+    const result = authorizeUserClaimsExplain(
+      payload,
+      baseOptions({ allowAnyTenantUser: true, requiredScopes: ['access_as_user'] })
+    );
+    expect(result).toEqual({ ok: false, reason: 'insufficient_scope' });
+  });
+
+  it('reports insufficient_scope when scp claim is absent and scopes are required', () => {
+    const payload = basePayload({ scp: undefined });
+    const result = authorizeUserClaimsExplain(
+      payload,
+      baseOptions({ allowAnyTenantUser: true, requiredScopes: ['access_as_user'] })
+    );
+    expect(result).toEqual({ ok: false, reason: 'insufficient_scope' });
+  });
+
+  it('reports invalid_token (not insufficient_scope) when both identity and scope fail — identity wins', () => {
+    // Audience mismatch is checked before the scope check, so the wire signal
+    // should be invalid_token. This guards the order: a client that does not
+    // even have the right audience must not be told "your scope is wrong"
+    // (which would imply identity is fine).
+    const payload = basePayload({ aud: 'api://some-other-app', scp: 'profile' });
+    const result = authorizeUserClaimsExplain(
+      payload,
+      baseOptions({ allowAnyTenantUser: true, requiredScopes: ['access_as_user'] })
+    );
+    expect(result).toEqual({ ok: false, reason: 'invalid_token' });
   });
 });
 

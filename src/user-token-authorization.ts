@@ -44,6 +44,24 @@ export interface UserTokenClaims {
   appid?: string;
 }
 
+/**
+ * Structured outcome of `authorizeUserClaimsExplain`. Distinguishes
+ * `invalid_token` (signature/audience/issuer/expiry/missing-claim/allowlist
+ * failures — the bearer is unauthenticated as far as RFC 6750 §3.1 is
+ * concerned) from `insufficient_scope` (token is otherwise valid but lacks a
+ * required `scp` claim entry — RFC 6750 §3.1 §insufficient_scope).
+ *
+ * mcp-remote and other RFC-compliant clients only attempt a refresh on 401
+ * `invalid_token`; on 403 `insufficient_scope` they correctly stop. Mapping
+ * the wrong reason to the wrong HTTP status causes infinite reconnect loops
+ * when the access_token simply expired.
+ */
+export type AuthorizationFailureReason = 'invalid_token' | 'insufficient_scope';
+
+export type AuthorizeUserClaimsResult =
+  | { ok: true; claims: UserTokenClaims }
+  | { ok: false; reason: AuthorizationFailureReason };
+
 export interface UserTokenPayload {
   iss?: string;
   aud?: string | string[];
@@ -73,27 +91,31 @@ function parseTokenScopes(scp: string | undefined): string[] {
  * Post-signature-verification authorization checks on the user token payload.
  * Pure function — no network, no JWT verification — so it is safe to import
  * from tests without pulling the JWKS / jose dependency chain.
+ *
+ * Returns a structured result so callers (HTTP layer) can map RFC 6750 §3.1
+ * error codes to the correct HTTP status: `invalid_token` → 401,
+ * `insufficient_scope` → 403. See `AuthorizeUserClaimsResult` for rationale.
  */
-export function authorizeUserClaims(
+export function authorizeUserClaimsExplain(
   payload: UserTokenPayload,
   options: UserTokenValidatorOptions
-): UserTokenClaims | null {
+): AuthorizeUserClaimsResult {
   if (payload.tid && payload.tid !== options.tenantId) {
     logger.warn(`User token tenant mismatch: tid=${payload.tid}, expected=${options.tenantId}`);
-    return null;
+    return { ok: false, reason: 'invalid_token' };
   }
 
   if (!audienceMatches(payload.aud, options.expectedAudiences)) {
     logger.warn(
       `User token audience not in expected list: aud=${JSON.stringify(payload.aud)}, expected=${JSON.stringify(options.expectedAudiences)}`
     );
-    return null;
+    return { ok: false, reason: 'invalid_token' };
   }
 
   const oid = payload.oid;
   if (!oid) {
     logger.warn('User token missing oid claim');
-    return null;
+    return { ok: false, reason: 'invalid_token' };
   }
 
   // SEC-F01: fail-closed when no per-user allowlist is configured.
@@ -105,14 +127,17 @@ export function authorizeUserClaims(
       logger.warn(
         `User ${upnForLog} (oid ${oid}) rejected: no --authorized-users allowlist configured and --allow-any-tenant-user not set`
       );
-      return null;
+      return { ok: false, reason: 'invalid_token' };
     }
   } else if (!options.authorizedUserOids.includes(oid)) {
     logger.warn(`User oid ${oid} (${upnForLog}) not in authorized-users allowlist`);
-    return null;
+    return { ok: false, reason: 'invalid_token' };
   }
 
   // SEC-F03: enforce required scopes (e.g. access_as_user) on the `scp` claim.
+  // This is the one case where the token is "valid" (signed, audience OK,
+  // identity OK) but the principal lacks the required scope — RFC 6750
+  // `insufficient_scope` / HTTP 403, distinct from `invalid_token` / 401.
   if (options.requiredScopes.length > 0) {
     const tokenScopes = parseTokenScopes(payload.scp);
     const missing = options.requiredScopes.filter((s) => !tokenScopes.includes(s));
@@ -120,14 +145,30 @@ export function authorizeUserClaims(
       logger.warn(
         `User token missing required scope(s): ${missing.join(', ')}; token scp=${payload.scp ?? '<none>'}`
       );
-      return null;
+      return { ok: false, reason: 'insufficient_scope' };
     }
   }
 
   return {
-    oid,
-    upn: payload.upn || payload.preferred_username,
-    name: payload.name,
-    appid: payload.appid || payload.azp,
+    ok: true,
+    claims: {
+      oid,
+      upn: payload.upn || payload.preferred_username,
+      name: payload.name,
+      appid: payload.appid || payload.azp,
+    },
   };
+}
+
+/**
+ * Backwards-compatible wrapper around `authorizeUserClaimsExplain`. Returns
+ * the claims on success or `null` on any rejection. Prefer the explain variant
+ * in new callers so the failure mode can be surfaced as an HTTP status.
+ */
+export function authorizeUserClaims(
+  payload: UserTokenPayload,
+  options: UserTokenValidatorOptions
+): UserTokenClaims | null {
+  const result = authorizeUserClaimsExplain(payload, options);
+  return result.ok ? result.claims : null;
 }

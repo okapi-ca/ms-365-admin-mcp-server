@@ -3,8 +3,11 @@ import type { Request, Response, NextFunction } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import logger from './logger.js';
-import { validateEntraToken, type TokenValidatorOptions } from './token-validator.js';
-import { validateUserToken, type UserTokenValidatorOptions } from './user-token-validator.js';
+import { validateEntraTokenExplain, type TokenValidatorOptions } from './token-validator.js';
+import {
+  validateUserTokenExplain,
+  type UserTokenValidatorOptions,
+} from './user-token-validator.js';
 import { formatUpnForLog } from './user-token-authorization.js';
 import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
 import { registerOAuthRateLimiters } from './oauth-rate-limiters.js';
@@ -38,6 +41,107 @@ function resourceMetadataUrl(publicUrl: string): string {
   // header-derived fallback here either, to keep the WWW-Authenticate challenge
   // consistent with the advertised metadata.
   return `${stripTrailingSlash(publicUrl)}/.well-known/oauth-protected-resource`;
+}
+
+export interface McpAuthMiddlewareOptions {
+  serviceValidator?: TokenValidatorOptions;
+  userValidator?: UserTokenValidatorOptions;
+  /**
+   * When set, every challenge response includes a
+   * `WWW-Authenticate: Bearer resource_metadata="..."` header pointing at the
+   * RFC 9728 protected-resource metadata document. Omit when no OAuth proxy
+   * is configured — there is nothing for the client to discover.
+   */
+  oauthPublicUrl?: string;
+}
+
+/**
+ * Builds the `/mcp` Bearer-token validation middleware.
+ *
+ * Extracted from `startHttpServer` so it can be unit-tested in isolation
+ * without spinning up the OAuth proxy, rate limiter, or MCP transport. The
+ * RFC 6750 §3.1 status mapping (invalid_token → 401, insufficient_scope →
+ * 403) is the load-bearing contract — see `http-server.test.ts` for the
+ * regression suite that pins it.
+ */
+export function createMcpAuthMiddleware(
+  options: McpAuthMiddlewareOptions
+): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+  const { serviceValidator, userValidator, oauthPublicUrl } = options;
+
+  function setChallengeHeader(_req: Request, res: Response, errorCode?: string): void {
+    if (!oauthPublicUrl) return;
+    const metadata = resourceMetadataUrl(oauthPublicUrl);
+    const parts = [`resource_metadata="${metadata}"`];
+    if (errorCode) parts.push(`error="${errorCode}"`);
+    res.setHeader('WWW-Authenticate', `Bearer ${parts.join(', ')}`);
+  }
+
+  return async function mcpAuthMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.info(`MCP ${req.method} ${req.path} → 401 (no bearer)`);
+      setChallengeHeader(req, res);
+      res.status(401).json({ error: 'Missing or invalid Authorization header' });
+      return;
+    }
+    const token = authHeader.slice(7);
+
+    // RFC 6750 §3.1: distinguish `invalid_token` (→ 401, prompts the client
+    // to refresh or re-authenticate) from `insufficient_scope` (→ 403, the
+    // principal lacks permission and a refresh would not help). mcp-remote
+    // and other compliant clients only attempt token refresh on 401; mapping
+    // an expired access_token to 403 caused infinite reconnect loops in the
+    // field — see commit history for the regression.
+    let userInsufficientScope = false;
+    if (userValidator) {
+      const userResult = await validateUserTokenExplain(token, userValidator);
+      if (userResult.ok) {
+        // SEC-F08 (SEC-004): respect --log-redact-upn here too. The Entra `oid`
+        // (non-PII GUID) stays plain when no UPN is present so operators can
+        // still pivot through the directory.
+        const upnForLog = formatUpnForLog(userResult.claims.upn, userValidator.redactUpn);
+        logger.info(
+          `MCP request authenticated as user ${userResult.claims.upn ? upnForLog : userResult.claims.oid} (oid ${userResult.claims.oid})`
+        );
+        // Store the raw bearer token so OBO can use it as the user assertion downstream.
+        res.locals.userToken = token;
+        next();
+        return;
+      }
+      if (userResult.reason === 'insufficient_scope') {
+        userInsufficientScope = true;
+      }
+    }
+
+    if (serviceValidator) {
+      const serviceResult = await validateEntraTokenExplain(token, serviceValidator);
+      if (serviceResult.ok) {
+        next();
+        return;
+      }
+    }
+
+    // If the user-token path rejected on insufficient_scope and the service
+    // path could not rescue (or was not configured), the most accurate
+    // signal back to the client is 403 insufficient_scope. Otherwise the
+    // failure was identity/integrity (signature, expiry, audience, allowlist)
+    // → 401 invalid_token, which lets the client refresh and retry.
+    if (userInsufficientScope) {
+      logger.warn(`MCP ${req.method} ${req.path} → 403 (insufficient_scope)`);
+      setChallengeHeader(req, res, 'insufficient_scope');
+      res.status(403).json({ error: 'insufficient_scope' });
+      return;
+    }
+
+    logger.warn(`MCP ${req.method} ${req.path} → 401 (invalid_token)`);
+    setChallengeHeader(req, res, 'invalid_token');
+    res.status(401).json({ error: 'invalid_token' });
+  };
 }
 
 export async function startHttpServer(options: HttpServerOptions): Promise<void> {
@@ -83,56 +187,14 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     );
   }
 
-  const oauthPublicUrl = options.oauthProxyOptions?.publicUrl;
-  const oauthEnabled = Boolean(options.oauthProxyOptions);
-
-  function setChallengeHeader(_req: Request, res: Response, errorCode?: string): void {
-    if (!oauthEnabled || !oauthPublicUrl) return;
-    const metadata = resourceMetadataUrl(oauthPublicUrl);
-    const parts = [`resource_metadata="${metadata}"`];
-    if (errorCode) parts.push(`error="${errorCode}"`);
-    res.setHeader('WWW-Authenticate', `Bearer ${parts.join(', ')}`);
-  }
-
-  app.use('/mcp', async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      logger.info(`MCP ${req.method} ${req.path} → 401 (no bearer)`);
-      setChallengeHeader(req, res);
-      res.status(401).json({ error: 'Missing or invalid Authorization header' });
-      return;
-    }
-    const token = authHeader.slice(7);
-
-    if (userValidator) {
-      const userClaims = await validateUserToken(token, userValidator);
-      if (userClaims) {
-        // SEC-F08 (SEC-004): respect --log-redact-upn here too. The Entra `oid`
-        // (non-PII GUID) stays plain when no UPN is present so operators can
-        // still pivot through the directory.
-        const upnForLog = formatUpnForLog(userClaims.upn, userValidator.redactUpn);
-        logger.info(
-          `MCP request authenticated as user ${userClaims.upn ? upnForLog : userClaims.oid} (oid ${userClaims.oid})`
-        );
-        // Store the raw bearer token so OBO can use it as the user assertion downstream.
-        res.locals.userToken = token;
-        next();
-        return;
-      }
-    }
-
-    if (serviceValidator) {
-      const serviceValid = await validateEntraToken(token, serviceValidator);
-      if (serviceValid) {
-        next();
-        return;
-      }
-    }
-
-    logger.warn(`MCP ${req.method} ${req.path} → 403 (token validation failed)`);
-    setChallengeHeader(req, res, 'invalid_token');
-    res.status(403).json({ error: 'Token validation failed' });
-  });
+  app.use(
+    '/mcp',
+    createMcpAuthMiddleware({
+      serviceValidator,
+      userValidator,
+      oauthPublicUrl: options.oauthProxyOptions?.publicUrl,
+    })
+  );
 
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     const server = options.createServer(res.locals.userToken as string | undefined);
