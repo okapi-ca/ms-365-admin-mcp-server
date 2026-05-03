@@ -74,17 +74,26 @@ function getSigningKey(
   return withStaleKeyFallback(kid, () => fetchSigningKey(client, kid), getStaleKeyCache(tenantId));
 }
 
-export async function validateEntraToken(
+/**
+ * Result of `validateEntraTokenExplain`. Service tokens (client_credentials)
+ * do not carry user scopes, so every failure mode reduces to `invalid_token`
+ * — there is no `insufficient_scope` path here. Kept as a tagged union for
+ * symmetry with `validateUserTokenExplain` and to make future scope checks
+ * (e.g. `roles` claim) trivial to slot in.
+ */
+export type ValidateEntraTokenResult = { ok: true } | { ok: false; reason: 'invalid_token' };
+
+export async function validateEntraTokenExplain(
   token: string,
   options: TokenValidatorOptions
-): Promise<boolean> {
+): Promise<ValidateEntraTokenResult> {
   try {
     const client = getJwksClient(options.tenantId);
 
     const decoded = jwt.decode(token, { complete: true });
     if (!decoded || typeof decoded === 'string') {
       logger.warn('Token could not be decoded');
-      return false;
+      return { ok: false, reason: 'invalid_token' };
     }
 
     const publicKey = await getSigningKey(options.tenantId, client, decoded.header);
@@ -99,26 +108,40 @@ export async function validateEntraToken(
     if (options.expectedAudience) {
       if (payload.aud !== options.expectedAudience) {
         logger.warn('Token audience mismatch');
-        return false;
+        return { ok: false, reason: 'invalid_token' };
       }
     }
 
     // Verify tenant ID from token payload
     if (payload.tid && payload.tid !== options.tenantId) {
       logger.warn('Token tenant ID mismatch');
-      return false;
+      return { ok: false, reason: 'invalid_token' };
     }
 
     // Verify client ID is in the allowed list
     const clientId = payload.appid || payload.azp;
     if (!clientId || !options.allowedClientIds.includes(clientId)) {
       logger.warn('Token client ID not in allowed list');
-      return false;
+      return { ok: false, reason: 'invalid_token' };
     }
 
-    return true;
+    return { ok: true };
   } catch (error) {
+    // Signature, expiry (TokenExpiredError), JWKS lookup, decode — all collapse
+    // to RFC 6750 `invalid_token` from the wire's point of view.
     logger.error(`Token validation failed: ${(error as Error).message}`);
-    return false;
+    return { ok: false, reason: 'invalid_token' };
   }
+}
+
+/**
+ * Backwards-compatible wrapper. Prefer `validateEntraTokenExplain` in new
+ * callers so the failure mode can be surfaced as an HTTP status.
+ */
+export async function validateEntraToken(
+  token: string,
+  options: TokenValidatorOptions
+): Promise<boolean> {
+  const result = await validateEntraTokenExplain(token, options);
+  return result.ok;
 }
