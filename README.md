@@ -25,6 +25,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | [docs/USE_CASES.md](docs/USE_CASES.md)                                 | 15 typical admin scenarios with sample prompts and tool lists               |
 | [docs/playbooks/](docs/playbooks/README.md)                            | End-to-end security incident response playbooks                             |
+| [agent-skills/](agent-skills/README.md)                                | Drop-in skills for LLM agents (Claude Code et al.) with safety patterns     |
 | [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md)                   | Step-by-step Azure AD app registration and permission consent               |
 | [docs/HTTP_DEPLOYMENT.md](docs/HTTP_DEPLOYMENT.md)                     | HTTP transport, JWT validation, Docker, Azure Container Apps                |
 | [docs/AZURE_DEPLOYMENT_SECURITY.md](docs/AZURE_DEPLOYMENT_SECURITY.md) | Threat model, required controls, and checklist for Azure production deploys |
