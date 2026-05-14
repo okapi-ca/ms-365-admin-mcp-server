@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { wrapUntrustedContent } from './untrusted-envelope.js';
-import { isToolAllowed, type RiskLevel } from './risk-level.js';
+import { effectiveRiskLevel, isToolAllowed, type RiskLevel } from './risk-level.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -273,11 +273,13 @@ export function registerGraphTools(
   readOnly: boolean = false,
   enabledToolsPattern?: string,
   maxRiskLevel: RiskLevel = 'critical',
-  appOnlyGraphClient?: GraphClient
+  appOnlyGraphClient?: GraphClient,
+  writeRiskTiers?: Set<RiskLevel>
 ): number {
   let registeredCount = 0;
   let skippedCount = 0;
   let skippedByRisk = 0;
+  let skippedByRole = 0;
   let failedCount = 0;
 
   let enabledToolsRegex: RegExp | undefined;
@@ -302,6 +304,19 @@ export function registerGraphTools(
     if (!isToolAllowed(endpointConfig?.riskLevel, tool.method, maxRiskLevel)) {
       skippedByRisk++;
       continue;
+    }
+
+    // Per-caller write tier filter (HTTP mode with Entra App Roles).
+    // `writeRiskTiers === undefined` means "no per-caller filter" (stdio, or
+    // server started without role-based gating) — preserve legacy behavior.
+    // A non-undefined Set is authoritative: writes whose effective tier is
+    // absent from the set are not registered for this caller.
+    if (writeRiskTiers !== undefined && tool.method.toUpperCase() !== 'GET') {
+      const tier = effectiveRiskLevel(endpointConfig?.riskLevel, tool.method);
+      if (!writeRiskTiers.has(tier)) {
+        skippedByRole++;
+        continue;
+      }
     }
 
     if (enabledToolsRegex && !enabledToolsRegex.test(tool.alias)) {
@@ -410,8 +425,11 @@ export function registerGraphTools(
     }
   }
 
+  const roleSummary = writeRiskTiers
+    ? `, ${skippedByRole} skipped (role tiers: ${[...writeRiskTiers].join('|') || 'none'})`
+    : '';
   logger.info(
-    `Tool registration complete: ${registeredCount} registered, ${skippedCount} skipped (read-only/filter), ${skippedByRisk} skipped (risk-level cap: ${maxRiskLevel}), ${failedCount} failed`
+    `Tool registration complete: ${registeredCount} registered, ${skippedCount} skipped (read-only/filter), ${skippedByRisk} skipped (risk-level cap: ${maxRiskLevel})${roleSummary}, ${failedCount} failed`
   );
   return registeredCount;
 }

@@ -42,6 +42,10 @@ export interface UserTokenClaims {
   upn?: string;
   name?: string;
   appid?: string;
+  // App Role assignments granted to this user (or to a group they belong to)
+  // on this app registration. Drives per-caller write gating in `server.ts`.
+  // Empty array when no roles are assigned — never undefined.
+  roles: string[];
 }
 
 /**
@@ -74,6 +78,7 @@ export interface UserTokenPayload {
   appid?: string;
   azp?: string;
   scp?: string;
+  roles?: string[];
 }
 
 function audienceMatches(tokenAud: string | string[] | undefined, expected: string[]): boolean {
@@ -156,6 +161,7 @@ export function authorizeUserClaimsExplain(
       upn: payload.upn || payload.preferred_username,
       name: payload.name,
       appid: payload.appid || payload.azp,
+      roles: Array.isArray(payload.roles) ? payload.roles : [],
     },
   };
 }

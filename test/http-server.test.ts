@@ -36,6 +36,7 @@ const VALID_CLAIMS = {
   upn: 'alice@contoso.com',
   name: 'Alice',
   appid: CLIENT_ID,
+  roles: [] as string[],
 };
 
 const userValidator: UserTokenValidatorOptions = {
@@ -176,7 +177,10 @@ describe('createMcpAuthMiddleware — RFC 6750 §3.1 status mapping', () => {
   it('returns 200 when the user path rejects but the service path accepts', async () => {
     resetMocks();
     validateUserTokenExplainMock.mockResolvedValueOnce({ ok: false, reason: 'invalid_token' });
-    validateEntraTokenExplainMock.mockResolvedValueOnce({ ok: true });
+    validateEntraTokenExplainMock.mockResolvedValueOnce({
+      ok: true,
+      claims: { clientId: CLIENT_ID, roles: [] },
+    });
     const res = await postMcp('Bearer valid-service-token');
     expect(res.status).toBe(200);
     const body = (await res.json()) as { ok: boolean; hasUserToken: boolean };
@@ -226,7 +230,10 @@ describe('createMcpAuthMiddleware — RFC 6750 §3.1 status mapping', () => {
       ok: false,
       reason: 'insufficient_scope',
     });
-    validateEntraTokenExplainMock.mockResolvedValueOnce({ ok: true });
+    validateEntraTokenExplainMock.mockResolvedValueOnce({
+      ok: true,
+      claims: { clientId: CLIENT_ID, roles: [] },
+    });
     const res = await postMcp('Bearer admin-service-token');
     expect(res.status).toBe(200);
   });

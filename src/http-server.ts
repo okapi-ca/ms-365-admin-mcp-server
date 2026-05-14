@@ -16,7 +16,7 @@ import rateLimit from 'express-rate-limit';
 export interface HttpServerOptions {
   port: number;
   host?: string;
-  createServer: (userToken?: string) => McpServer;
+  createServer: (userToken?: string, roles?: string[]) => McpServer;
   tokenValidatorOptions?: TokenValidatorOptions;
   userTokenValidatorOptions?: UserTokenValidatorOptions;
   oauthProxyOptions?: OAuthProxyOptions;
@@ -110,6 +110,10 @@ export function createMcpAuthMiddleware(
         );
         // Store the raw bearer token so OBO can use it as the user assertion downstream.
         res.locals.userToken = token;
+        // Propagate App Role assignments to the per-request McpServer so write
+        // tools can be filtered by tier. Empty array = no Tools.Write.* role
+        // granted = read-only session for this caller.
+        res.locals.roles = userResult.claims.roles;
         next();
         return;
       }
@@ -121,6 +125,9 @@ export function createMcpAuthMiddleware(
     if (serviceValidator) {
       const serviceResult = await validateEntraTokenExplain(token, serviceValidator);
       if (serviceResult.ok) {
+        // Same role propagation for service-to-service callers. App Roles
+        // assigned to the calling SP appear in the JWT `roles` claim.
+        res.locals.roles = serviceResult.claims.roles;
         next();
         return;
       }
@@ -197,7 +204,10 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
   );
 
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
-    const server = options.createServer(res.locals.userToken as string | undefined);
+    const server = options.createServer(
+      res.locals.userToken as string | undefined,
+      res.locals.roles as string[] | undefined
+    );
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on('close', () => {
       void transport.close().catch(() => {});
