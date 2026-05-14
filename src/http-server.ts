@@ -156,6 +156,24 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
 
   app.set('trust proxy', 1);
   app.use(securityHeaders);
+
+  // SEC-005: outer per-IP rate limiter runs BEFORE the body parsers so an
+  // unauthenticated attacker cannot force 100 KB JSON parses at full request
+  // rate. The inner /mcp limiter (below) still gates authenticated traffic
+  // at 100/min. 200 req/min is a generous cap that covers /health, OAuth
+  // proxy and /mcp combined for a single IP — adjust upward if a legitimate
+  // admin cohort shares a NAT.
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      max: 200,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req) => req.ip ?? 'unknown',
+      message: { error: 'Too many requests, please try again later' },
+    })
+  );
+
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
