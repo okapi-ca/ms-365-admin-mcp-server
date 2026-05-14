@@ -16,6 +16,15 @@ interface EntraTokenPayload {
   appid?: string;
   azp?: string;
   tid?: string;
+  // App Role assignments granted to the calling SP. Present when one or more
+  // app roles defined on this app's manifest are assigned to the client
+  // service principal via Enterprise Apps → Users and groups.
+  roles?: string[];
+}
+
+export interface ServiceTokenClaims {
+  clientId: string;
+  roles: string[];
 }
 
 const jwksClients = new Map<string, jwksRsa.JwksClient>();
@@ -78,10 +87,17 @@ function getSigningKey(
  * Result of `validateEntraTokenExplain`. Service tokens (client_credentials)
  * do not carry user scopes, so every failure mode reduces to `invalid_token`
  * — there is no `insufficient_scope` path here. Kept as a tagged union for
- * symmetry with `validateUserTokenExplain` and to make future scope checks
- * (e.g. `roles` claim) trivial to slot in.
+ * symmetry with `validateUserTokenExplain`.
+ *
+ * On success, `claims.roles` carries any App Role assignments granted to the
+ * calling service principal. Consumers (e.g. per-caller write gating in
+ * `server.ts`) check membership against `Tools.Write` etc. — absence of a
+ * role is NOT an authentication failure here, only an authorization signal
+ * surfaced to downstream tool registration.
  */
-export type ValidateEntraTokenResult = { ok: true } | { ok: false; reason: 'invalid_token' };
+export type ValidateEntraTokenResult =
+  | { ok: true; claims: ServiceTokenClaims }
+  | { ok: false; reason: 'invalid_token' };
 
 export async function validateEntraTokenExplain(
   token: string,
@@ -125,7 +141,13 @@ export async function validateEntraTokenExplain(
       return { ok: false, reason: 'invalid_token' };
     }
 
-    return { ok: true };
+    return {
+      ok: true,
+      claims: {
+        clientId,
+        roles: Array.isArray(payload.roles) ? payload.roles : [],
+      },
+    };
   } catch (error) {
     // Signature, expiry (TokenExpiredError), JWKS lookup, decode — all collapse
     // to RFC 6750 `invalid_token` from the wire's point of view.

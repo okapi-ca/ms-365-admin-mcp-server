@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   RISK_LEVELS,
+  computeWriteRiskTiers,
   effectiveRiskLevel,
   isToolAllowed,
   isValidRiskLevel,
@@ -93,5 +94,66 @@ describe('risk-level — isToolAllowed gate', () => {
     expect(isToolAllowed(undefined, 'POST', 'medium')).toBe(false);
     expect(isToolAllowed(undefined, 'POST', 'high')).toBe(false);
     expect(isToolAllowed(undefined, 'POST', 'critical')).toBe(true);
+  });
+});
+
+describe('risk-level — computeWriteRiskTiers', () => {
+  it('returns undefined when roles is undefined (stdio / legacy)', () => {
+    // undefined preserves the existing --allow-writes / --max-risk-level
+    // behavior — no per-caller filter is applied. stdio has no caller identity.
+    expect(computeWriteRiskTiers(undefined)).toBeUndefined();
+  });
+
+  it('returns an empty Set when authenticated but no Tools.Write.* role is granted', () => {
+    // Authenticated caller without any write role → read-only session.
+    // Distinct from `undefined`: the filter IS active, it just admits no tier.
+    const tiers = computeWriteRiskTiers([]);
+    expect(tiers).toBeInstanceOf(Set);
+    expect(tiers!.size).toBe(0);
+  });
+
+  it('LowMedium grants low + medium together', () => {
+    const tiers = computeWriteRiskTiers(['Tools.Write.LowMedium']);
+    expect([...tiers!].sort()).toEqual(['low', 'medium']);
+  });
+
+  it('High grants only high', () => {
+    const tiers = computeWriteRiskTiers(['Tools.Write.High']);
+    expect([...tiers!]).toEqual(['high']);
+  });
+
+  it('Critical grants only critical', () => {
+    const tiers = computeWriteRiskTiers(['Tools.Write.Critical']);
+    expect([...tiers!]).toEqual(['critical']);
+  });
+
+  it('the three roles are additive — combinations grant the union', () => {
+    // Non-contiguous combos are valid: e.g. SOC that can triage (LowMedium)
+    // and execute incident-response actions (Critical) but not provisioning (High).
+    const tiers = computeWriteRiskTiers(['Tools.Write.LowMedium', 'Tools.Write.Critical']);
+    expect([...tiers!].sort()).toEqual(['critical', 'low', 'medium']);
+  });
+
+  it('all three roles together grant every tier', () => {
+    const tiers = computeWriteRiskTiers([
+      'Tools.Write.LowMedium',
+      'Tools.Write.High',
+      'Tools.Write.Critical',
+    ]);
+    expect([...tiers!].sort()).toEqual(['critical', 'high', 'low', 'medium']);
+  });
+
+  it('ignores unknown roles silently', () => {
+    // Unknown roles must not error or grant tiers — forward-compatibility
+    // with future roles on the same app registration (e.g. Tools.Read.Sensitive).
+    const tiers = computeWriteRiskTiers(['Tools.Write.High', 'Tools.Some.Other.Role', 'Reader']);
+    expect([...tiers!]).toEqual(['high']);
+  });
+
+  it('is case-sensitive on role names (matches Entra App Role `value`)', () => {
+    // App Role `value` is preserved verbatim in the JWT `roles` claim.
+    // Lowercase variants would be a misconfiguration and must NOT grant anything.
+    const tiers = computeWriteRiskTiers(['tools.write.high', 'TOOLS.WRITE.HIGH']);
+    expect(tiers!.size).toBe(0);
   });
 });

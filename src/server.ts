@@ -6,6 +6,7 @@ import GraphClient from './graph-client.js';
 import AuthManager from './auth.js';
 import type { CommandOptions } from './cli.ts';
 import { getSecrets, type AppSecrets } from './secrets.js';
+import { computeWriteRiskTiers } from './risk-level.js';
 
 class AdminGraphServer {
   private authManager: AuthManager;
@@ -28,7 +29,7 @@ class AdminGraphServer {
     this.server = this.createServer();
   }
 
-  createServer(userToken?: string): McpServer {
+  createServer(userToken?: string, roles?: string[]): McpServer {
     const server = new McpServer({
       name: 'Microsoft365AdminMCP',
       version: this.version,
@@ -46,13 +47,18 @@ class AdminGraphServer {
     const appOnlyGraphClient = userToken
       ? new GraphClient(() => this.authManager.getToken(), this.secrets!)
       : undefined;
+    // Per-caller write gating via Entra App Roles. `undefined` for stdio
+    // (no caller identity) preserves the existing --allow-writes / --max-risk-level
+    // behavior. Composes in AND with both controls in graph-tools.ts.
+    const writeRiskTiers = computeWriteRiskTiers(roles);
     registerGraphTools(
       server,
       graphClient,
       this.options.readOnly,
       this.options.enabledTools,
       this.options.maxRiskLevel,
-      appOnlyGraphClient
+      appOnlyGraphClient,
+      writeRiskTiers
     );
     return server;
   }

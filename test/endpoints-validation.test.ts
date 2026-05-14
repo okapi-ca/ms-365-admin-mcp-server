@@ -19,6 +19,7 @@ interface Endpoint {
   appPermissions?: string[];
   scopes?: string[];
   workScopes?: string[];
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 const endpoints: Endpoint[] = JSON.parse(
@@ -49,6 +50,27 @@ describe('endpoints.json validation', () => {
     if (missing.length > 0) {
       const details = missing.map((e) => `  ${e.toolName}`).join('\n');
       expect.fail(`${missing.length} endpoint(s) are missing appPermissions.\n${details}`);
+    }
+  });
+
+  it('should have a riskLevel on every write endpoint', () => {
+    // Per-caller write gating (App Roles → Tools.Write.LowMedium / High / Critical)
+    // filters writes by their `riskLevel`. A write without riskLevel falls back
+    // to `critical` via effectiveRiskLevel(), which is fail-safe — but the
+    // intent is that every write be classified explicitly. This guard makes
+    // adding a write without a tier a build failure rather than silent surprise.
+    const writes = endpoints.filter((e) => e.method.toLowerCase() !== 'get');
+    const unclassified = writes.filter((e) => !e.riskLevel);
+
+    if (unclassified.length > 0) {
+      const details = unclassified
+        .map((e) => `  ${e.toolName} (${e.method.toUpperCase()} ${e.pathPattern})`)
+        .join('\n');
+      expect.fail(
+        `${unclassified.length} write endpoint(s) missing riskLevel. ` +
+          `Set "riskLevel": "low" | "medium" | "high" | "critical" — low for reversible/benign mutations, ` +
+          `critical for destructive or irrevocable operations.\n${details}`
+      );
     }
   });
 

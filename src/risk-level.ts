@@ -51,3 +51,36 @@ export function isToolAllowed(
 ): boolean {
   return rank(effectiveRiskLevel(configuredRiskLevel, method)) <= rank(maxRiskLevel);
 }
+
+/**
+ * Map Entra App Role assignments on this app registration to the set of
+ * write-tier `RiskLevel`s the caller is authorized to invoke.
+ *
+ * Three independent roles (additive, no implicit hierarchy):
+ *   - `Tools.Write.LowMedium` → grants `low` + `medium`
+ *   - `Tools.Write.High`      → grants `high`
+ *   - `Tools.Write.Critical`  → grants `critical`
+ *
+ * Returns:
+ *   - `undefined` when `roles === undefined`: caller identity not available
+ *     (stdio transport) — fall back to the existing `--allow-writes` /
+ *     `--max-risk-level` controls without an extra per-caller filter.
+ *   - empty `Set` when authenticated but no Tools.Write.* role is assigned:
+ *     caller is effectively read-only for this session.
+ *   - populated `Set` otherwise: registration pipeline includes only writes
+ *     whose effective tier is in the set.
+ *
+ * This filter composes in AND with `--max-risk-level` — a tier present in
+ * the set but excluded by the global cap stays excluded.
+ */
+export function computeWriteRiskTiers(roles: string[] | undefined): Set<RiskLevel> | undefined {
+  if (roles === undefined) return undefined;
+  const tiers = new Set<RiskLevel>();
+  if (roles.includes('Tools.Write.LowMedium')) {
+    tiers.add('low');
+    tiers.add('medium');
+  }
+  if (roles.includes('Tools.Write.High')) tiers.add('high');
+  if (roles.includes('Tools.Write.Critical')) tiers.add('critical');
+  return tiers;
+}
