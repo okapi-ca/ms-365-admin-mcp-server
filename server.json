@@ -8,13 +8,13 @@
     "url": "https://github.com/okapi-ca/ms-365-admin-mcp-server",
     "source": "github"
   },
-  "version": "0.6.2",
+  "version": "0.6.3",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@okapi-ca/ms-365-admin-mcp-server",
-      "version": "0.6.2",
+      "version": "0.6.3",
       "transport": {
         "type": "stdio"
       },
