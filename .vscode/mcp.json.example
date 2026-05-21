@@ -1,0 +1,108 @@
+// Example VS Code MCP configuration for ms-365-admin-mcp-server.
+//
+// Copy this file to .vscode/mcp.json and fill in your tenant / app values.
+// The real .vscode/mcp.json is gitignored so secrets resolved from prompts
+// never end up in git history.
+//
+// VS Code 1.102+ supports MCP servers natively. Three deployment shapes are
+// shown below — uncomment the one that matches your setup.
+//
+// Reference: https://code.visualstudio.com/docs/copilot/chat/mcp-servers
+{
+  // "inputs" are prompted once on first start and stored in VS Code's
+  // secret store. They are NOT written to this file.
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "ms365-tenant-id",
+      "description": "Azure AD tenant ID (specific GUID, not 'common')"
+    },
+    {
+      "type": "promptString",
+      "id": "ms365-client-id",
+      "description": "App registration client ID"
+    },
+    {
+      "type": "promptString",
+      "id": "ms365-client-secret",
+      "description": "App registration client secret",
+      "password": true
+    }
+  ],
+
+  "servers": {
+    // -------------------------------------------------------------------
+    // Variant 1 — stdio, globally installed (recommended)
+    // Prereq: npm install -g @okapi-ca/ms-365-admin-mcp-server
+    // -------------------------------------------------------------------
+    "ms365-admin": {
+      "type": "stdio",
+      "command": "ms-365-admin-mcp-server",
+      "args": [
+        "--preset",
+        "security,audit,identity,health"
+        // Add "--allow-writes" only when you want incident-response,
+        // device remote actions, or other mutating tools available.
+      ],
+      "env": {
+        "MS365_ADMIN_MCP_TENANT_ID": "${input:ms365-tenant-id}",
+        "MS365_ADMIN_MCP_CLIENT_ID": "${input:ms365-client-id}",
+        "MS365_ADMIN_MCP_CLIENT_SECRET": "${input:ms365-client-secret}"
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // Variant 2 — stdio, no global install (npx)
+    // Tradeoff: 2–3 s cold start at every VS Code launch.
+    // -------------------------------------------------------------------
+    // "ms365-admin": {
+    //   "type": "stdio",
+    //   "command": "npx",
+    //   "args": [
+    //     "-y",
+    //     "@okapi-ca/ms-365-admin-mcp-server@latest",
+    //     "--preset", "security,audit,identity,health"
+    //   ],
+    //   "env": {
+    //     "MS365_ADMIN_MCP_TENANT_ID":     "${input:ms365-tenant-id}",
+    //     "MS365_ADMIN_MCP_CLIENT_ID":     "${input:ms365-client-id}",
+    //     "MS365_ADMIN_MCP_CLIENT_SECRET": "${input:ms365-client-secret}"
+    //   }
+    // }
+
+    // -------------------------------------------------------------------
+    // Variant 3a — Remote HTTP, VS Code native OAuth (1.103+)
+    // Server runs with --transport http behind a reverse proxy that
+    // serves OAuth 2.0 DCR (Dynamic Client Registration). VS Code opens
+    // the browser, handles the callback, and stores the token in its
+    // secret store. No inputs needed — credentials live server-side.
+    // -------------------------------------------------------------------
+    // "ms365-admin-remote": {
+    //   "type": "http",
+    //   "url": "https://your-mcp-host.example.com/mcp"
+    // }
+
+    // -------------------------------------------------------------------
+    // Variant 3b — Remote HTTP via mcp-remote bridge
+    // Use when the native HTTP flow can't open a browser on localhost
+    // (e.g. macOS Platform SSO intercepting the WebKit OAuth callback,
+    // headless / SSH dev envs, or VS Code older than 1.103).
+    //
+    // Bootstrap once per workstation, on any trusted device:
+    //   npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+    //     --server https://your-mcp-host.example.com/mcp
+    //
+    // The helper pre-seeds ~/.mcp-auth/mcp-remote-*/ so mcp-remote
+    // finds the cached tokens without ever opening a browser.
+    // -------------------------------------------------------------------
+    // "ms365-admin-remote": {
+    //   "type": "stdio",
+    //   "command": "npx",
+    //   "args": [
+    //     "-y",
+    //     "mcp-remote",
+    //     "https://your-mcp-host.example.com/mcp"
+    //   ]
+    // }
+  }
+}

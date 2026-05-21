@@ -105,6 +105,49 @@ npm run build
 }
 ```
 
+### VS Code (1.102+)
+
+VS Code consumes the same MCP protocol but uses a different config layout —
+`servers` instead of `mcpServers`, an explicit `type` field, and `inputs` for
+secret prompts. A ready-to-copy sample lives at
+[`.vscode/mcp.json.example`](.vscode/mcp.json.example); copy it to
+`.vscode/mcp.json` and VS Code will prompt for the tenant / client / secret on
+first start, then store them in its secret store (the real `mcp.json` is
+gitignored so resolved secrets never reach the repo).
+
+Minimal stdio setup:
+
+```jsonc
+{
+  "inputs": [
+    { "type": "promptString", "id": "ms365-tenant-id",     "description": "Tenant ID" },
+    { "type": "promptString", "id": "ms365-client-id",     "description": "Client ID" },
+    { "type": "promptString", "id": "ms365-client-secret", "description": "Client secret", "password": true }
+  ],
+  "servers": {
+    "ms365-admin": {
+      "type": "stdio",
+      "command": "ms-365-admin-mcp-server",
+      "args": ["--preset", "security,audit,identity,health"],
+      "env": {
+        "MS365_ADMIN_MCP_TENANT_ID":     "${input:ms365-tenant-id}",
+        "MS365_ADMIN_MCP_CLIENT_ID":     "${input:ms365-client-id}",
+        "MS365_ADMIN_MCP_CLIENT_SECRET": "${input:ms365-client-secret}"
+      }
+    }
+  }
+}
+```
+
+For remote HTTP deployments, use `"type": "http"` with a `url` field (VS Code
+1.103+ handles OAuth 2.0 Dynamic Client Registration natively) or fall back to
+the `mcp-remote` bridge when the native browser flow is unavailable — see the
+example file for both shapes.
+
+Tools surface in **Agent mode** (GitHub Copilot Chat). VS Code asks for
+per-tool approval; the `--preset` flag above keeps the catalog manageable.
+Use `Cmd/Ctrl+Shift+P` → `MCP: List Servers` → `Show Output` to see logs.
+
 ### Remote HTTP server: device_code authentication (RFC 8628)
 
 If the server runs in HTTP / OAuth mode on a remote host (e.g. Azure Container Apps) and the client connects via [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), the standard flow requires a browser to reach `localhost:14543/oauth/callback`. When that isn't possible — macOS Platform SSO hijacks the WebKit flow, Claude Code runs in a headless Docker container, the user is on a remote SSH dev env — use the `ms-365-admin-mcp-auth` bootstrap to pre-seed `mcp-remote`'s token cache instead.

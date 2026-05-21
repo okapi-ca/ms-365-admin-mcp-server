@@ -25,6 +25,11 @@ src/generated/client.ts
 .idea
 .vscode-test
 
+# VS Code MCP config — resolved secrets from input prompts must never be
+# committed. Only the sanitized example file is checked in.
+.vscode/mcp.json
+!.vscode/mcp.json.example
+
 # Claude
 CLAUDE.md
 .claude/
