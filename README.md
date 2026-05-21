@@ -120,9 +120,14 @@ Minimal stdio setup:
 ```jsonc
 {
   "inputs": [
-    { "type": "promptString", "id": "ms365-tenant-id",     "description": "Tenant ID" },
-    { "type": "promptString", "id": "ms365-client-id",     "description": "Client ID" },
-    { "type": "promptString", "id": "ms365-client-secret", "description": "Client secret", "password": true }
+    { "type": "promptString", "id": "ms365-tenant-id", "description": "Tenant ID" },
+    { "type": "promptString", "id": "ms365-client-id", "description": "Client ID" },
+    {
+      "type": "promptString",
+      "id": "ms365-client-secret",
+      "description": "Client secret",
+      "password": true,
+    },
   ],
   "servers": {
     "ms365-admin": {
@@ -130,12 +135,12 @@ Minimal stdio setup:
       "command": "ms-365-admin-mcp-server",
       "args": ["--preset", "security,audit,identity,health"],
       "env": {
-        "MS365_ADMIN_MCP_TENANT_ID":     "${input:ms365-tenant-id}",
-        "MS365_ADMIN_MCP_CLIENT_ID":     "${input:ms365-client-id}",
-        "MS365_ADMIN_MCP_CLIENT_SECRET": "${input:ms365-client-secret}"
-      }
-    }
-  }
+        "MS365_ADMIN_MCP_TENANT_ID": "${input:ms365-tenant-id}",
+        "MS365_ADMIN_MCP_CLIENT_ID": "${input:ms365-client-id}",
+        "MS365_ADMIN_MCP_CLIENT_SECRET": "${input:ms365-client-secret}",
+      },
+    },
+  },
 }
 ```
 
