@@ -8,6 +8,46 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-05-22
+
+### Added — `assignmentFilters` tools (532 tools)
+
+Five new tools for Intune assignment filters (dynamic membership filters scoping policy/app assignments to a sub-set of an Entra group):
+
+- `list-assignment-filters` — GET `/deviceManagement/assignmentFilters`
+- `get-assignment-filter` — GET `/deviceManagement/assignmentFilters/{id}`
+- `create-assignment-filter` — POST (risk: medium)
+- `update-assignment-filter` — PATCH (risk: medium)
+- `delete-assignment-filter` — DELETE (risk: high)
+
+Filters use a KQL-like rule syntax on device properties (e.g. `(device.osVersion -startsWith "14")`) and are referenced by `deviceConfigurations` / `mobileApps` / `deviceCompliancePolicies` assignments to target a sub-set of a group ("Macs Sonoma only", "iPhones supervised", "Windows 11 23H2+"). Reduces the need to maintain dozens of overlapping Entra groups.
+
+Beta-only endpoint (`/beta/deviceManagement/assignmentFilters`) — leveraging the per-endpoint `apiVersion` infrastructure shipped in 0.7.0.
+
+Permission: `DeviceManagementConfiguration.ReadWrite.All` (already required for `deviceConfigurations`).
+
+### Added — `deviceHealthScripts` tools — Intune Remediations / Proactive Remediations
+
+Six new tools for Intune Remediations (paired detection + remediation PowerShell scripts for Windows 10/11 Azure AD joined devices):
+
+- `list-device-health-scripts` — GET `/deviceManagement/deviceHealthScripts`
+- `get-device-health-script` — GET `/deviceManagement/deviceHealthScripts/{id}`
+- `create-device-health-script` — POST (risk: medium)
+- `update-device-health-script` — PATCH (risk: medium)
+- `delete-device-health-script` — DELETE (risk: high)
+- `assign-device-health-script` — POST `/assign` (risk: medium; REPLACES existing assignments; supports daily/hourly/run-once schedules)
+
+The detect-and-fix model — detection script returns 0 (compliant) or 1 (needs remediation); remediation script only runs when detection returns 1. Examples: verify FileVault is on, verify a service is running, verify CIS hardening, verify an agent is installed. Modern replacement for `deviceShellScripts` for "verify + fix" use cases on Windows.
+
+Beta-only endpoint (`/beta/deviceManagement/deviceHealthScripts`). Both scripts are base64-encoded; updating either re-deploys to all assigned devices on next Intune Management Extension sync (24h cadence by default).
+
+Permission: `DeviceManagementScripts.ReadWrite.All` (already required for `deviceShellScripts` since 0.7.0).
+
+### Notes
+
+- This release amortizes the per-endpoint `apiVersion` infrastructure shipped in 0.7.0 — both new resources are beta-only, but no new infrastructure was needed.
+- 195/195 tests pass, no regressions.
+
 ## [0.7.0] — 2026-05-22
 
 ### Added — `deviceShellScripts` tools for macOS Platform Scripts (521 tools)
