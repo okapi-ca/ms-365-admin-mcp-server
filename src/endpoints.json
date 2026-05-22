@@ -845,6 +845,22 @@
     "llmTip": "Gets device status overview for a configuration profile. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
   },
   {
+    "pathPattern": "/deviceManagement/deviceShellScripts",
+    "method": "get",
+    "toolName": "list-device-shell-scripts",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "llmTip": "Lists Intune macOS Platform Scripts (shell scripts deployed to managed Macs). Each has displayName, description, runAsAccount (system|user), executionFrequency (ISO 8601 duration; PT0S=run once, P1D=daily), retryCount, blockExecutionNotifications, fileName, roleScopeTagIds. scriptContent is NOT returned in list responses — fetch a specific script with $select=scriptContent. Supports $filter, $top, $skip, $select, $expand, $orderby, $count.",
+    "apiVersion": "beta"
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceShellScripts/{deviceShellScript-id}",
+    "method": "get",
+    "toolName": "get-device-shell-script",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "llmTip": "Gets a specific Intune macOS Platform Script by ID. By default scriptContent is NOT returned — pass $select=id,displayName,scriptContent,runAsAccount,executionFrequency,... to fetch the base64-encoded script body. Supports $select and $expand.",
+    "apiVersion": "beta"
+  },
+  {
     "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
     "method": "get",
     "toolName": "list-enrollment-configurations",
@@ -2878,6 +2894,42 @@
     "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Deletes a device configuration profile. Devices assigned to this profile will no longer receive these settings."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceShellScripts",
+    "method": "post",
+    "toolName": "create-device-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a new Intune macOS Platform Script. Body example: {\"@odata.type\":\"#microsoft.graph.deviceShellScript\",\"displayName\":\"Install agent\",\"description\":\"...\",\"scriptContent\":\"<base64-encoded shell script, LF line endings>\",\"runAsAccount\":\"system\",\"executionFrequency\":\"PT0S\",\"retryCount\":3,\"blockExecutionNotifications\":true,\"fileName\":\"install-agent.sh\",\"roleScopeTagIds\":[\"0\"]}. scriptContent MUST be strict base64 (not URL-safe) of a script with LF line endings — CRLF will break execution on Macs. Use runAsAccount=user for scripts that interact with the user session (e.g. osascript touching System Events).",
+    "apiVersion": "beta"
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceShellScripts/{deviceShellScript-id}",
+    "method": "patch",
+    "toolName": "update-device-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a macOS Platform Script (partial update). Same body shape as create-device-shell-script — only fields included in the body are changed. To update scriptContent, send the full new base64-encoded body. Assigned Macs receive the new version on their next Intune check-in.",
+    "apiVersion": "beta"
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceShellScripts/{deviceShellScript-id}",
+    "method": "delete",
+    "toolName": "delete-device-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes an Intune macOS Platform Script. All assigned Macs immediately stop receiving the script on their next check-in. This does NOT undo what the script already did on devices — it only unassigns. Confirm with the user before calling on a script with active assignments.",
+    "apiVersion": "beta"
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceShellScripts/{deviceShellScript-id}/assign",
+    "method": "post",
+    "toolName": "assign-device-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Assigns a macOS Platform Script to Entra groups. Body: {\"deviceManagementScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list.",
+    "apiVersion": "beta"
   },
   {
     "pathPattern": "/sites/{site-id}/permissions",
