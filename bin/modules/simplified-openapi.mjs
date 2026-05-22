@@ -1,12 +1,29 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 
-export function createAndSaveSimplifiedOpenAPI(endpointsFile, openapiFile, openapiTrimmedFile) {
+export function createAndSaveSimplifiedOpenAPI(
+  endpointsFile,
+  openapiFile,
+  openapiTrimmedFile,
+  betaOpenapiFile
+) {
   const allEndpoints = JSON.parse(fs.readFileSync(endpointsFile, 'utf8'));
   const endpoints = allEndpoints.filter((endpoint) => !endpoint.disabled);
 
   const spec = fs.readFileSync(openapiFile, 'utf8');
   const openApiSpec = yaml.load(spec);
+
+  const betaEndpoints = endpoints.filter((e) => e.apiVersion === 'beta');
+  if (betaEndpoints.length > 0) {
+    if (!betaOpenapiFile || !fs.existsSync(betaOpenapiFile)) {
+      throw new Error(
+        `${betaEndpoints.length} endpoint(s) declare apiVersion="beta" but beta OpenAPI file not found at ${betaOpenapiFile}. Run \`npm run generate -- --force\` to download both specs.`
+      );
+    }
+    console.log(`📡 Merging ${betaEndpoints.length} beta endpoint(s) from ${betaOpenapiFile}`);
+    const betaSpec = yaml.load(fs.readFileSync(betaOpenapiFile, 'utf8'));
+    mergeBetaIntoV1(openApiSpec, betaSpec, betaEndpoints);
+  }
 
   for (const endpoint of endpoints) {
     if (!openApiSpec.paths[endpoint.pathPattern]) {
@@ -60,6 +77,71 @@ export function createAndSaveSimplifiedOpenAPI(endpointsFile, openapiFile, opena
   pruneUnusedSchemas(openApiSpec, usedSchemas);
 
   fs.writeFileSync(openapiTrimmedFile, yaml.dump(openApiSpec));
+}
+
+function mergeBetaIntoV1(v1Spec, betaSpec, betaEndpoints) {
+  v1Spec.paths = v1Spec.paths || {};
+  v1Spec.components = v1Spec.components || {};
+
+  const betaPathPatterns = new Set(betaEndpoints.map((e) => e.pathPattern));
+  for (const pathPattern of betaPathPatterns) {
+    const betaPath = betaSpec.paths?.[pathPattern];
+    if (!betaPath) {
+      throw new Error(`Beta path "${pathPattern}" not found in beta OpenAPI spec.`);
+    }
+    v1Spec.paths[pathPattern] = betaPath;
+
+    const refs = collectRefs(betaPath);
+    for (const ref of refs) {
+      copyBetaComponent(v1Spec, betaSpec, ref);
+    }
+  }
+}
+
+function collectRefs(obj, refs = new Set(), visited = new Set()) {
+  if (!obj || typeof obj !== 'object' || visited.has(obj)) return refs;
+  visited.add(obj);
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => collectRefs(item, refs, visited));
+    return refs;
+  }
+
+  for (const [key, val] of Object.entries(obj)) {
+    if (key === '$ref' && typeof val === 'string' && val.startsWith('#/components/')) {
+      refs.add(val);
+    } else if (typeof val === 'object') {
+      collectRefs(val, refs, visited);
+    }
+  }
+  return refs;
+}
+
+function copyBetaComponent(v1Spec, betaSpec, ref) {
+  const m = ref.match(/^#\/components\/(schemas|parameters|responses|requestBodies)\/(.+)$/);
+  if (!m) return;
+  const [, kind, name] = m;
+
+  v1Spec.components[kind] = v1Spec.components[kind] || {};
+
+  if (v1Spec.components[kind][name]) {
+    return;
+  }
+
+  const betaComponent = betaSpec.components?.[kind]?.[name];
+  if (!betaComponent) {
+    console.warn(`   ⚠️  Beta component not found in beta spec: ${ref}`);
+    return;
+  }
+
+  v1Spec.components[kind][name] = betaComponent;
+
+  const nestedRefs = collectRefs(betaComponent);
+  for (const nestedRef of nestedRefs) {
+    if (nestedRef !== ref) {
+      copyBetaComponent(v1Spec, betaSpec, nestedRef);
+    }
+  }
 }
 
 function removeODataTypeRecursively(obj) {

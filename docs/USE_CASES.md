@@ -304,6 +304,40 @@ node dist/index.js --preset identity --allow-writes
 
 ---
 
+## 16. Intune macOS Platform Scripts — automated deployment
+
+**Context.** Deploying shell scripts to managed Macs via Intune: wallpaper segmentation, CIS hardening, agent install (Zabbix, BeyondTrust), troubleshooting helpers. Previously required manual portal operations because `deviceShellScripts` is beta-only and not exposed by most Graph clients.
+
+**Startup command.**
+
+```bash
+node dist/index.js --preset intune --allow-writes --max-risk-level high
+```
+
+> `delete-device-shell-script` is **high** risk. If you only need to push and assign new scripts, run with `--max-risk-level medium` and elevate only when intentionally removing.
+
+**Sample prompt (deploy).**
+
+> "Create a Platform Script named `download-wallpaper-staff-fr` that runs as the user, executes once (`PT0S`), retries 3 times, with `blockExecutionNotifications: true`. The script body is in `./scripts/wallpaper-fr-staff.sh` — base64-encode it before submitting. Once created, assign it to the Entra group `Gr-Sec-AAD-INTUNE-MAC-STAFF-FR`."
+
+**Sample prompt (audit).**
+
+> "List all macOS Platform Scripts in the tenant. For each, fetch the script content (`$select=id,displayName,scriptContent,fileName,runAsAccount`), decode the base64, and flag any that contain `sudo`, `curl | bash`, or hardcoded credentials."
+
+**Sample prompt (rotate).**
+
+> "The script `download-wallpaper-staff-fr` needs an updated payload. Read the new version from `./scripts/wallpaper-fr-staff-v2.sh`, base64-encode it, and PATCH the existing script via `update-device-shell-script`. Do not touch the assignments — they stay as-is."
+
+**Key tools.** `list-device-shell-scripts`, `get-device-shell-script`, `create-device-shell-script` (**medium**), `update-device-shell-script` (**medium**), `delete-device-shell-script` (**high**), `assign-device-shell-script` (**medium**).
+
+> **Gotcha — assign is REPLACE, not ADD.** `assign-device-shell-script` overwrites all existing assignments with the body's list. To add a group without removing others, first GET the current assignments (via the script's `groupAssignments` navigation property), append your new target, then POST the merged list.
+>
+> **Gotcha — base64 + LF.** `scriptContent` is strict base64 of a script with LF line endings. CRLF will break execution on the Mac. Encode with `Buffer.from(fs.readFileSync(path,'utf8').replace(/\r\n/g,'\n')).toString('base64')`.
+>
+> **Gotcha — beta endpoint.** This family lives in `/beta/deviceManagement/...`. Microsoft documents the beta endpoint as "not intended for production" but the Intune portal itself calls it under the hood. Treat as production-validated; track Microsoft's API changelog for surprises.
+
+---
+
 ## General recommendations
 
 ### Least-privilege preset

@@ -8,6 +8,50 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-22
+
+### Added — `deviceShellScripts` tools for macOS Platform Scripts (521 tools)
+
+Six new tools for Intune macOS Platform Scripts (shell scripts deployed to managed Macs):
+
+- `list-device-shell-scripts` — GET `/deviceManagement/deviceShellScripts`
+- `get-device-shell-script` — GET `/deviceManagement/deviceShellScripts/{id}`
+- `create-device-shell-script` — POST (risk: medium)
+- `update-device-shell-script` — PATCH (risk: medium)
+- `delete-device-shell-script` — DELETE (risk: high)
+- `assign-device-shell-script` — POST `/assign` (risk: medium; REPLACES existing assignments)
+
+Closes a notable gap in Intune coverage: `deviceConfigurations` was already supported, but `deviceShellScripts` was not — making it impossible to automate the deployment of shell scripts to managed macOS devices. The trigger was a multi-segment macOS wallpaper rollout (LCI Education, May 2026) that successfully created/updated 6 Configuration Profiles via the existing tools but had to fall back to manual portal operations for the 7 associated Platform Scripts.
+
+Required Graph permission: **`DeviceManagementScripts.ReadWrite.All`** (new — must be consented on the app registration).
+
+### Added — per-endpoint Graph `apiVersion` override (v1.0 / beta)
+
+`deviceShellScripts` is documented by Microsoft as a beta-only endpoint (never promoted to v1.0). To support it, the server now allows individual entries in `endpoints.json` to opt into `/beta/` via an optional field:
+
+```json
+{
+  "pathPattern": "/deviceManagement/deviceShellScripts",
+  "method": "get",
+  "toolName": "list-device-shell-scripts",
+  "appPermissions": ["DeviceManagementScripts.Read.All"],
+  "apiVersion": "beta"
+}
+```
+
+Without `apiVersion`, endpoints continue to target `/v1.0/` (the safe default).
+
+Implementation notes:
+
+- `bin/modules/download-openapi.mjs` now downloads both the v1.0 and beta Microsoft Graph OpenAPI specs; the beta file lands at `openapi/openapi-beta.yaml`.
+- `bin/modules/simplified-openapi.mjs` merges beta paths and their transitively referenced components (`schemas`, `parameters`, `responses`, `requestBodies`) into the v1.0 spec before validation. v1.0 wins on name collisions.
+- `src/graph-client.ts` `makeRequest` reads `options.apiVersion` and builds the URL as `${graphApi}/${apiVersion ?? 'v1.0'}${endpoint}`.
+- `src/graph-tools.ts` `executeGraphTool` forwards `endpointConfig.apiVersion` to the client.
+
+This is the unlock for the broader Intune Scripts family — `deviceHealthScripts`, `deviceCustomAttributeShellScripts`, `deviceManagementScripts`, `deviceComplianceScripts` are all beta-only and become straightforward to add once the infra is in place.
+
+Tests: existing 195 still green; no count assertions broken.
+
 ## [0.6.1] — 2026-04-23
 
 ### Fixed — device_code polling hit /token rate limit before MFA could complete

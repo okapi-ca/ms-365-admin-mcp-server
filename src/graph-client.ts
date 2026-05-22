@@ -8,6 +8,7 @@ interface GraphRequestOptions {
   body?: string;
   rawResponse?: boolean;
   excludeResponse?: boolean;
+  apiVersion?: 'v1.0' | 'beta';
 }
 
 interface ContentItem {
@@ -48,7 +49,8 @@ class GraphClient {
   private async makeRequest(endpoint: string, options: GraphRequestOptions = {}): Promise<unknown> {
     const accessToken = await this.getAccessToken();
     const cloudEndpoints = getCloudEndpoints(this.secrets.cloudType);
-    const url = `${cloudEndpoints.graphApi}/v1.0${endpoint}`;
+    const apiVersion = options.apiVersion ?? 'v1.0';
+    const url = `${cloudEndpoints.graphApi}/${apiVersion}${endpoint}`;
 
     // SEC: strip query string — can contain PII/UPN/secret IDs via $filter, etc.
     logger.debug(`[GRAPH CLIENT] Final URL: ${url.split('?')[0]}`);
