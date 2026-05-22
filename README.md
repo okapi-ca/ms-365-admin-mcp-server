@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **521 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **532 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **assignment filters**, **Remediations**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -23,7 +23,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 | Document                                                               | Purpose                                                                     |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [docs/USE_CASES.md](docs/USE_CASES.md)                                 | 16 typical admin scenarios with sample prompts and tool lists               |
+| [docs/USE_CASES.md](docs/USE_CASES.md)                                 | 18 typical admin scenarios with sample prompts and tool lists               |
 | [docs/playbooks/](docs/playbooks/README.md)                            | End-to-end security incident response playbooks                             |
 | [agent-skills/](agent-skills/README.md)                                | Drop-in skills for LLM agents (Claude Code et al.) with safety patterns     |
 | [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md)                   | Step-by-step Azure AD app registration and permission consent               |
@@ -563,6 +563,47 @@ Notes:
 - `runAsAccount=user` is required for scripts that interact with the user session (e.g. `osascript` touching System Events).
 - `assign-device-shell-script` **REPLACES** all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list.
 - By default `get-device-shell-script` does **not** return `scriptContent`; pass `$select=id,displayName,scriptContent,...` to fetch the base64 body.
+
+### Intune Remediations / Proactive Remediations (6)
+
+Paired detection + remediation PowerShell scripts for Windows 10/11 Azure AD joined devices. **Targets Graph beta** (`/beta/deviceManagement/deviceHealthScripts`). Requires `DeviceManagementScripts.ReadWrite.All`.
+
+| Tool                          | Method | Risk   |
+| ----------------------------- | ------ | ------ |
+| `list-device-health-scripts`  | GET    |        |
+| `get-device-health-script`    | GET    |        |
+| `create-device-health-script` | POST   | medium |
+| `update-device-health-script` | PATCH  | medium |
+| `delete-device-health-script` | DELETE | high   |
+| `assign-device-health-script` | POST   | medium |
+
+Notes:
+
+- Both `detectionScriptContent` and `remediationScriptContent` are **base64-encoded PowerShell** — UTF-8 encoded scripts before base64.
+- Detection script returns exit code 0 (compliant) or 1 (needs remediation). The remediation script only runs when detection returns 1.
+- `assign-device-health-script` **REPLACES** all existing assignments — schedules can be daily / hourly / run-once. Set `runRemediationScript: false` for detect-only deployments.
+- By default `get-device-health-script` does **not** return the script bodies; pass `$select=id,displayName,detectionScriptContent,remediationScriptContent,...`.
+- Modern replacement for `deviceShellScripts` for Windows "verify + fix" use cases (CIS hardening, agent install verification, service state).
+
+### Assignment filters (5)
+
+Dynamic membership filters that scope policy/app assignments to a sub-set of an Entra group. **Targets Graph beta** (`/beta/deviceManagement/assignmentFilters`). Requires `DeviceManagementConfiguration.ReadWrite.All`.
+
+| Tool                       | Method | Risk   |
+| -------------------------- | ------ | ------ |
+| `list-assignment-filters`  | GET    |        |
+| `get-assignment-filter`    | GET    |        |
+| `create-assignment-filter` | POST   | medium |
+| `update-assignment-filter` | PATCH  | medium |
+| `delete-assignment-filter` | DELETE | high   |
+
+Notes:
+
+- Rule syntax is KQL-like on device properties — example: `(device.osVersion -startsWith "14")` for macOS Sonoma only, `(device.deviceOwnership -eq "Corporate")` for corporate-owned devices.
+- Operators: `-eq`, `-ne`, `-startsWith`, `-contains`, `-in`, `-matches`, joined by `-and` / `-or`.
+- Filters are referenced by `deviceConfigurations` / `mobileApps` / `deviceCompliancePolicies` assignments (not by users — you target the assignment to a group, then add a filter to narrow it).
+- `assignmentFilterManagementType`: `devices` for device-scoped assignments, `apps` for app-scoped (some properties differ).
+- Deleting a filter that is in use will silently fall the dependent assignments back to "all members of the group" — audit assignments before deleting.
 
 ### Enrollment & Autopilot (10)
 

@@ -338,6 +338,76 @@ node dist/index.js --preset intune --allow-writes --max-risk-level high
 
 ---
 
+## 17. Intune Remediations (Windows detect-and-fix)
+
+**Context.** Deploying paired detection + remediation PowerShell scripts to Windows 10/11 Azure AD joined devices: CIS hardening verification, agent install verification, service state checks, BitLocker / TPM checks, registry hardening. Modern replacement for `deviceManagementScripts` (one-shot Windows PS) when the desired pattern is "verify state, fix if broken".
+
+**Startup command.**
+
+```bash
+node dist/index.js --preset intune --allow-writes --max-risk-level high
+```
+
+**Sample prompt (deploy).**
+
+> "Create a Remediation named `Verify-Zabbix-Agent-Running` (publisher LCI). Detection script in `./detect-zabbix.ps1` returns 0 if service is Running, 1 otherwise. Remediation script in `./remediate-zabbix.ps1` (re)starts and re-enables the service. Both base64-encode before submitting. runAsAccount=system. Assign to `Gr-Sec-AAD-INTUNE-WIN-STAFF` with a daily 03:00 schedule, runRemediationScript=true."
+
+**Sample prompt (audit).**
+
+> "List all Remediations in the tenant. For each, fetch `detectionScriptContent` and `remediationScriptContent`, decode the base64, and flag any with hardcoded credentials, plaintext URLs to S3/blob storage, or `Set-ExecutionPolicy Bypass`."
+
+**Sample prompt (detect-only).**
+
+> "Create a detection-only Remediation named `Verify-FileVault-Enabled` — empty remediation script, runRemediationScript=false in the assignment. Use it as a reporting probe across `Gr-Sec-AAD-INTUNE-MAC-ALL`. Then query `getRemediationSummary` after 48h to see how many devices reported non-compliance."
+
+**Key tools.** `list-device-health-scripts`, `get-device-health-script`, `create-device-health-script` (**medium**), `update-device-health-script` (**medium**), `delete-device-health-script` (**high**), `assign-device-health-script` (**medium**).
+
+> **Gotcha — base64 each side.** `detectionScriptContent` AND `remediationScriptContent` are each strict base64 of UTF-8 PowerShell. Both must be valid even if remediation is a no-op (use a single-line `Exit 0`).
+>
+> **Gotcha — runRemediationScript flag.** Set in the **assignment**, not the script. Same script can be deployed as detect-only to one group and detect-and-remediate to another.
+>
+> **Gotcha — schedule kinds.** `deviceHealthScriptDailySchedule`, `deviceHealthScriptHourlySchedule`, `deviceHealthScriptRunOnceSchedule`. Daily is the default Intune portal experience.
+>
+> **Gotcha — Windows only.** macOS uses `deviceShellScripts` (one-shot, no detect-fix pair). Don't try to deploy a Remediation to a Mac group — Intune will silently ignore it.
+
+---
+
+## 18. Intune assignment filters — scope without group sprawl
+
+**Context.** A policy or app needs to target only a sub-set of a group: "Macs Sonoma+ only", "iPhones supervised only", "Windows 11 23H2+ only", "corporate-owned only". Without filters, you'd create a new Entra group for every variant, leading to dozens of overlapping memberships and sync lag from Aquera/Entra. Filters let one group + one filter rule cover the same scope, evaluated at assignment time by Intune.
+
+**Startup command.**
+
+```bash
+node dist/index.js --preset intune --allow-writes --max-risk-level medium
+```
+
+> Deleting a filter currently referenced by an assignment is **high risk** (silently broadens the assignment to "all members") — keep that out of routine runs.
+
+**Sample prompt (create + use).**
+
+> "Create an assignment filter named `macOS-Sonoma-Plus` with platform=macOS and rule `(device.osVersion -startsWith \"14\") -or (device.osVersion -startsWith \"15\")`, assignmentFilterManagementType=devices. Then update the configuration profile `Wallpaper-Staff-FR` to add this filter to its assignment to `Gr-Sec-AAD-INTUNE-MAC-STAFF-FR`."
+
+**Sample prompt (audit).**
+
+> "List all assignment filters. For each, list the policies/apps that currently reference it (search across deviceConfigurations, configurationPolicies, mobileApps assignments). Flag any filter with zero references — those are dead and safe to delete."
+
+**Sample prompt (refactor).**
+
+> "We have 8 groups named `Gr-AAD-MAC-Sonoma`, `Gr-AAD-MAC-Sequoia`, etc. — one per macOS version. Audit which Intune policies use them, then propose a refactor: replace each version-specific group with the parent `Gr-AAD-MAC-ALL` + an assignment filter using `device.osVersion`. Don't apply changes — just produce a migration plan."
+
+**Key tools.** `list-assignment-filters`, `get-assignment-filter`, `create-assignment-filter` (**medium**), `update-assignment-filter` (**medium**), `delete-assignment-filter` (**high**).
+
+> **Gotcha — rule syntax.** KQL-like, but quoting differs. Single quotes inside the rule must be escaped or use `\"`. Test rules in the Intune portal "Preview filter" UI before automating large rollouts.
+>
+> **Gotcha — silent broadening on delete.** Deleting a filter referenced by an assignment doesn't reject the delete or update the assignment — it just removes the filter, so the assignment now targets the whole group. Audit references first.
+>
+> **Gotcha — assignmentFilterManagementType is fixed.** Once created with `devices` or `apps`, you can't switch. Pick based on what the filter will scope (device-scoped policies vs. app-scoped policies have slightly different property sets).
+>
+> **Gotcha — beta endpoint.** Like other Intune resources, lives in `/beta/`. See §16 disclaimer.
+
+---
+
 ## General recommendations
 
 ### Least-privilege preset
