@@ -861,6 +861,38 @@
     "apiVersion": "beta"
   },
   {
+    "pathPattern": "/deviceManagement/assignmentFilters",
+    "method": "get",
+    "toolName": "list-assignment-filters",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Intune assignment filters (dynamic membership filters applied to policy/app assignments). Each filter has displayName, description, platform (android/iOS/macOS/windows10AndLater/etc.), rule (KQL-like expression on device properties: e.g. \"device.osVersion -startsWith \\\"14\\\"\"), assignmentFilterManagementType (devices | apps), and creationSource. Filters scope assignments to a sub-set of a group (e.g. \"only Macs on Sonoma\", \"only iPhones supervised\"). Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/assignmentFilters/{deviceAndAppManagementAssignmentFilter-id}",
+    "method": "get",
+    "toolName": "get-assignment-filter",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Intune assignment filter by ID. Returns full rule expression and metadata. Supports $select and $expand."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts",
+    "method": "get",
+    "toolName": "list-device-health-scripts",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Intune Remediations (Proactive Remediations) — paired detection + remediation PowerShell scripts for Windows 10/11 Azure AD joined devices. Each has displayName, description, publisher, version, runAsAccount (system|user), enforceSignatureCheck, runAs32Bit, roleScopeTagIds, isGlobalScript (Microsoft proprietary read-only), deviceHealthScriptType (deviceHealthScript | managedInstallerScript). detectionScriptContent and remediationScriptContent NOT returned in list responses — fetch a specific script with $select=detectionScriptContent,remediationScriptContent. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts/{deviceHealthScript-id}",
+    "method": "get",
+    "toolName": "get-device-health-script",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Intune Remediation (Proactive Remediation) by ID. By default detectionScriptContent and remediationScriptContent are NOT returned — pass $select=id,displayName,detectionScriptContent,remediationScriptContent,runAsAccount,... to fetch the base64-encoded PowerShell bodies. Supports $select and $expand."
+  },
+  {
     "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
     "method": "get",
     "toolName": "list-enrollment-configurations",
@@ -2930,6 +2962,69 @@
     "riskLevel": "medium",
     "llmTip": "Assigns a macOS Platform Script to Entra groups. Body: {\"deviceManagementScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list.",
     "apiVersion": "beta"
+  },
+  {
+    "pathPattern": "/deviceManagement/assignmentFilters",
+    "method": "post",
+    "toolName": "create-assignment-filter",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Creates a new Intune assignment filter. Body example: {\"@odata.type\":\"#microsoft.graph.deviceAndAppManagementAssignmentFilter\",\"displayName\":\"Macs Sonoma only\",\"description\":\"...\",\"platform\":\"macOS\",\"rule\":\"(device.osVersion -startsWith \\\"14\\\")\",\"assignmentFilterManagementType\":\"devices\",\"roleScopeTags\":[\"0\"]}. Rule syntax: KQL-like, operators -eq/-ne/-startsWith/-contains/-in/-matches, joined by -and/-or. Supported device properties depend on platform (see Intune docs). assignmentFilterManagementType: 'devices' for device-scoped assignments, 'apps' for app-scoped."
+  },
+  {
+    "pathPattern": "/deviceManagement/assignmentFilters/{deviceAndAppManagementAssignmentFilter-id}",
+    "method": "patch",
+    "toolName": "update-assignment-filter",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Updates an Intune assignment filter (partial update). Same body shape as create-assignment-filter — only fields included in the body are changed. Changing 'rule' may cause devices currently in-scope to fall out (and vice versa) on the next Intune evaluation cycle."
+  },
+  {
+    "pathPattern": "/deviceManagement/assignmentFilters/{deviceAndAppManagementAssignmentFilter-id}",
+    "method": "delete",
+    "toolName": "delete-assignment-filter",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Deletes an Intune assignment filter. ANY policy/app assignment currently referencing this filter will fall back to the unfiltered group (i.e. ALL members of the targeted group will receive the assignment, not just the filtered subset). Check with `getAssignmentFiltersStatusDetails` or audit assignments before deleting."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts",
+    "method": "post",
+    "toolName": "create-device-health-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Creates a new Intune Remediation (paired detection + remediation PowerShell scripts) for Windows. Body example: {\"@odata.type\":\"#microsoft.graph.deviceHealthScript\",\"displayName\":\"Verify FileVault\",\"description\":\"...\",\"publisher\":\"LCI\",\"detectionScriptContent\":\"<base64 of PS script>\",\"remediationScriptContent\":\"<base64 of PS script>\",\"runAsAccount\":\"system\",\"enforceSignatureCheck\":false,\"runAs32Bit\":false,\"roleScopeTagIds\":[\"0\"]}. BOTH scripts are required, both as base64 PowerShell. Detection script returns exit code 0 (compliant) or 1 (needs remediation). Remediation script is only run when detection returns 1."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts/{deviceHealthScript-id}",
+    "method": "patch",
+    "toolName": "update-device-health-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Updates an Intune Remediation (partial update). Same body shape as create-device-health-script. To update only one of the two scripts, send only the relevant *ScriptContent field (base64). Assigned devices receive the updated scripts on their next Intune Management Extension sync (every 24h, or forced via portal)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts/{deviceHealthScript-id}",
+    "method": "delete",
+    "toolName": "delete-device-health-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Deletes an Intune Remediation. All assigned devices immediately stop receiving detection runs on their next sync. This does NOT undo previous remediations that already ran on devices. Confirm with the user before calling on a script with active assignments."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts/{deviceHealthScript-id}/assign",
+    "method": "post",
+    "toolName": "assign-device-health-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Assigns an Intune Remediation to Entra groups with a schedule. Body: {\"deviceHealthScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"},\"runRemediationScript\":true,\"runSchedule\":{\"@odata.type\":\"#microsoft.graph.deviceHealthScriptDailySchedule\",\"interval\":1,\"time\":\"03:00:00\",\"useUtc\":false}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — not additive. Schedule options: deviceHealthScriptDailySchedule, deviceHealthScriptHourlySchedule, deviceHealthScriptRunOnceSchedule. Set runRemediationScript=false to make it a detect-only deployment."
   },
   {
     "pathPattern": "/sites/{site-id}/permissions",
