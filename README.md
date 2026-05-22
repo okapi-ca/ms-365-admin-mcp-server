@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **515 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **521 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -23,7 +23,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 | Document                                                               | Purpose                                                                     |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [docs/USE_CASES.md](docs/USE_CASES.md)                                 | 15 typical admin scenarios with sample prompts and tool lists               |
+| [docs/USE_CASES.md](docs/USE_CASES.md)                                 | 16 typical admin scenarios with sample prompts and tool lists               |
 | [docs/playbooks/](docs/playbooks/README.md)                            | End-to-end security incident response playbooks                             |
 | [agent-skills/](agent-skills/README.md)                                | Drop-in skills for LLM agents (Claude Code et al.) with safety patterns     |
 | [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md)                   | Step-by-step Azure AD app registration and permission consent               |
@@ -543,6 +543,26 @@ node dist/index.js --verify-login
 | `list-device-configurations`               | GET    |
 | `get-device-configuration`                 | GET    |
 | `get-device-configuration-status-overview` | GET    |
+
+### macOS Platform Scripts (6)
+
+Intune shell scripts deployed to managed macOS devices. **Targets Graph beta** (`/beta/deviceManagement/deviceShellScripts`) — Microsoft has never promoted this endpoint to v1.0. Requires `DeviceManagementScripts.ReadWrite.All`.
+
+| Tool                         | Method | Risk   |
+| ---------------------------- | ------ | ------ |
+| `list-device-shell-scripts`  | GET    |        |
+| `get-device-shell-script`    | GET    |        |
+| `create-device-shell-script` | POST   | medium |
+| `update-device-shell-script` | PATCH  | medium |
+| `delete-device-shell-script` | DELETE | high   |
+| `assign-device-shell-script` | POST   | medium |
+
+Notes:
+
+- `scriptContent` is **strict base64** (not URL-safe) of a script with LF line endings — CRLF will break execution on Macs.
+- `runAsAccount=user` is required for scripts that interact with the user session (e.g. `osascript` touching System Events).
+- `assign-device-shell-script` **REPLACES** all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list.
+- By default `get-device-shell-script` does **not** return `scriptContent`; pass `$select=id,displayName,scriptContent,...` to fetch the base64 body.
 
 ### Enrollment & Autopilot (10)
 
