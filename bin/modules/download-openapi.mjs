@@ -1,12 +1,14 @@
 import fs from 'fs';
 
-const DEFAULT_OPENAPI_URL =
+const DEFAULT_V1_OPENAPI_URL =
   'https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/refs/heads/master/openapi/v1.0/openapi.yaml';
+const DEFAULT_BETA_OPENAPI_URL =
+  'https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/refs/heads/master/openapi/beta/openapi.yaml';
 
 export async function downloadGraphOpenAPI(
   targetDir,
   targetFile,
-  openapiUrl = DEFAULT_OPENAPI_URL,
+  openapiUrl = DEFAULT_V1_OPENAPI_URL,
   forceDownload = false
 ) {
   if (!fs.existsSync(targetDir)) {
@@ -37,4 +39,8 @@ export async function downloadGraphOpenAPI(
     console.error('Error downloading OpenAPI specification:', error.message);
     throw error;
   }
+}
+
+export async function downloadGraphBetaOpenAPI(targetDir, targetFile, forceDownload = false) {
+  return downloadGraphOpenAPI(targetDir, targetFile, DEFAULT_BETA_OPENAPI_URL, forceDownload);
 }

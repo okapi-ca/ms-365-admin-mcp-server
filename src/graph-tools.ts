@@ -23,6 +23,7 @@ interface EndpointConfig {
   contentType?: string;
   acceptType?: string;
   returnDownloadUrl?: boolean;
+  apiVersion?: 'v1.0' | 'beta';
 }
 
 // SEC-A (SEC-001): allowlist for skip-encoded path parameters. The previous
@@ -243,6 +244,10 @@ async function executeGraphTool(
       rawResponse: !!config?.acceptType || !!config?.returnDownloadUrl,
       excludeResponse: !!params.excludeResponse,
     };
+
+    if (config?.apiVersion) {
+      requestOptions.apiVersion = config.apiVersion;
+    }
 
     if (body !== null) {
       requestOptions.body = JSON.stringify(body);
