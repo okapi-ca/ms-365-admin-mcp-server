@@ -4425,5 +4425,20 @@
     "appPermissions": ["eDiscovery.ReadWrite.All"],
     "riskLevel": "medium",
     "llmTip": "Applies review tags to all items matching a saved query. Body example: {\"tagsToAdd\":[{\"id\":\"<tag-id-1>\"},{\"id\":\"<tag-id-2>\"}],\"tagsToRemove\":[]}. Used to bulk-tag review-set items (e.g. mark all items matching a KQL filter as 'Responsive' or 'Privileged'). Tag IDs come from the tenant's review tag taxonomy (separate API). Long-running: returns 202; track via list-case-operations."
+  },
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance",
+    "method": "get",
+    "toolName": "get-data-security-governance-root",
+    "appPermissions": ["InformationProtectionPolicy.Read.All"],
+    "llmTip": "Gets the root entity for Microsoft Purview Data Security Posture Management (DSPM). Returns metadata about the tenant's DSPM configuration: enabled state, last scan timestamps, related links to protectionScopes and sensitivityLabels. This is the entry point for navigating the DSPM surface — the Microsoft equivalent of third-party DSPM tools (Varonis, Defender for Cloud DSPM)."
+  },
+  {
+    "pathPattern": "/security/dataSecurityAndGovernance/protectionScopes/compute",
+    "method": "post",
+    "toolName": "compute-protection-scopes",
+    "appPermissions": ["ProtectionScopes.Compute.All"],
+    "riskLevel": "low",
+    "llmTip": "Computes the data protection policies and actions applicable across all users in the tenant based on current Purview policy configuration. Empty request body. Returns the list of evaluated scopes — useful for auditing which Purview DLP / sensitivity / retention policies actually apply per user / location / data type at the current point in time. Read-heavy operation (queries policy graph) but classified as POST because it triggers compute on the server side. Pairs with get-protection-scopes which returns the cached / last-computed scopes."
   }
 ]
