@@ -4282,5 +4282,28 @@
     "appPermissions": ["eDiscovery.ReadWrite.All"],
     "riskLevel": "medium",
     "llmTip": "Creates a collection search in a case. Body: displayName, description, contentQuery (KQL), dataSourceScopes ('none'|'allTenantMailboxes'|'allTenantSites'|'allCaseCustodians'|'allCaseNoncustodialDataSources')."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}",
+    "method": "get",
+    "toolName": "get-ediscovery-custodian",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Gets a specific custodian by ID in an eDiscovery case. Returns full details: displayName, email, status (active | released | error), holdStatus (notApplied | applied | pending | applying | removing | partial), lastIndexOperation, createdDateTime, lastModifiedDateTime. Use to verify hold status before / after applyHold / removeHold actions, or to inspect indexing progress for a specific custodian."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}/microsoft.graph.security.release",
+    "method": "post",
+    "toolName": "release-ediscovery-custodian",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Releases a custodian from an eDiscovery case — removes them from the case scope and removes any holds applied via this case. Empty request body. IMPORTANT: this only releases the hold applied through THIS case. If the user has holds from other eDiscovery cases or independent retention policies, those are unaffected. Audit other cases / retention before assuming release is total. Use list-ediscovery-cases to identify other cases containing the same custodian."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}/microsoft.graph.security.updateIndex",
+    "method": "post",
+    "toolName": "update-ediscovery-custodian-index",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Forces a re-index of a custodian's data sources (mailbox, OneDrive, SharePoint sites). Empty request body. Use when search results for this custodian are missing recent content — re-indexing pulls in items added since the last index refresh. Long-running: returns 202; track via list-case-operations / get-case-operation. Indexing duration depends on data volume (minutes for small mailboxes, hours for large ones)."
   }
 ]
