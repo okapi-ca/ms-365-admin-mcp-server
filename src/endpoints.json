@@ -2192,6 +2192,31 @@
     "llmTip": "Activates one or more Defender for Identity sensor candidates — initiates sensor installation on the named servers using the deployment access key flow. Body: {\"serverIds\":[\"<candidate-id-1>\",\"<candidate-id-2>\"]}. The activation is asynchronous: returns 202 then DfI pushes the installer to each server. Track progress via list-identity-sensors (new entries appear) and list-sensor-candidates (activated candidates flip isActivated=true). Verify with get-sensor-candidate before activating to confirm host identity — activating the wrong serverId installs a sensor on an unintended host."
   },
   {
+    "pathPattern": "/security/identities/sensorMigration",
+    "method": "get",
+    "toolName": "list-sensor-migrations",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Microsoft Defender for Identity sensor migration jobs — tracks upgrades of sensors from legacy AATP (Azure Advanced Threat Protection) workspace to the unified Defender XDR sensor architecture. Each migration has sensorId, sourceVersion, targetVersion, status (pending | inProgress | completed | failed), startedDateTime, completedDateTime. Use to monitor an in-flight migration wave. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/security/identities/sensorMigration/{sensorMigration-id}",
+    "method": "get",
+    "toolName": "get-sensor-migration",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific sensor migration job by ID. Returns the full migration trace: source/target versions, current step, errors (if status=failed), per-step timestamps. Use to investigate why a specific migration is stuck or failed. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/security/identities/sensorMigration/microsoft.graph.security.migrate",
+    "method": "post",
+    "toolName": "migrate-sensors",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Triggers migration of one or more Defender for Identity sensors to the unified Defender XDR architecture. Body: {\"sensorIds\":[\"<sensor-id-1>\",\"<sensor-id-2>\"]}. POTENTIALLY DISRUPTIVE: the migration restarts the sensor service on the target host — there's a brief window (~minutes) where the DC's network traffic is not being captured. Schedule during a maintenance window for production DCs. Track via list-sensor-migrations / get-sensor-migration. Failed migrations require manual remediation on the host. Beta-only endpoint."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
