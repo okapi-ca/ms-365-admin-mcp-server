@@ -4357,5 +4357,35 @@
     "toolName": "get-case-operation",
     "appPermissions": ["eDiscovery.Read.All"],
     "llmTip": "Gets a specific eDiscovery case operation by ID. Returns full status including percentProgress and resultInfo. Use to poll until status=succeeded for operations like export-review-set or update-ediscovery-custodian-index that return 202 + operation ID. For failed operations, resultInfo contains the error message."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets",
+    "method": "get",
+    "toolName": "list-review-sets",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists review sets in an eDiscovery case. Review sets are curated collections of items collected from searches — the workspace where legal teams review, tag, and export content for production. Each review set has displayName, description, createdDateTime, createdBy. A case can have multiple review sets (e.g. one per matter or production batch). Items only enter a review set after add-to-review-set is invoked on a search."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets",
+    "method": "post",
+    "toolName": "create-review-set",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Creates a new review set in an eDiscovery case. Body example: {\"displayName\":\"2026 Q1 production\",\"description\":\"Documents responsive to subpoena #123\"}. The review set is empty until populated via add-to-review-set (which moves search hits into it). Multiple review sets per case is the common pattern — one per matter, production batch, or review phase."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}",
+    "method": "get",
+    "toolName": "get-review-set",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Gets a specific review set by ID. Returns displayName, description, createdDateTime, createdBy, and the list of queries (saved filters) attached to it. Item count is NOT directly returned — use list-review-set-queries and run a query to count items, or wait for export to see the file count."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/microsoft.graph.security.export",
+    "method": "post",
+    "toolName": "export-review-set",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Exports the contents of a review set for production / forensic delivery. Body example: {\"outputName\":\"2026Q1-production\",\"description\":\"Subpoena response Jan 2026\",\"exportOptions\":\"originalFiles,fileInfo,tags\",\"exportStructure\":\"directory\"}. exportOptions: 'originalFiles' (native), 'text' (extracted text), 'pdfReplacement' (PDFs), 'tags' (review tags as CSV), 'fileInfo' (metadata CSV), 'summary'. exportStructure: 'none' (flat) | 'directory' (per-custodian) | 'pst' (mailbox-style PST per custodian). Long-running: returns 202; track via list-case-operations. Output is downloaded via the Purview portal once status=succeeded — Graph does not return a direct download URL. HIGH risk: exports may contain privileged / PII content — handle per the case's chain-of-custody."
   }
 ]
