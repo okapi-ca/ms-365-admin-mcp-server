@@ -4343,5 +4343,19 @@
     "appPermissions": ["eDiscovery.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Releases legal hold on a noncustodial data source. Empty request body. POTENTIALLY DESTRUCTIVE: once hold is removed, deleted items become eligible for permanent purge per the tenant's retention policy (typically 14-30 days for mailbox dumpster, 93 days for SharePoint Site Recycle Bin). Confirm with legal counsel before releasing — items deleted while on hold but past the standard retention window WILL be purged within days of release."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/operations",
+    "method": "get",
+    "toolName": "list-case-operations",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists long-running operations on an eDiscovery case — search executions, hold applications, indexing jobs, reviewSet additions, exports. Each operation has action (e.g. 'estimateStatistics', 'addToReviewSet', 'export', 'applyHold'), status (notStarted | running | succeeded | failed | partiallySucceeded), percentProgress, createdDateTime, completedDateTime, resultInfo (error details if failed). Use to track async operations triggered by other tools (create-ediscovery-search, add-to-review-set, export-review-set, etc.)."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/operations/{caseOperation-id}",
+    "method": "get",
+    "toolName": "get-case-operation",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Gets a specific eDiscovery case operation by ID. Returns full status including percentProgress and resultInfo. Use to poll until status=succeeded for operations like export-review-set or update-ediscovery-custodian-index that return 202 + operation ID. For failed operations, resultInfo contains the error message."
   }
 ]
