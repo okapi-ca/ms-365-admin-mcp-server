@@ -4387,5 +4387,43 @@
     "appPermissions": ["eDiscovery.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Exports the contents of a review set for production / forensic delivery. Body example: {\"outputName\":\"2026Q1-production\",\"description\":\"Subpoena response Jan 2026\",\"exportOptions\":\"originalFiles,fileInfo,tags\",\"exportStructure\":\"directory\"}. exportOptions: 'originalFiles' (native), 'text' (extracted text), 'pdfReplacement' (PDFs), 'tags' (review tags as CSV), 'fileInfo' (metadata CSV), 'summary'. exportStructure: 'none' (flat) | 'directory' (per-custodian) | 'pst' (mailbox-style PST per custodian). Long-running: returns 202; track via list-case-operations. Output is downloaded via the Purview portal once status=succeeded — Graph does not return a direct download URL. HIGH risk: exports may contain privileged / PII content — handle per the case's chain-of-custody."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches/{ediscoverySearch-id}/microsoft.graph.security.addToReviewSet",
+    "method": "post",
+    "toolName": "add-to-review-set",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Adds the results of an eDiscovery search to a review set — the canonical workflow for moving search hits into a curated review workspace. Body: {\"reviewSet\":{\"id\":\"<reviewSet-id>\"},\"additionalDataOptions\":\"linkedFiles\"}. additionalDataOptions: 'linkedFiles' (include attachments / linked SharePoint docs) | 'allItemsInFolder' (include sibling items) | 'subfolderContents'. Long-running: returns 202; track via list-case-operations (action='addToReviewSet'). Once succeeded, items are immutable in the review set — they snapshot the source content at the time of add."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/queries",
+    "method": "get",
+    "toolName": "list-review-set-queries",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Lists saved queries (filters) on a review set. Each query has displayName, contentQuery (KQL filtering review-set items), createdDateTime. Queries are the persistent way to slice a review set — examples: 'all items tagged Responsive', 'docs from a specific custodian', 'communications matching keyword X'."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/queries",
+    "method": "post",
+    "toolName": "create-review-set-query",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "low",
+    "llmTip": "Creates a saved query on a review set. Body example: {\"displayName\":\"Responsive items only\",\"contentQuery\":\"Tags:\\\"Responsive\\\"\"}. contentQuery is a KQL expression filtering review-set items by property (Tags, From, Subject, Author, Date, etc.) or fulltext. Use to persist a filter for repeated review / export operations."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/queries/{ediscoveryReviewSetQuery-id}",
+    "method": "get",
+    "toolName": "get-review-set-query",
+    "appPermissions": ["eDiscovery.Read.All"],
+    "llmTip": "Gets a specific review-set query by ID. Returns displayName, contentQuery, createdDateTime, lastModifiedDateTime."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/queries/{ediscoveryReviewSetQuery-id}/microsoft.graph.security.applyTags",
+    "method": "post",
+    "toolName": "apply-tags-review-set-query",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Applies review tags to all items matching a saved query. Body example: {\"tagsToAdd\":[{\"id\":\"<tag-id-1>\"},{\"id\":\"<tag-id-2>\"}],\"tagsToRemove\":[]}. Used to bulk-tag review-set items (e.g. mark all items matching a KQL filter as 'Responsive' or 'Privileged'). Tag IDs come from the tenant's review tag taxonomy (separate API). Long-running: returns 202; track via list-case-operations."
   }
 ]
