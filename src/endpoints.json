@@ -2217,6 +2217,21 @@
     "llmTip": "Triggers migration of one or more Defender for Identity sensors to the unified Defender XDR architecture. Body: {\"sensorIds\":[\"<sensor-id-1>\",\"<sensor-id-2>\"]}. POTENTIALLY DISRUPTIVE: the migration restarts the sensor service on the target host — there's a brief window (~minutes) where the DC's network traffic is not being captured. Schedule during a maintenance window for production DCs. Track via list-sensor-migrations / get-sensor-migration. Failed migrations require manual remediation on the host. Beta-only endpoint."
   },
   {
+    "pathPattern": "/security/identities/settings/autoAuditingConfiguration",
+    "method": "get",
+    "toolName": "get-auto-auditing-config",
+    "appPermissions": ["SecurityIdentitiesSettings.Read.All"],
+    "llmTip": "Gets the Defender for Identity auto-auditing configuration. Auto-auditing controls whether DfI automatically configures the recommended Windows audit policies (advanced audit policies on DCs: 'Audit Directory Service Changes', 'Audit Computer Account Management', etc.) on sensors and reverts them if changed locally. Returns enabled (boolean) and lastUpdatedDateTime. Recommended state for production tenants: enabled=true (prevents drift in audit configuration that degrades detection coverage)."
+  },
+  {
+    "pathPattern": "/security/identities/settings/autoAuditingConfiguration",
+    "method": "patch",
+    "toolName": "update-auto-auditing-config",
+    "appPermissions": ["SecurityIdentitiesSettings.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates the Defender for Identity auto-auditing configuration (partial update). Body example: {\"enabled\":true}. Setting enabled=true causes DfI to enforce the recommended Windows advanced audit policies on every sensor host — if a local admin changes them on the DC, DfI reverts the change on its next sync. Disable only for tenants with custom audit policy frameworks (where DfI's enforcement would conflict). Changes propagate to sensors on their next heartbeat."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
