@@ -8,6 +8,77 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-05-25
+
+### Added — Microsoft Purview expansion (596 tools)
+
+Twenty-five new tools across the Microsoft Purview surface — eDiscovery v3 advanced administration, Data Security Posture Management (DSPM), and event-based retention triggers. Builds on the 15 Purview tools shipped prior to bring total Purview tool count to 40.
+
+**eDiscovery v3 — custodian admin (3 tools)** — drill-down, release, force re-index:
+
+- `get-ediscovery-custodian` (GET)
+- `release-ediscovery-custodian` (POST .../release, medium)
+- `update-ediscovery-custodian-index` (POST .../updateIndex, low)
+
+**eDiscovery v3 — noncustodial data sources (5 tools)** — shared mailboxes, departmental sites, M365 group OneDrive:
+
+- `list-ediscovery-noncustodial-data-sources` (GET)
+- `create-ediscovery-noncustodial-data-source` (POST, medium)
+- `get-ediscovery-noncustodial-data-source` (GET)
+- `apply-hold-ediscovery-noncustodial-data-source` (POST .../applyHold, medium)
+- `remove-hold-ediscovery-noncustodial-data-source` (POST .../removeHold, **high**)
+
+**eDiscovery v3 — case operations tracking (2 tools)** — poll long-running ops:
+
+- `list-case-operations` (GET)
+- `get-case-operation` (GET)
+
+**eDiscovery v3 — review sets (4 tools)** — the legal-review workspace:
+
+- `list-review-sets` (GET)
+- `create-review-set` (POST, low)
+- `get-review-set` (GET)
+- `export-review-set` (POST .../export, **high**)
+
+**eDiscovery v3 — review set queries + addToReviewSet (5 tools)** — slice and tag:
+
+- `add-to-review-set` (POST .../addToReviewSet, medium) — moves search hits into a review set
+- `list-review-set-queries` (GET)
+- `create-review-set-query` (POST, low)
+- `get-review-set-query` (GET)
+- `apply-tags-review-set-query` (POST .../applyTags, medium)
+
+**DSPM — root + compute (2 tools)** — Microsoft-native Data Security Posture Management:
+
+- `get-data-security-governance-root` (GET /security/dataSecurityAndGovernance)
+- `compute-protection-scopes` (POST .../protectionScopes/compute, low)
+
+The existing `get-protection-scopes` (GET, declared in earlier v0.x) returns the last-computed scopes; the new `compute-protection-scopes` forces evaluation across all users.
+
+**Retention events expansion (4 tools)** — event-based retention triggers:
+
+- `get-retention-event` (GET)
+- `create-retention-event` (POST, medium)
+- `get-retention-event-type` (GET)
+- `create-retention-event-type` (POST, medium)
+
+Operational pattern: define a `retentionEventType` (e.g. 'project_closed'), author event-based retention labels referencing the eventType, then call `create-retention-event` to trigger the retention period on tagged content when the business event happens.
+
+### New Graph permissions required
+
+Must be admin-consented on the app registration (none of these were declared prior to 0.11.0):
+
+- `ProtectionScopes.Compute.All` — for `compute-protection-scopes`
+- `RecordsManagement.ReadWrite.All` — for `create-retention-event` and `create-retention-event-type`
+
+The existing `eDiscovery.Read.All`, `eDiscovery.ReadWrite.All`, `RecordsManagement.Read.All`, and `InformationProtectionPolicy.Read.All` continue to cover the 18 new eDiscovery + DSPM root tools.
+
+### Notes
+
+- All 25 new tools target Graph v1.0 (stable) — no beta endpoints in this PR.
+- Eight of the new tools are long-running actions returning 202; track via the new `list-case-operations` / `get-case-operation` tools.
+- 195/195 tests still pass, no regressions on existing 571 tools.
+
 ## [0.10.0] — 2026-05-25
 
 ### Added — Microsoft Defender for Identity full surface (571 tools)
