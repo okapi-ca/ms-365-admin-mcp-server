@@ -925,6 +925,22 @@
     "llmTip": "Gets a specific Intune Windows PowerShell script by ID. By default scriptContent is NOT returned — pass $select=id,displayName,scriptContent,runAsAccount,enforceSignatureCheck,runAs32Bit,... to fetch the base64-encoded PowerShell body. Supports $select and $expand."
   },
   {
+    "pathPattern": "/deviceManagement/deviceComplianceScripts",
+    "method": "get",
+    "toolName": "list-device-compliance-scripts",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Intune custom compliance PowerShell scripts (deviceComplianceScripts) for Windows 10/11. Each script emits a JSON object on STDOUT (e.g. {\"BitLockerEnabled\":true,\"TpmReady\":true}) which is then evaluated against rules declared on an associated compliance policy with @odata.type=#microsoft.graph.windows10CustomComplianceConfiguration. Each has displayName, description, publisher, version, runAsAccount (system | user), enforceSignatureCheck, runAs32Bit, roleScopeTagIds. detectionScriptContent is NOT returned in list responses. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceComplianceScripts/{deviceComplianceScript-id}",
+    "method": "get",
+    "toolName": "get-device-compliance-script",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Intune custom compliance script by ID. By default detectionScriptContent is NOT returned — pass $select=id,displayName,detectionScriptContent,runAsAccount,enforceSignatureCheck,runAs32Bit,... to fetch the base64-encoded PowerShell body. Supports $select and $expand."
+  },
+  {
     "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
     "method": "get",
     "toolName": "list-enrollment-configurations",
@@ -3129,6 +3145,42 @@
     "riskLevel": "medium",
     "apiVersion": "beta",
     "llmTip": "Assigns a Windows PowerShell script to Entra groups. Body: {\"deviceManagementScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list. Adding a new group triggers script execution on devices that haven't yet run it (existing successful devices are not re-run)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceComplianceScripts",
+    "method": "post",
+    "toolName": "create-device-compliance-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Creates a new Intune custom compliance script for Windows 10/11. Body example: {\"@odata.type\":\"#microsoft.graph.deviceComplianceScript\",\"displayName\":\"Verify BitLocker + TPM\",\"description\":\"Custom compliance: BitLocker + TPM ready\",\"publisher\":\"LCI\",\"detectionScriptContent\":\"<base64 of PS script>\",\"runAsAccount\":\"system\",\"enforceSignatureCheck\":false,\"runAs32Bit\":false,\"roleScopeTagIds\":[\"0\"]}. The PS script MUST emit a JSON object on STDOUT (e.g. ConvertTo-Json -Compress @{BitLockerEnabled=$true;TpmReady=$true}). The JSON keys are then evaluated against rules in an associated #microsoft.graph.windows10CustomComplianceConfiguration policy (separate API). The script alone has no compliance effect — you also need to author the compliance policy with matching detection settings."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceComplianceScripts/{deviceComplianceScript-id}",
+    "method": "patch",
+    "toolName": "update-device-compliance-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Updates an Intune custom compliance script (partial update). Same body shape as create-device-compliance-script. Changing the JSON keys emitted by detectionScriptContent without updating the associated compliance policy's rules will silently break compliance evaluation — audit the linked windows10CustomComplianceConfiguration policy before changing the script's output shape. Bump 'version' field to invalidate device caches."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceComplianceScripts/{deviceComplianceScript-id}",
+    "method": "delete",
+    "toolName": "delete-device-compliance-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Deletes an Intune custom compliance script. ANY windows10CustomComplianceConfiguration compliance policy referencing this script will fail evaluation on next device check-in (devices will be marked non-compliant or revert to the unknown state, depending on the policy's settings). Audit referencing compliance policies before deleting."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceComplianceScripts/{deviceComplianceScript-id}/assign",
+    "method": "post",
+    "toolName": "assign-device-compliance-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Assigns a custom compliance script to Entra groups. Body: {\"deviceHealthScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"},\"runRemediationScript\":false,\"runSchedule\":{\"@odata.type\":\"#microsoft.graph.deviceHealthScriptDailySchedule\",\"interval\":1,\"time\":\"03:00:00\",\"useUtc\":false}}]}. IMPORTANT: REPLACES existing assignments — not additive. Note: deviceComplianceScripts reuses the deviceHealthScriptAssignment shape (runRemediationScript should be false since compliance scripts have no remediation pairing). The schedule controls how often Windows re-evaluates the script's JSON output against the linked compliance policy."
   },
   {
     "pathPattern": "/sites/{site-id}/permissions",
