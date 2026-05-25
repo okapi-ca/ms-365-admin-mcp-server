@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **532 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **assignment filters**, **Remediations**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **550 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -604,6 +604,69 @@ Notes:
 - Filters are referenced by `deviceConfigurations` / `mobileApps` / `deviceCompliancePolicies` assignments (not by users — you target the assignment to a group, then add a filter to narrow it).
 - `assignmentFilterManagementType`: `devices` for device-scoped assignments, `apps` for app-scoped (some properties differ).
 - Deleting a filter that is in use will silently fall the dependent assignments back to "all members of the group" — audit assignments before deleting.
+
+### macOS custom attribute shell scripts (6)
+
+Intune shell scripts whose STDOUT is stored as a named custom attribute on each device — useful for surfacing inventory data (FileVault, Gatekeeper, encryption flags, custom markers) and driving dynamic group filters. **Targets Graph beta** (`/beta/deviceManagement/deviceCustomAttributeShellScripts`). Requires `DeviceManagementScripts.ReadWrite.All`.
+
+| Tool                                          | Method | Risk   |
+| --------------------------------------------- | ------ | ------ |
+| `list-device-custom-attribute-shell-scripts`  | GET    |        |
+| `get-device-custom-attribute-shell-script`    | GET    |        |
+| `create-device-custom-attribute-shell-script` | POST   | medium |
+| `update-device-custom-attribute-shell-script` | PATCH  | medium |
+| `delete-device-custom-attribute-shell-script` | DELETE | high   |
+| `assign-device-custom-attribute-shell-script` | POST   | medium |
+
+Notes:
+
+- The script's STDOUT becomes the value stored under `customAttributeName` on each device.
+- `customAttributeType` controls how Intune parses STDOUT: `integer`, `string`, or `dateTime` (ISO 8601).
+- `scriptContent` is strict base64 of a script with LF line endings — CRLF breaks execution on Macs.
+- Changing `customAttributeName` or `customAttributeType` after deployment breaks downstream dynamic groups and assignment filters that reference the previous key — audit references first.
+- Deleting a script does NOT clear previously-collected attribute values from device records.
+
+### Windows PowerShell scripts (deviceManagementScripts) (6)
+
+One-shot PowerShell scripts deployed to managed Windows 10/11 devices. Runs once per device per assignment, retries on failure. For detect-and-fix patterns use `deviceHealthScripts` (Remediations) instead. **Targets Graph beta** (`/beta/deviceManagement/deviceManagementScripts`). Requires `DeviceManagementScripts.ReadWrite.All`.
+
+| Tool                              | Method | Risk   |
+| --------------------------------- | ------ | ------ |
+| `list-device-management-scripts`  | GET    |        |
+| `get-device-management-script`    | GET    |        |
+| `create-device-management-script` | POST   | medium |
+| `update-device-management-script` | PATCH  | medium |
+| `delete-device-management-script` | DELETE | high   |
+| `assign-device-management-script` | POST   | medium |
+
+Notes:
+
+- `scriptContent` is base64-encoded UTF-8 PowerShell.
+- Runs ONCE per device on the next Intune Management Extension sync after assignment — does NOT re-run after successful execution (use `deviceHealthScripts` for repeating patterns).
+- Updating `scriptContent` does NOT re-run on devices that already succeeded; delete + recreate to force re-execution.
+- `enforceSignatureCheck=true` requires code-signed scripts (recommended for prod).
+- `runAs32Bit=true` forces 32-bit PowerShell on 64-bit Windows (rarely needed).
+
+### Windows custom compliance scripts (deviceComplianceScripts) (6)
+
+PowerShell scripts that emit a JSON object on STDOUT evaluated against rules declared on an associated `windows10CustomComplianceConfiguration` policy — for organization-specific compliance signals beyond the built-in BitLocker / Defender / firewall checks. **Targets Graph beta** (`/beta/deviceManagement/deviceComplianceScripts`). Requires `DeviceManagementScripts.ReadWrite.All`.
+
+| Tool                              | Method | Risk   |
+| --------------------------------- | ------ | ------ |
+| `list-device-compliance-scripts`  | GET    |        |
+| `get-device-compliance-script`    | GET    |        |
+| `create-device-compliance-script` | POST   | medium |
+| `update-device-compliance-script` | PATCH  | medium |
+| `delete-device-compliance-script` | DELETE | high   |
+| `assign-device-compliance-script` | POST   | medium |
+
+Notes:
+
+- `detectionScriptContent` must emit a JSON object on STDOUT (e.g. `ConvertTo-Json -Compress @{BitLockerEnabled=$true;TpmReady=$true}`).
+- The script alone has no compliance effect — you must also author a `windows10CustomComplianceConfiguration` policy with matching rules.
+- Changing the JSON keys without updating the linked policy's rules silently breaks compliance evaluation.
+- Deleting a script in use causes referencing compliance policies to fail evaluation on next device check-in.
+- Assignment shape reuses `deviceHealthScriptAssignment` (set `runRemediationScript: false` since compliance scripts have no remediation pairing).
 
 ### Enrollment & Autopilot (10)
 

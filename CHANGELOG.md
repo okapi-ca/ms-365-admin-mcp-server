@@ -8,6 +8,28 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-05-25
+
+### Added — P2 beta-only Intune script families (550 tools)
+
+Eighteen new tools across three Intune script families, completing the Graph beta scripts coverage initiated in 0.7.0 (`deviceShellScripts`) and 0.8.0 (`deviceHealthScripts`). All three families reuse the per-endpoint `apiVersion: "beta"` infrastructure from 0.7.0 — pure `endpoints.json` additions, no code changes.
+
+**`deviceCustomAttributeShellScripts` (macOS) — 6 tools**
+
+Shell scripts whose STDOUT becomes a named custom attribute on the device record. Useful for surfacing inventory data (FileVault, Gatekeeper, encryption flags) and driving dynamic group filters. `customAttributeType` controls parse mode: `integer`, `string`, `dateTime`. Changing the attribute key or type after deployment breaks downstream dynamic groups — audit references first.
+
+**`deviceManagementScripts` (Windows PowerShell) — 6 tools**
+
+One-shot PowerShell scripts for Windows 10/11. Runs once per device per assignment, retries on failure. Distinct from `deviceHealthScripts` (Remediations) — no detection/remediation pairing, no scheduling, does NOT re-run after successful execution. For detect-and-fix use `deviceHealthScripts` instead.
+
+**`deviceComplianceScripts` (Windows custom compliance) — 6 tools**
+
+PowerShell scripts that emit a JSON object on STDOUT evaluated against rules declared on an associated `windows10CustomComplianceConfiguration` policy. For organization-specific compliance signals beyond built-in checks (BitLocker, Defender, firewall). The script alone has no compliance effect — must be paired with a custom compliance policy that defines matching rules.
+
+**No new Graph permissions required** — `DeviceManagementScripts.ReadWrite.All` (declared since 0.7.0) explicitly covers all five Intune script families per Microsoft's permission reference: `deviceComplianceScripts`, `deviceManagementScripts`, `deviceShellScripts`, `deviceCustomAttributeShellScripts`, `deviceHealthScripts`.
+
+Completes the Intune scripts family coverage. Three follow-ups from PR #113 ("P1 quick wins") are now closed.
+
 ## [0.8.0] — 2026-05-22
 
 ### Added — `assignmentFilters` tools (532 tools)
