@@ -4440,5 +4440,35 @@
     "appPermissions": ["ProtectionScopes.Compute.All"],
     "riskLevel": "low",
     "llmTip": "Computes the data protection policies and actions applicable across all users in the tenant based on current Purview policy configuration. Empty request body. Returns the list of evaluated scopes — useful for auditing which Purview DLP / sensitivity / retention policies actually apply per user / location / data type at the current point in time. Read-heavy operation (queries policy graph) but classified as POST because it triggers compute on the server side. Pairs with get-protection-scopes which returns the cached / last-computed scopes."
+  },
+  {
+    "pathPattern": "/security/triggers/retentionEvents/{retentionEvent-id}",
+    "method": "get",
+    "toolName": "get-retention-event",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Gets a specific retention event by ID. Returns full details: displayName, description, eventTriggerDateTime (when the retention period started for matching labels), retentionEventType (relationship to the event type definition), createdDateTime, lastModifiedDateTime, status. Used to inspect when an event-based retention label became 'active' and started its retention period (e.g. 'employee_leaving' event triggered when an HR system signals a departure)."
+  },
+  {
+    "pathPattern": "/security/triggers/retentionEvents",
+    "method": "post",
+    "toolName": "create-retention-event",
+    "appPermissions": ["RecordsManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a retention event — triggers the retention period for all event-based retention labels of the linked retentionEventType. Body example: {\"displayName\":\"Employee terminated — John Smith\",\"description\":\"HR system signal 2026-05-25\",\"eventTriggerDateTime\":\"2026-05-25T17:00:00Z\",\"retentionEventType@odata.bind\":\"https://graph.microsoft.com/v1.0/security/triggersTypes/retentionEventTypes/<eventType-id>\"}. Once created, any content tagged with an event-based label that references this eventType starts its retention timer from eventTriggerDateTime. Common patterns: 'project closed' triggers retention on project documents; 'contract expired' triggers retention on contract attachments; 'employee terminated' triggers retention on HR records."
+  },
+  {
+    "pathPattern": "/security/triggerTypes/retentionEventTypes/{retentionEventType-id}",
+    "method": "get",
+    "toolName": "get-retention-event-type",
+    "appPermissions": ["RecordsManagement.Read.All"],
+    "llmTip": "Gets a specific retention event type definition by ID. Returns displayName, description, createdBy, createdDateTime, lastModifiedDateTime. Event types are the categories of events that can trigger event-based retention (e.g. 'project_closed', 'contract_terminated', 'employee_left'). Use get-retention-event-types to list available types before creating an event."
+  },
+  {
+    "pathPattern": "/security/triggerTypes/retentionEventTypes",
+    "method": "post",
+    "toolName": "create-retention-event-type",
+    "appPermissions": ["RecordsManagement.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Creates a retention event type — the category definition that event-based retention labels reference. Body example: {\"displayName\":\"Project closed\",\"description\":\"Triggered when an LCI project is marked closed in the PMO system\"}. After creation, label admins can author event-based retention labels that reference this eventType's id. Then operational scripts call create-retention-event with the same eventType to trigger retention on tagged content."
   }
 ]
