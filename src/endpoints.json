@@ -909,6 +909,22 @@
     "llmTip": "Gets a specific Intune macOS custom attribute shell script by ID. By default scriptContent is NOT returned — pass $select=id,displayName,scriptContent,customAttributeName,customAttributeType,runAsAccount,... to fetch the base64-encoded script body. Supports $select and $expand."
   },
   {
+    "pathPattern": "/deviceManagement/deviceManagementScripts",
+    "method": "get",
+    "toolName": "list-device-management-scripts",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Intune Windows PowerShell scripts (deviceManagementScripts) — one-shot PowerShell scripts deployed to managed Windows 10/11 devices. Distinct from deviceHealthScripts: no detection/remediation pairing, no scheduling — runs once per device per assignment, retries on failure up to retryCount. Each has displayName, description, runAsAccount (system | user), enforceSignatureCheck, runAs32Bit (force 32-bit PS even on 64-bit OS), fileName, roleScopeTagIds. scriptContent is NOT returned in list responses — fetch a specific script with $select=scriptContent. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceManagementScripts/{deviceManagementScript-id}",
+    "method": "get",
+    "toolName": "get-device-management-script",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Intune Windows PowerShell script by ID. By default scriptContent is NOT returned — pass $select=id,displayName,scriptContent,runAsAccount,enforceSignatureCheck,runAs32Bit,... to fetch the base64-encoded PowerShell body. Supports $select and $expand."
+  },
+  {
     "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
     "method": "get",
     "toolName": "list-enrollment-configurations",
@@ -3077,6 +3093,42 @@
     "riskLevel": "medium",
     "apiVersion": "beta",
     "llmTip": "Assigns a macOS custom attribute shell script to Entra groups. Body: {\"deviceManagementScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceManagementScripts",
+    "method": "post",
+    "toolName": "create-device-management-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Creates a new Intune Windows PowerShell script (one-shot). Body example: {\"@odata.type\":\"#microsoft.graph.deviceManagementScript\",\"displayName\":\"Install agent\",\"description\":\"Install internal monitoring agent\",\"scriptContent\":\"<base64-encoded PowerShell script>\",\"runAsAccount\":\"system\",\"enforceSignatureCheck\":false,\"runAs32Bit\":false,\"fileName\":\"install-agent.ps1\",\"roleScopeTagIds\":[\"0\"]}. scriptContent MUST be base64-encoded UTF-8 PowerShell. Runs ONCE per device on next IME sync after assignment; retries on failure (max 3 attempts). For detect-and-fix patterns use deviceHealthScripts instead. Set enforceSignatureCheck=true to require code-signed scripts (recommended for prod). runAs32Bit=true forces 32-bit PowerShell on 64-bit Windows (rarely needed)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceManagementScripts/{deviceManagementScript-id}",
+    "method": "patch",
+    "toolName": "update-device-management-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Updates an Intune Windows PowerShell script (partial update). Same body shape as create-device-management-script — only fields included in the body are changed. Updating scriptContent does NOT re-run the script on devices that have already executed it successfully — Intune tracks per-device success state. To force re-execution, delete and recreate the script (or use deviceHealthScripts for re-runnable patterns)."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceManagementScripts/{deviceManagementScript-id}",
+    "method": "delete",
+    "toolName": "delete-device-management-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Deletes an Intune Windows PowerShell script. All assigned devices immediately stop receiving the script on their next IME sync. This does NOT undo what the script already did on devices — it only removes future execution. Confirm with the user before calling on a script with active assignments."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceManagementScripts/{deviceManagementScript-id}/assign",
+    "method": "post",
+    "toolName": "assign-device-management-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Assigns a Windows PowerShell script to Entra groups. Body: {\"deviceManagementScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list. Adding a new group triggers script execution on devices that haven't yet run it (existing successful devices are not re-run)."
   },
   {
     "pathPattern": "/sites/{site-id}/permissions",
