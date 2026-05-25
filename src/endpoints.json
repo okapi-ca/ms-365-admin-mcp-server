@@ -2155,6 +2155,43 @@
     "llmTip": "Generates a NEW Defender for Identity deployment access key, invalidating the previous key immediately. Used when the previous key is suspected compromised, has leaked, or as part of periodic rotation. BREAKING IMPACT: any in-progress sensor installations using the OLD key will fail and must be retried with the new key. Already-installed sensors are unaffected (they use registered service principals, not the deployment key). After regeneration, retrieve the new key with get-sensor-deployment-access-key. Empty request body. Confirm with the user before calling — coordinate with anyone currently rolling out sensors."
   },
   {
+    "pathPattern": "/security/identities/sensorCandidates",
+    "method": "get",
+    "toolName": "list-sensor-candidates",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Lists Microsoft Defender for Identity sensor candidates — servers detected on the network that appear to be domain controllers, AD FS, AD CS, or Entra Connect hosts but do NOT yet have a DfI sensor installed. Each has dnsName, ipAddress, osVersion, lastSeenDateTime, candidateType (e.g. domainController, adfs, adcs, entraConnect), isActivated (boolean), and detectedBy (which existing sensor detected this candidate). Use to discover blind spots in DfI coverage and target new sensor deployments. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidates/{sensorCandidate-id}",
+    "method": "get",
+    "toolName": "get-sensor-candidate",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets a specific sensor candidate by ID. Returns full discovery metadata: dnsName, ipAddress, osVersion, candidateType, lastSeenDateTime, isActivated, detectedBy, additionalInformation (server role hints). Use before calling activate-sensor-candidates to confirm the candidate matches the expected server."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidateActivationConfiguration",
+    "method": "get",
+    "toolName": "get-sensor-candidate-activation-config",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets the global sensor candidate activation configuration — controls how DfI handles newly-detected sensor candidates. Returns the autoActivation flag (whether candidates are auto-promoted to sensors), automation rules (criteria for auto-activation), and notification settings."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidateActivationConfiguration",
+    "method": "patch",
+    "toolName": "update-sensor-candidate-activation-config",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates the global sensor candidate activation configuration (partial update). Body example: {\"autoActivation\":false,\"notifyOnDiscovery\":true}. Set autoActivation=true with caution — it auto-promotes any newly-detected DC/AD FS host to a sensor on the deployment-key path, which may include hosts you do not intend to monitor (lab environments, decommissioned servers still on the network)."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidates/microsoft.graph.security.activate",
+    "method": "post",
+    "toolName": "activate-sensor-candidates",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Activates one or more Defender for Identity sensor candidates — initiates sensor installation on the named servers using the deployment access key flow. Body: {\"serverIds\":[\"<candidate-id-1>\",\"<candidate-id-2>\"]}. The activation is asynchronous: returns 202 then DfI pushes the installer to each server. Track progress via list-identity-sensors (new entries appear) and list-sensor-candidates (activated candidates flip isActivated=true). Verify with get-sensor-candidate before activating to confirm host identity — activating the wrong serverId installs a sensor on an unintended host."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
