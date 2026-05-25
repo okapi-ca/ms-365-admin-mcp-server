@@ -2118,6 +2118,43 @@
     "llmTip": "Gets a specific health issue scoped to a sensor. Equivalent to get-identity-health-issue but verified to belong to the named sensor — useful when correlating an alert to a specific DC."
   },
   {
+    "pathPattern": "/security/identities/sensors/{sensor-id}",
+    "method": "get",
+    "toolName": "get-identity-sensor",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets a specific Microsoft Defender for Identity sensor by ID. Returns full details: displayName, sensorType (adConnectIntegrated | adcsIntegrated | adfsIntegrated | domainControllerIntegrated | entraConnectIntegrated), healthStatus (healthy | notHealthy | offline | failed), openHealthIssuesCount, domainName, version, deploymentStatus, sensorSettings, createdDateTime, settings (capture mode, delayed updates), and the underlying server's DNS / IP / OS info. Use after list-identity-sensors to drill into a specific DC / AD FS / AD CS / Entra Connect server."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}",
+    "method": "patch",
+    "toolName": "update-identity-sensor",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a Microsoft Defender for Identity sensor configuration (partial update). Body example: {\"settings\":{\"description\":\"DC1 — primary domain controller\",\"domainControllerIsAdvertised\":true,\"sensorMode\":\"sensor\"}}. Common updates: rename a sensor, change capture mode (sensor vs. standalone), toggle network adapters used, enable/disable delayed updates. Sensor configuration changes propagate to the sensor on its next service heartbeat (typically <5 min)."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/microsoft.graph.security.getDeploymentAccessKey()",
+    "method": "get",
+    "toolName": "get-sensor-deployment-access-key",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets the Microsoft Defender for Identity deployment access key for the tenant — required to install NEW sensors (the installer prompts for this key on first run). SECURITY: This key is a credential that allows any host on the network to register itself as a DfI sensor — treat it as a secret, do NOT log it, do NOT expose in tickets or screenshots. Anyone with this key can install a rogue sensor that may impersonate traffic capture. If suspected compromised, use regenerate-sensor-deployment-access-key to rotate (invalidates the old key immediately)."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/microsoft.graph.security.getDeploymentPackageUri()",
+    "method": "get",
+    "toolName": "get-sensor-deployment-package-uri",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets the Microsoft Defender for Identity sensor deployment package URL and version. The URL is a time-limited Azure Blob link to the latest .exe installer. Use to download the installer programmatically when deploying new sensors. The version field tells you the installer build that will be installed."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/microsoft.graph.security.regenerateDeploymentAccessKey",
+    "method": "post",
+    "toolName": "regenerate-sensor-deployment-access-key",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Generates a NEW Defender for Identity deployment access key, invalidating the previous key immediately. Used when the previous key is suspected compromised, has leaked, or as part of periodic rotation. BREAKING IMPACT: any in-progress sensor installations using the OLD key will fail and must be retried with the new key. Already-installed sensors are unaffected (they use registered service principals, not the deployment key). After regeneration, retrieve the new key with get-sensor-deployment-access-key. Empty request body. Confirm with the user before calling — coordinate with anyone currently rolling out sensors."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
