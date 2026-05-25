@@ -893,6 +893,22 @@
     "llmTip": "Gets a specific Intune Remediation (Proactive Remediation) by ID. By default detectionScriptContent and remediationScriptContent are NOT returned — pass $select=id,displayName,detectionScriptContent,remediationScriptContent,runAsAccount,... to fetch the base64-encoded PowerShell bodies. Supports $select and $expand."
   },
   {
+    "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts",
+    "method": "get",
+    "toolName": "list-device-custom-attribute-shell-scripts",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Intune macOS custom attribute shell scripts. Each script's STDOUT is stored as a named custom attribute on the device record — useful for surfacing inventory data (FileVault state, Gatekeeper, encryption flags, custom markers) and driving dynamic group filters. Each has displayName, description, customAttributeName (the attribute key), customAttributeType (integer | string | dateTime), runAsAccount (system | user), fileName, roleScopeTagIds. scriptContent is NOT returned in list responses — fetch a specific script with $select=scriptContent. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts/{deviceCustomAttributeShellScript-id}",
+    "method": "get",
+    "toolName": "get-device-custom-attribute-shell-script",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Intune macOS custom attribute shell script by ID. By default scriptContent is NOT returned — pass $select=id,displayName,scriptContent,customAttributeName,customAttributeType,runAsAccount,... to fetch the base64-encoded script body. Supports $select and $expand."
+  },
+  {
     "pathPattern": "/deviceManagement/deviceEnrollmentConfigurations",
     "method": "get",
     "toolName": "list-enrollment-configurations",
@@ -3025,6 +3041,42 @@
     "riskLevel": "medium",
     "apiVersion": "beta",
     "llmTip": "Assigns an Intune Remediation to Entra groups with a schedule. Body: {\"deviceHealthScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"},\"runRemediationScript\":true,\"runSchedule\":{\"@odata.type\":\"#microsoft.graph.deviceHealthScriptDailySchedule\",\"interval\":1,\"time\":\"03:00:00\",\"useUtc\":false}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — not additive. Schedule options: deviceHealthScriptDailySchedule, deviceHealthScriptHourlySchedule, deviceHealthScriptRunOnceSchedule. Set runRemediationScript=false to make it a detect-only deployment."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts",
+    "method": "post",
+    "toolName": "create-device-custom-attribute-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Creates a new Intune macOS custom attribute shell script. Body example: {\"@odata.type\":\"#microsoft.graph.deviceCustomAttributeShellScript\",\"displayName\":\"FileVault status\",\"description\":\"Reports FileVault enabled state\",\"customAttributeName\":\"filevault_enabled\",\"customAttributeType\":\"string\",\"scriptContent\":\"<base64-encoded shell script, LF line endings>\",\"runAsAccount\":\"system\",\"fileName\":\"filevault-status.sh\",\"roleScopeTagIds\":[\"0\"]}. scriptContent MUST be strict base64 of a script with LF line endings — CRLF will break execution on Macs. The script's STDOUT becomes the value stored under customAttributeName on each device. customAttributeType controls how Intune parses STDOUT: 'integer' (parsed as int), 'string' (raw), or 'dateTime' (ISO 8601). Use runAsAccount=user only for scripts that need to read user-context data."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts/{deviceCustomAttributeShellScript-id}",
+    "method": "patch",
+    "toolName": "update-device-custom-attribute-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Updates an Intune macOS custom attribute shell script (partial update). Same body shape as create-device-custom-attribute-shell-script — only fields included in the body are changed. WARNING: changing customAttributeName or customAttributeType after deployment breaks downstream dynamic groups and assignment filters that reference the previous attribute key — audit references before updating those fields. To update only scriptContent, send just that field as base64."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts/{deviceCustomAttributeShellScript-id}",
+    "method": "delete",
+    "toolName": "delete-device-custom-attribute-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Deletes an Intune macOS custom attribute shell script. All assigned Macs immediately stop collecting the attribute on their next check-in. Previously-collected attribute values on devices are NOT automatically cleared from the device record. Any dynamic groups or assignment filters referencing this customAttributeName will return empty for new evaluations. Confirm with the user before calling on a script with active assignments or downstream references."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts/{deviceCustomAttributeShellScript-id}/assign",
+    "method": "post",
+    "toolName": "assign-device-custom-attribute-shell-script",
+    "appPermissions": ["DeviceManagementScripts.ReadWrite.All"],
+    "riskLevel": "medium",
+    "apiVersion": "beta",
+    "llmTip": "Assigns a macOS custom attribute shell script to Entra groups. Body: {\"deviceManagementScriptAssignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<entra-group-uuid>\"}}]}. IMPORTANT: this endpoint REPLACES all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list."
   },
   {
     "pathPattern": "/sites/{site-id}/permissions",
