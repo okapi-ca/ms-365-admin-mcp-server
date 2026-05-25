@@ -2097,6 +2097,27 @@
     "llmTip": "Gets Microsoft Defender for Identity global settings. Returns configuration for identity-based threat detection."
   },
   {
+    "pathPattern": "/security/identities/healthIssues/{healthIssue-id}",
+    "method": "get",
+    "toolName": "get-identity-health-issue",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Gets a specific Microsoft Defender for Identity health issue by ID. Returns full details including healthIssueType, severity (low | medium | high), status (open | closed | suppressed), displayName, description, recommendedActions, recommendedActionCommands (PowerShell remediation snippets), createdDateTime, lastModifiedDateTime, domainNames, sensorDNSNames, additionalInformation, issueTypeId. Use after list-identity-health-issues to drill into a specific health alert and get the remediation commands."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}/healthIssues",
+    "method": "get",
+    "toolName": "list-sensor-health-issues",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Lists all health issues for a specific Defender for Identity sensor. Returns the per-sensor view of healthIssues — same shape as list-identity-health-issues but scoped to a single sensor. Useful for triaging the health of one specific domain controller or AD FS / AD CS server. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}/healthIssues/{healthIssue-id}",
+    "method": "get",
+    "toolName": "get-sensor-health-issue",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Gets a specific health issue scoped to a sensor. Equivalent to get-identity-health-issue but verified to belong to the named sensor — useful when correlating an alert to a specific DC."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
