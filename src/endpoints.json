@@ -4389,12 +4389,12 @@
     "llmTip": "Exports the contents of a review set for production / forensic delivery. Body example: {\"outputName\":\"2026Q1-production\",\"description\":\"Subpoena response Jan 2026\",\"exportOptions\":\"originalFiles,fileInfo,tags\",\"exportStructure\":\"directory\"}. exportOptions: 'originalFiles' (native), 'text' (extracted text), 'pdfReplacement' (PDFs), 'tags' (review tags as CSV), 'fileInfo' (metadata CSV), 'summary'. exportStructure: 'none' (flat) | 'directory' (per-custodian) | 'pst' (mailbox-style PST per custodian). Long-running: returns 202; track via list-case-operations. Output is downloaded via the Purview portal once status=succeeded — Graph does not return a direct download URL. HIGH risk: exports may contain privileged / PII content — handle per the case's chain-of-custody."
   },
   {
-    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches/{ediscoverySearch-id}/microsoft.graph.security.addToReviewSet",
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/microsoft.graph.security.addToReviewSet",
     "method": "post",
     "toolName": "add-to-review-set",
     "appPermissions": ["eDiscovery.ReadWrite.All"],
     "riskLevel": "medium",
-    "llmTip": "Adds the results of an eDiscovery search to a review set — the canonical workflow for moving search hits into a curated review workspace. Body: {\"reviewSet\":{\"id\":\"<reviewSet-id>\"},\"additionalDataOptions\":\"linkedFiles\"}. additionalDataOptions: 'linkedFiles' (include attachments / linked SharePoint docs) | 'allItemsInFolder' (include sibling items) | 'subfolderContents'. Long-running: returns 202; track via list-case-operations (action='addToReviewSet'). Once succeeded, items are immutable in the review set — they snapshot the source content at the time of add."
+    "llmTip": "Adds the results of an eDiscovery search to a review set — the canonical workflow for moving search hits into a curated review workspace. Body: {\"search\":{\"id\":\"<ediscoverySearch-id>\"},\"additionalDataOptions\":\"linkedFiles\",\"itemsToInclude\":\"searchHits\",\"cloudAttachmentVersion\":\"latest\",\"documentVersion\":\"latest\"}. additionalDataOptions: 'linkedFiles' (include attachments / linked SharePoint docs) | 'allItemsInFolder' (include sibling items) | 'subfolderContents'. Long-running: returns 202; track via list-case-operations (action='addToReviewSet'). Once succeeded, items are immutable in the review set — they snapshot the source content at the time of add. NOTE: this is an action on the REVIEW SET (parent path), not on the search — the search is referenced in the body."
   },
   {
     "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/reviewSets/{ediscoveryReviewSet-id}/queries",
