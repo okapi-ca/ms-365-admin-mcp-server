@@ -8,6 +8,72 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-05-25
+
+### Added — Microsoft Defender for Identity full surface (571 tools)
+
+Twenty-one new tools completing the coverage of Microsoft Defender for Identity (DfI) administration via Graph. Builds on the 3 read-only DfI tools shipped in early v0.x releases to bring total DfI tool count to 24.
+
+**Health issues completion (3 tools)** — drill-down by health issue ID, scope to specific sensor:
+
+- `get-identity-health-issue` (GET)
+- `list-sensor-health-issues` (GET)
+- `get-sensor-health-issue` (GET)
+
+**Sensor management (5 tools)** — drill-down, reconfigure, deployment access key lifecycle:
+
+- `get-identity-sensor` (GET)
+- `update-identity-sensor` (PATCH, risk: medium)
+- `get-sensor-deployment-access-key` (GET function — treat returned key as secret)
+- `get-sensor-deployment-package-uri` (GET function)
+- `regenerate-sensor-deployment-access-key` (POST action, risk: high — invalidates previous key)
+
+**Sensor candidates (5 tools)** — auto-discovery of un-sensored DCs / AD FS / AD CS / Entra Connect hosts:
+
+- `list-sensor-candidates` (GET)
+- `get-sensor-candidate` (GET)
+- `get-sensor-candidate-activation-config` (GET)
+- `update-sensor-candidate-activation-config` (PATCH, risk: medium)
+- `activate-sensor-candidates` (POST .../activate, risk: medium)
+
+**Sensor migration (3 tools)** — migration to unified Defender XDR architecture (beta-only endpoints):
+
+- `list-sensor-migrations` (GET, beta)
+- `get-sensor-migration` (GET, beta)
+- `migrate-sensors` (POST .../migrate, risk: high, beta — brief capture gap on DCs)
+
+**Auto-auditing configuration (2 tools)** — enforces Windows advanced audit policies on sensor hosts:
+
+- `get-auto-auditing-config` (GET)
+- `update-auto-auditing-config` (PATCH, risk: medium)
+
+**Identity accounts + break-glass invokeAction (3 tools)** — the highest-impact DfI capability:
+
+- `list-identity-accounts` (GET)
+- `get-identity-account` (GET)
+- `invoke-identity-account-action` (POST .../invokeAction, risk: **critical**)
+
+`invoke-identity-account-action` performs identity-response actions in source systems — disable / enable / forcePasswordReset (AD on-prem), revokeAllSessions (Okta), markUserAsCompromised. Equivalent to a "break-glass" SOC response. Classified as `critical` riskLevel and gated by `Tools.Write.Critical` App Role per the per-caller write gating model (see v0.6.0+).
+
+### New Graph permissions required
+
+Must be consented on the app registration (none of these were declared prior to 0.10.0):
+
+- `SecurityIdentitiesSensors.Read.All`
+- `SecurityIdentitiesSensors.ReadWrite.All`
+- `SecurityIdentitiesSettings.Read.All`
+- `SecurityIdentitiesSettings.ReadWrite.All`
+- `SecurityIdentitiesActions.Read.All`
+- `SecurityIdentitiesActions.ReadWrite.All`
+
+The existing `SecurityIdentitiesHealth.Read.All` (declared since the original `list-identity-health-issues` tool) continues to cover all health-issue reads.
+
+### Notes
+
+- 18 of 21 new tools target Graph v1.0 (stable) — only the 3 `sensorMigration` tools use the beta endpoint.
+- Function paths with parentheses notation (`getDeploymentAccessKey()`, `getDeploymentPackageUri()`) and namespace-prefixed action paths (`microsoft.graph.security.invokeAction`, `microsoft.graph.security.activate`, etc.) are passed through to Graph as-is — the per-endpoint validation test confirms generator + Zodios client handle them.
+- 195/195 tests still pass, no regressions on existing 550 tools.
+
 ## [0.9.0] — 2026-05-25
 
 ### Added — P2 beta-only Intune script families (550 tools)
