@@ -2232,6 +2232,28 @@
     "llmTip": "Updates the Defender for Identity auto-auditing configuration (partial update). Body example: {\"enabled\":true}. Setting enabled=true causes DfI to enforce the recommended Windows advanced audit policies on every sensor host — if a local admin changes them on the DC, DfI reverts the change on its next sync. Disable only for tenants with custom audit policy frameworks (where DfI's enforcement would conflict). Changes propagate to sensors on their next heartbeat."
   },
   {
+    "pathPattern": "/security/identities/identityAccounts",
+    "method": "get",
+    "toolName": "list-identity-accounts",
+    "appPermissions": ["SecurityIdentitiesActions.Read.All"],
+    "llmTip": "Lists identity accounts observed by Microsoft Defender for Identity — synced AD / Entra ID / Okta accounts that DfI has correlated with detected activity. Each has accountId, displayName, identityProvider (entraID | activeDirectory | okta), upn / sAMAccountName, domain, isSensitive (privileged), and lastActivityDateTime. Use to identify the canonical DfI account-id needed for invoke-identity-account-action (which requires the DfI identityAccountsId, NOT the AD objectGuid). Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/security/identities/identityAccounts/{identityAccounts-id}",
+    "method": "get",
+    "toolName": "get-identity-account",
+    "appPermissions": ["SecurityIdentitiesActions.Read.All"],
+    "llmTip": "Gets a specific identity account by DfI identityAccounts id. Returns full details including identityProvider, sourceId (the AD objectGuid / Entra objectId / Okta id), upn, displayName, lastActivityDateTime, sensitivity flags, group memberships observed by DfI. Use to confirm an account's identityProvider before calling invoke-identity-account-action — the action set differs by provider (e.g. forcePasswordReset works for activeDirectory only)."
+  },
+  {
+    "pathPattern": "/security/identities/identityAccounts/{identityAccounts-id}/microsoft.graph.security.invokeAction",
+    "method": "post",
+    "toolName": "invoke-identity-account-action",
+    "appPermissions": ["SecurityIdentitiesActions.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Performs an identity-response action on an account observed by Defender for Identity. Body: {\"accountId\":\"<source-id>\",\"action\":\"disable|enable|forcePasswordReset|revokeAllSessions|requireUserToSignInAgain|markUserAsCompromised\",\"identityProvider\":\"entraID|activeDirectory|okta\"}. ACTION/PROVIDER COMPATIBILITY: disable/enable supported on activeDirectory and okta; forcePasswordReset supported on activeDirectory only; revokeAllSessions on okta only. The accountId in the body is the source-system identifier (AD objectGuid, Okta id), NOT the DfI identityAccountsId in the URL — get both via get-identity-account first. DESTRUCTIVE: this disables AD on-prem accounts, forces password resets, or revokes sessions — equivalent to an incident-response action. Confirm with the user before invoking, ESPECIALLY on production accounts. Audit trail: action is logged in DfI activity logs AND in AD (if AD is the provider)."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
