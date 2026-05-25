@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **550 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, Defender for Identity, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **571 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, Copilot admin, custom security attributes, LAPS, policies, reports, incident response, eDiscovery, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -1074,13 +1074,10 @@ Notes:
 | ---------------------------------------- | ------ | ---- |
 | `list-service-principal-risk-detections` | GET    |      |
 
-### Security advanced (14)
+### Security advanced (9)
 
 | Tool                                     | Method | Risk |
 | ---------------------------------------- | ------ | ---- |
-| `list-identity-health-issues`            | GET    |      |
-| `list-identity-sensors`                  | GET    |      |
-| `get-identity-security-settings`         | GET    |      |
 | `list-retention-events`                  | GET    |      |
 | `list-retention-event-types`             | GET    |      |
 | `list-subject-rights-requests`           | GET    |      |
@@ -1090,6 +1087,54 @@ Notes:
 | `list-simulation-end-user-notifications` | GET    |      |
 | `list-simulation-landing-pages`          | GET    |      |
 | `list-simulation-login-pages`            | GET    |      |
+
+### Defender for Identity (24)
+
+Full surface coverage of Microsoft Defender for Identity (DfI) administration via Graph: sensors, sensor candidates (auto-discovery), sensor migration to unified Defender XDR architecture, identity accounts (with break-glass invokeAction for AD on-prem / Okta), audit policy enforcement, and health alerts. Most endpoints are Graph v1.0; `sensorMigration` is beta-only.
+
+| Tool                                        | Method | Risk     |
+| ------------------------------------------- | ------ | -------- |
+| `list-identity-health-issues`               | GET    |          |
+| `get-identity-health-issue`                 | GET    |          |
+| `list-sensor-health-issues`                 | GET    |          |
+| `get-sensor-health-issue`                   | GET    |          |
+| `list-identity-sensors`                     | GET    |          |
+| `get-identity-sensor`                       | GET    |          |
+| `update-identity-sensor`                    | PATCH  | medium   |
+| `get-sensor-deployment-access-key`          | GET    |          |
+| `get-sensor-deployment-package-uri`         | GET    |          |
+| `regenerate-sensor-deployment-access-key`   | POST   | high     |
+| `list-sensor-candidates`                    | GET    |          |
+| `get-sensor-candidate`                      | GET    |          |
+| `get-sensor-candidate-activation-config`    | GET    |          |
+| `update-sensor-candidate-activation-config` | PATCH  | medium   |
+| `activate-sensor-candidates`                | POST   | medium   |
+| `list-sensor-migrations`                    | GET    |          |
+| `get-sensor-migration`                      | GET    |          |
+| `migrate-sensors`                           | POST   | high     |
+| `get-identity-security-settings`            | GET    |          |
+| `get-auto-auditing-config`                  | GET    |          |
+| `update-auto-auditing-config`               | PATCH  | medium   |
+| `list-identity-accounts`                    | GET    |          |
+| `get-identity-account`                      | GET    |          |
+| `invoke-identity-account-action`            | POST   | critical |
+
+Notes:
+
+- **`invoke-identity-account-action`** is the highest-impact write — performs identity-response actions (disable, enable, forcePasswordReset, revokeAllSessions, requireUserToSignInAgain, markUserAsCompromised) on accounts in their source system (AD on-prem, Okta). Action / provider compatibility: `disable`/`enable` for AD + Okta, `forcePasswordReset` for AD only, `revokeAllSessions` for Okta only.
+- **`regenerate-sensor-deployment-access-key`** invalidates the previous key immediately — coordinate with anyone rolling out new sensors before calling.
+- **`migrate-sensors`** restarts the sensor service on the target DC during migration to unified Defender XDR — brief capture gap (~minutes). Schedule maintenance windows for production DCs. Beta-only.
+- **`activate-sensor-candidates`** triggers sensor installation on detected hosts using the deployment access key flow. Verify with `get-sensor-candidate` first — wrong serverId installs on the wrong host.
+- **`update-auto-auditing-config`** with `enabled=true` makes DfI enforce the recommended Windows advanced audit policies on every sensor host (revert local admin overrides on next heartbeat) — recommended for production.
+
+New Graph permissions required since v0.10.0 (must be consented on the app registration):
+
+- `SecurityIdentitiesSensors.Read.All`
+- `SecurityIdentitiesSensors.ReadWrite.All`
+- `SecurityIdentitiesSettings.Read.All`
+- `SecurityIdentitiesSettings.ReadWrite.All`
+- `SecurityIdentitiesActions.Read.All`
+- `SecurityIdentitiesActions.ReadWrite.All`
 
 ### Threat intelligence+ (7)
 
@@ -1295,7 +1340,10 @@ RoleManagement.Read.Directory
 RoleManagementPolicy.Read.Directory
 SecurityAlert.Read.All
 SecurityEvents.Read.All
+SecurityIdentitiesActions.Read.All
 SecurityIdentitiesHealth.Read.All
+SecurityIdentitiesSensors.Read.All
+SecurityIdentitiesSettings.Read.All
 SecurityIncident.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
@@ -1350,6 +1398,9 @@ RoleEligibilitySchedule.ReadWrite.Directory
 RoleManagement.ReadWrite.Directory
 RoleManagementPolicy.ReadWrite.Directory
 SecurityAlert.ReadWrite.All
+SecurityIdentitiesActions.ReadWrite.All
+SecurityIdentitiesSensors.ReadWrite.All
+SecurityIdentitiesSettings.ReadWrite.All
 SecurityIncident.ReadWrite.All
 Sites.ReadWrite.All
 Team.Create

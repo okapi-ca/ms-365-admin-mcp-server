@@ -2097,6 +2097,163 @@
     "llmTip": "Gets Microsoft Defender for Identity global settings. Returns configuration for identity-based threat detection."
   },
   {
+    "pathPattern": "/security/identities/healthIssues/{healthIssue-id}",
+    "method": "get",
+    "toolName": "get-identity-health-issue",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Gets a specific Microsoft Defender for Identity health issue by ID. Returns full details including healthIssueType, severity (low | medium | high), status (open | closed | suppressed), displayName, description, recommendedActions, recommendedActionCommands (PowerShell remediation snippets), createdDateTime, lastModifiedDateTime, domainNames, sensorDNSNames, additionalInformation, issueTypeId. Use after list-identity-health-issues to drill into a specific health alert and get the remediation commands."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}/healthIssues",
+    "method": "get",
+    "toolName": "list-sensor-health-issues",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Lists all health issues for a specific Defender for Identity sensor. Returns the per-sensor view of healthIssues — same shape as list-identity-health-issues but scoped to a single sensor. Useful for triaging the health of one specific domain controller or AD FS / AD CS server. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}/healthIssues/{healthIssue-id}",
+    "method": "get",
+    "toolName": "get-sensor-health-issue",
+    "appPermissions": ["SecurityIdentitiesHealth.Read.All"],
+    "llmTip": "Gets a specific health issue scoped to a sensor. Equivalent to get-identity-health-issue but verified to belong to the named sensor — useful when correlating an alert to a specific DC."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}",
+    "method": "get",
+    "toolName": "get-identity-sensor",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets a specific Microsoft Defender for Identity sensor by ID. Returns full details: displayName, sensorType (adConnectIntegrated | adcsIntegrated | adfsIntegrated | domainControllerIntegrated | entraConnectIntegrated), healthStatus (healthy | notHealthy | offline | failed), openHealthIssuesCount, domainName, version, deploymentStatus, sensorSettings, createdDateTime, settings (capture mode, delayed updates), and the underlying server's DNS / IP / OS info. Use after list-identity-sensors to drill into a specific DC / AD FS / AD CS / Entra Connect server."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/{sensor-id}",
+    "method": "patch",
+    "toolName": "update-identity-sensor",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates a Microsoft Defender for Identity sensor configuration (partial update). Body example: {\"settings\":{\"description\":\"DC1 — primary domain controller\",\"domainControllerIsAdvertised\":true,\"sensorMode\":\"sensor\"}}. Common updates: rename a sensor, change capture mode (sensor vs. standalone), toggle network adapters used, enable/disable delayed updates. Sensor configuration changes propagate to the sensor on its next service heartbeat (typically <5 min)."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/microsoft.graph.security.getDeploymentAccessKey()",
+    "method": "get",
+    "toolName": "get-sensor-deployment-access-key",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets the Microsoft Defender for Identity deployment access key for the tenant — required to install NEW sensors (the installer prompts for this key on first run). SECURITY: This key is a credential that allows any host on the network to register itself as a DfI sensor — treat it as a secret, do NOT log it, do NOT expose in tickets or screenshots. Anyone with this key can install a rogue sensor that may impersonate traffic capture. If suspected compromised, use regenerate-sensor-deployment-access-key to rotate (invalidates the old key immediately)."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/microsoft.graph.security.getDeploymentPackageUri()",
+    "method": "get",
+    "toolName": "get-sensor-deployment-package-uri",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets the Microsoft Defender for Identity sensor deployment package URL and version. The URL is a time-limited Azure Blob link to the latest .exe installer. Use to download the installer programmatically when deploying new sensors. The version field tells you the installer build that will be installed."
+  },
+  {
+    "pathPattern": "/security/identities/sensors/microsoft.graph.security.regenerateDeploymentAccessKey",
+    "method": "post",
+    "toolName": "regenerate-sensor-deployment-access-key",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Generates a NEW Defender for Identity deployment access key, invalidating the previous key immediately. Used when the previous key is suspected compromised, has leaked, or as part of periodic rotation. BREAKING IMPACT: any in-progress sensor installations using the OLD key will fail and must be retried with the new key. Already-installed sensors are unaffected (they use registered service principals, not the deployment key). After regeneration, retrieve the new key with get-sensor-deployment-access-key. Empty request body. Confirm with the user before calling — coordinate with anyone currently rolling out sensors."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidates",
+    "method": "get",
+    "toolName": "list-sensor-candidates",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Lists Microsoft Defender for Identity sensor candidates — servers detected on the network that appear to be domain controllers, AD FS, AD CS, or Entra Connect hosts but do NOT yet have a DfI sensor installed. Each has dnsName, ipAddress, osVersion, lastSeenDateTime, candidateType (e.g. domainController, adfs, adcs, entraConnect), isActivated (boolean), and detectedBy (which existing sensor detected this candidate). Use to discover blind spots in DfI coverage and target new sensor deployments. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidates/{sensorCandidate-id}",
+    "method": "get",
+    "toolName": "get-sensor-candidate",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets a specific sensor candidate by ID. Returns full discovery metadata: dnsName, ipAddress, osVersion, candidateType, lastSeenDateTime, isActivated, detectedBy, additionalInformation (server role hints). Use before calling activate-sensor-candidates to confirm the candidate matches the expected server."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidateActivationConfiguration",
+    "method": "get",
+    "toolName": "get-sensor-candidate-activation-config",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "llmTip": "Gets the global sensor candidate activation configuration — controls how DfI handles newly-detected sensor candidates. Returns the autoActivation flag (whether candidates are auto-promoted to sensors), automation rules (criteria for auto-activation), and notification settings."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidateActivationConfiguration",
+    "method": "patch",
+    "toolName": "update-sensor-candidate-activation-config",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates the global sensor candidate activation configuration (partial update). Body example: {\"autoActivation\":false,\"notifyOnDiscovery\":true}. Set autoActivation=true with caution — it auto-promotes any newly-detected DC/AD FS host to a sensor on the deployment-key path, which may include hosts you do not intend to monitor (lab environments, decommissioned servers still on the network)."
+  },
+  {
+    "pathPattern": "/security/identities/sensorCandidates/microsoft.graph.security.activate",
+    "method": "post",
+    "toolName": "activate-sensor-candidates",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Activates one or more Defender for Identity sensor candidates — initiates sensor installation on the named servers using the deployment access key flow. Body: {\"serverIds\":[\"<candidate-id-1>\",\"<candidate-id-2>\"]}. The activation is asynchronous: returns 202 then DfI pushes the installer to each server. Track progress via list-identity-sensors (new entries appear) and list-sensor-candidates (activated candidates flip isActivated=true). Verify with get-sensor-candidate before activating to confirm host identity — activating the wrong serverId installs a sensor on an unintended host."
+  },
+  {
+    "pathPattern": "/security/identities/sensorMigration",
+    "method": "get",
+    "toolName": "list-sensor-migrations",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Microsoft Defender for Identity sensor migration jobs — tracks upgrades of sensors from legacy AATP (Azure Advanced Threat Protection) workspace to the unified Defender XDR sensor architecture. Each migration has sensorId, sourceVersion, targetVersion, status (pending | inProgress | completed | failed), startedDateTime, completedDateTime. Use to monitor an in-flight migration wave. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/security/identities/sensorMigration/{sensorMigration-id}",
+    "method": "get",
+    "toolName": "get-sensor-migration",
+    "appPermissions": ["SecurityIdentitiesSensors.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific sensor migration job by ID. Returns the full migration trace: source/target versions, current step, errors (if status=failed), per-step timestamps. Use to investigate why a specific migration is stuck or failed. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/security/identities/sensorMigration/microsoft.graph.security.migrate",
+    "method": "post",
+    "toolName": "migrate-sensors",
+    "appPermissions": ["SecurityIdentitiesSensors.ReadWrite.All"],
+    "riskLevel": "high",
+    "apiVersion": "beta",
+    "llmTip": "Triggers migration of one or more Defender for Identity sensors to the unified Defender XDR architecture. Body: {\"sensorIds\":[\"<sensor-id-1>\",\"<sensor-id-2>\"]}. POTENTIALLY DISRUPTIVE: the migration restarts the sensor service on the target host — there's a brief window (~minutes) where the DC's network traffic is not being captured. Schedule during a maintenance window for production DCs. Track via list-sensor-migrations / get-sensor-migration. Failed migrations require manual remediation on the host. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/security/identities/settings/autoAuditingConfiguration",
+    "method": "get",
+    "toolName": "get-auto-auditing-config",
+    "appPermissions": ["SecurityIdentitiesSettings.Read.All"],
+    "llmTip": "Gets the Defender for Identity auto-auditing configuration. Auto-auditing controls whether DfI automatically configures the recommended Windows audit policies (advanced audit policies on DCs: 'Audit Directory Service Changes', 'Audit Computer Account Management', etc.) on sensors and reverts them if changed locally. Returns enabled (boolean) and lastUpdatedDateTime. Recommended state for production tenants: enabled=true (prevents drift in audit configuration that degrades detection coverage)."
+  },
+  {
+    "pathPattern": "/security/identities/settings/autoAuditingConfiguration",
+    "method": "patch",
+    "toolName": "update-auto-auditing-config",
+    "appPermissions": ["SecurityIdentitiesSettings.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Updates the Defender for Identity auto-auditing configuration (partial update). Body example: {\"enabled\":true}. Setting enabled=true causes DfI to enforce the recommended Windows advanced audit policies on every sensor host — if a local admin changes them on the DC, DfI reverts the change on its next sync. Disable only for tenants with custom audit policy frameworks (where DfI's enforcement would conflict). Changes propagate to sensors on their next heartbeat."
+  },
+  {
+    "pathPattern": "/security/identities/identityAccounts",
+    "method": "get",
+    "toolName": "list-identity-accounts",
+    "appPermissions": ["SecurityIdentitiesActions.Read.All"],
+    "llmTip": "Lists identity accounts observed by Microsoft Defender for Identity — synced AD / Entra ID / Okta accounts that DfI has correlated with detected activity. Each has accountId, displayName, identityProvider (entraID | activeDirectory | okta), upn / sAMAccountName, domain, isSensitive (privileged), and lastActivityDateTime. Use to identify the canonical DfI account-id needed for invoke-identity-account-action (which requires the DfI identityAccountsId, NOT the AD objectGuid). Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/security/identities/identityAccounts/{identityAccounts-id}",
+    "method": "get",
+    "toolName": "get-identity-account",
+    "appPermissions": ["SecurityIdentitiesActions.Read.All"],
+    "llmTip": "Gets a specific identity account by DfI identityAccounts id. Returns full details including identityProvider, sourceId (the AD objectGuid / Entra objectId / Okta id), upn, displayName, lastActivityDateTime, sensitivity flags, group memberships observed by DfI. Use to confirm an account's identityProvider before calling invoke-identity-account-action — the action set differs by provider (e.g. forcePasswordReset works for activeDirectory only)."
+  },
+  {
+    "pathPattern": "/security/identities/identityAccounts/{identityAccounts-id}/microsoft.graph.security.invokeAction",
+    "method": "post",
+    "toolName": "invoke-identity-account-action",
+    "appPermissions": ["SecurityIdentitiesActions.ReadWrite.All"],
+    "riskLevel": "critical",
+    "llmTip": "Performs an identity-response action on an account observed by Defender for Identity. Body: {\"accountId\":\"<source-id>\",\"action\":\"disable|enable|forcePasswordReset|revokeAllSessions|requireUserToSignInAgain|markUserAsCompromised\",\"identityProvider\":\"entraID|activeDirectory|okta\"}. ACTION/PROVIDER COMPATIBILITY: disable/enable supported on activeDirectory and okta; forcePasswordReset supported on activeDirectory only; revokeAllSessions on okta only. The accountId in the body is the source-system identifier (AD objectGuid, Okta id), NOT the DfI identityAccountsId in the URL — get both via get-identity-account first. DESTRUCTIVE: this disables AD on-prem accounts, forces password resets, or revokes sessions — equivalent to an incident-response action. Confirm with the user before invoking, ESPECIALLY on production accounts. Audit trail: action is logged in DfI activity logs AND in AD (if AD is the provider)."
+  },
+  {
     "pathPattern": "/security/triggers/retentionEvents",
     "method": "get",
     "toolName": "list-retention-events",
