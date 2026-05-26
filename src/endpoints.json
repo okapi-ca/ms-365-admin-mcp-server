@@ -4576,5 +4576,19 @@
     "toolName": "get-copilot-user-count-trend",
     "appPermissions": ["Reports.Read.All"],
     "llmTip": "Gets the Microsoft 365 Copilot user count trend (time series) over a period (D7/D30/D90/D180). Returns one data point per day with active counts per app. Use for trend reporting (week-over-week adoption growth, post-training adoption bump, Friday usage drop, etc.). Pair with get-copilot-user-count-summary (snapshot) for full adoption picture."
+  },
+  {
+    "pathPattern": "/copilot/interactionHistory/getAllEnterpriseInteractions()",
+    "method": "get",
+    "toolName": "get-all-copilot-interactions",
+    "appPermissions": ["AiEnterpriseInteraction.Read.All"],
+    "llmTip": "Gets ALL Microsoft 365 Copilot interactions tenant-wide — every user prompt to Copilot and Copilot's response, across Teams, Word, Outlook, M365 Chat, etc. Returns aiInteraction objects with userId, sessionId, appClass (e.g. IPM.SkypeTeams.Message.Copilot.Teams, IPM.SkypeTeams.Message.Copilot.BizChat), interactionDateTime, body (the actual prompt/response content), conversationType. Supports $filter (e.g. appClass eq '...'), $top (recommended 100 for performance), date ranges. SENSITIVE: this returns the actual prompt content tenant-wide — gates a high surveillance capability. Use ONLY with documented investigative purpose (security incident, legal hold, compliance audit) and log each query in the internal investigation journal per PIPEDA / Loi 25 / RGPD legitimacy requirements. Licensed users only (Microsoft 365 Copilot with Graph-grounded chat service plan)."
+  },
+  {
+    "pathPattern": "/copilot/users/{aiUser-id}/interactionHistory/getAllEnterpriseInteractions()",
+    "method": "get",
+    "toolName": "get-user-copilot-interactions",
+    "appPermissions": ["AiEnterpriseInteraction.Read.All"],
+    "llmTip": "Gets ALL Microsoft 365 Copilot interactions for a SPECIFIC user — user prompts + Copilot responses across all integrated apps. Same shape as get-all-copilot-interactions but scoped to {aiUser-id} (which is the user's directory id / object id). Supports $filter, $top (recommended 100), date ranges. PRIVACY CAVEAT: scoping reduces but does not eliminate the surveillance impact — admin reads of a user's AI prompts must be documented per PIPEDA / Loi 25 / RGPD. PREFERRED over the tenant-wide variant when investigating a specific user (more efficient + less data over the wire)."
   }
 ]
