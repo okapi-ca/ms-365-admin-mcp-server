@@ -8,6 +8,69 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-05-26
+
+### Added — Teams chat investigation reads (Chat.Read.All) + legal-discovery playbook (608 tools)
+
+Five new tools for direct read access to Teams chat content scoped to a specific user — for preliminary security/HR investigations BEFORE deciding to open a formal eDiscovery case.
+
+This release also introduces a comprehensive **legal-discovery playbook** (`docs/playbooks/legal-discovery.md`) covering the formal eDiscovery v3 workflow for court-admissible content production (subpoena response, litigation, regulatory request, internal investigation requiring chain-of-custody).
+
+**Tools (5)**:
+
+- `list-user-chats` (GET /users/{user-id}/chats)
+- `get-chat` (GET .../chats/{chat-id})
+- `list-chat-members` (GET .../members)
+- `list-chat-messages` (GET .../messages) — the actual conversation content
+- `get-chat-message` (GET .../messages/{id})
+
+### Use case differentiation
+
+| Aspect              | Preliminary triage (this release)               | Formal legal discovery (PR #117)                                   |
+| ------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| Tools               | `list-chat-messages`, `get-chat-message` direct | `create-ediscovery-case` + custodian + search + reviewSet + export |
+| Court admissibility | No chain-of-custody                             | Signed exports, audit trail complete                               |
+| Audit               | Graph API audit (basic)                         | Purview eDiscovery audit (linked to case)                          |
+| Preservation        | None — if user deletes, content lost            | Legal hold prevents purge                                          |
+| Scope               | Per-user chats only                             | Mailbox + chats + groups + meetings + OneDrive + SharePoint        |
+| When to use         | Decide whether to open a formal case            | Subpoena, litigation, regulatory, HR with potential litigation     |
+
+### Playbook
+
+`docs/playbooks/legal-discovery.md` documents the formal eDiscovery v3 workflow end-to-end:
+
+- Trigger signals (subpoena, court order, internal investigation, DPA request)
+- Scope boundary (what the MCP can/cannot do; handoffs to Purview portal + outside counsel)
+- 6-phase procedure (preservation → collection → curation → review → production → close)
+- KQL examples (Teams chats only, cross-source, subject-rights)
+- Sample prompts per phase + full-run single-shot prompt
+- Comparison table vs preliminary triage
+
+### Microsoft billing for Chat.Read.All — NO LONGER METERED
+
+`Chat.Read.All` / `ChatMessage.Read.All` in **application** permission mode were previously metered via the Teams Export API tier (~$0.75 / 1000 messages from 2024 to 2025-08-24). **Microsoft de-metered the Teams Export APIs on 2025-08-25** — no Azure subscription billing setup required to use these tools at any scale.
+
+The only Graph API still metered as of 0.13.0 is `assignSensitivityLabel` ($0.00185/call) which this server does not expose. Meeting recordings / transcripts content download (also not yet exposed) still use a per-license `model=A` parameter (free with M365 E5) or `model=B` (per-call).
+
+See [`docs/METERED_APIS.md`](docs/METERED_APIS.md) for the full current state of metered APIs relevant to this server.
+
+### LEGAL CAVEAT (PIPEDA / Loi 25 / RGPD)
+
+Admin reads of chats without a formal eDiscovery case must be documented in an internal investigation journal with the motif légitime (security incident response, HR investigation with documented sign-off, etc.). The tools' `llmTip` strings include this warning to guide LLM operators.
+
+### New Graph permissions required
+
+Must be admin-consented on the app registration:
+
+- `Chat.Read.All` — for chats listing and metadata
+- `ChatMember.Read.All` — for members
+- `ChatMessage.Read.All` — for message content
+
+### Notes
+
+- All 5 new tools target Graph v1.0 (stable).
+- 195/195 tests still pass, no regressions on existing 603 tools (post-PR #121 baseline).
+
 ## [0.12.0] — 2026-05-26
 
 ### Added — Teams advanced: meeting attendance + deleted chats (603 tools)
@@ -40,7 +103,7 @@ Without that policy, requests return 403 even with `OnlineMeetings.Read.All` + `
 
 For LCI's use case, the recommended pattern is to grant the policy only on demand during a specific investigation (HR, legal, compliance), and revoke after.
 
-### New Graph permissions required
+### New Graph permissions required (v0.12.0)
 
 Must be admin-consented on the app registration (none of these were declared prior to 0.12.0):
 

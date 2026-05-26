@@ -4520,5 +4520,40 @@
     "appPermissions": ["Chat.ManageDeletion.All"],
     "riskLevel": "medium",
     "llmTip": "Restores a soft-deleted Teams chat to active state. Empty request body. All original participants regain access; the chat reappears in their Teams client. IMPORTANT: this operation is NOT supported for non-admin users (per Microsoft docs) — it's an admin recovery flow only. CONSIDERATIONS: (1) participants who left the organization between delete and restore may have lost access independently; (2) message history is preserved as it was at deletion time, not subsequent activity (deleted chats accept no new messages); (3) consider notifying participants before restoring sensitive chats — they may have expected deletion to be permanent. Returns 204 on success."
+  },
+  {
+    "pathPattern": "/users/{user-id}/chats",
+    "method": "get",
+    "toolName": "list-user-chats",
+    "appPermissions": ["Chat.Read.All"],
+    "llmTip": "Lists all Teams chats a specific user is a member of (1:1, group, meeting chats). Each chat has id, topic (for group/meeting chats; null for 1:1), chatType (oneOnOne | group | meeting), createdDateTime, lastUpdatedDateTime, webUrl, viewpoint. Use as the entry point for security investigations on a specific user — list their chats, then drill into messages with list-chat-messages. IMPORTANT: this is admin-level surveillance access — only call with documented investigative purpose (security incident, legal hold pending eDiscovery case, HR investigation with sign-off). For formal legal discovery (subpoena response, litigation), prefer the eDiscovery v3 workflow (create-ediscovery-case → custodian → search → reviewSet → export) which provides chain-of-custody and is the Microsoft-recommended pattern for court-admissible exports. Supports $filter, $top, $skip, $expand=lastMessagePreview, $orderby. BILLING: as of 2025-08-25 the Teams Export APIs (including Chat.Read.All / ChatMessage.Read.All in application mode) are NO LONGER METERED — no Azure subscription billing setup required. (Recordings and transcripts still use per-license model parameter — see docs/METERED_APIS.md.)"
+  },
+  {
+    "pathPattern": "/users/{user-id}/chats/{chat-id}",
+    "method": "get",
+    "toolName": "get-chat",
+    "appPermissions": ["Chat.Read.All"],
+    "llmTip": "Gets a specific Teams chat by ID, scoped to a user. Returns full details: chatType, topic, members snapshot (via $expand=members), lastMessagePreview, webUrl. Use $expand=members,lastMessagePreview to avoid round-trips. The chat-id is the canonical Teams thread identifier (19:xxx@thread.v2 format). Same caveat as list-user-chats — admin-level investigation only (Chat.Read.All in app mode is no longer metered since 2025-08-25)."
+  },
+  {
+    "pathPattern": "/users/{user-id}/chats/{chat-id}/members",
+    "method": "get",
+    "toolName": "list-chat-members",
+    "appPermissions": ["ChatMember.Read.All"],
+    "llmTip": "Lists members of a Teams chat (scoped to a user's view of the chat). Each member has @odata.type (aadUserConversationMember | anonymousGuestConversationMember), id, displayName, userId (for AAD members — null for guests), email, roles (owner | guest), tenantId (for federated participants from other tenants). Federated / guest participants help identify external communications during investigations. Supports $filter, $top, $skip."
+  },
+  {
+    "pathPattern": "/users/{user-id}/chats/{chat-id}/messages",
+    "method": "get",
+    "toolName": "list-chat-messages",
+    "appPermissions": ["ChatMessage.Read.All"],
+    "llmTip": "Lists messages in a Teams chat — the actual conversation content. Each message has id, createdDateTime, lastModifiedDateTime, deletedDateTime (if soft-deleted), from (sender identity), body (HTML or text content), attachments, mentions, reactions, importance, subject, replyToId. INVESTIGATION WORKFLOW: use $orderby=createdDateTime+desc&$top=50 to get the most recent messages, or $filter=createdDateTime ge YYYY-MM-DDTHH:mm:ssZ for time-window scoped queries. The body.content may be HTML — strip tags for plain text. Soft-deleted messages have deletedDateTime set but content is still retrievable (up to 21 days post-deletion per Microsoft Teams Export APIs). LEGAL CAVEAT: reads of chats without a formal eDiscovery case must be documented in the internal investigation journal to respect PIPEDA/Loi 25/GDPR (motif légitime). For court submission, prefer eDiscovery v3 export. BILLING: free since 2025-08-25 (previously metered via Teams Export API). Tip: pass `$top=250` (Microsoft's recommended max), use `$filter=lastModifiedDateTime` for incremental sync to avoid re-reading same messages. Supports $filter, $top, $skip, $expand=replies, $orderby."
+  },
+  {
+    "pathPattern": "/users/{user-id}/chats/{chat-id}/messages/{chatMessage-id}",
+    "method": "get",
+    "toolName": "get-chat-message",
+    "appPermissions": ["ChatMessage.Read.All"],
+    "llmTip": "Gets a specific message in a chat by ID. Returns full message details including body content, attachments (with embedded image URLs), reactions, replies (via $expand). Use after list-chat-messages identified a message of interest. Same legal + billing caveats as list-chat-messages."
   }
 ]
