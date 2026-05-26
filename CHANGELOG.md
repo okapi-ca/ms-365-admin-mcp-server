@@ -8,6 +8,45 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.11.1] — 2026-05-26
+
+### Fixed — correct DfI permission names that don't exist in Microsoft Graph
+
+Three permission names declared in `endpoints.json` were not real Microsoft Graph application permissions — discovered while running the admin-consent script against the LCI prod tenant. The MCP server uses these strings for `--list-permissions` output only (actual gating is server-side on Graph against the consented permissions), so the affected tools were already working in prod after the correct permissions were consented out-of-band.
+
+Corrections (4 tools, 3 permission name changes):
+
+| Tool                          | Before (invalid)                           | After (real Graph permission)                |
+| ----------------------------- | ------------------------------------------ | -------------------------------------------- |
+| `get-auto-auditing-config`    | `SecurityIdentitiesSettings.Read.All`      | `SecurityIdentitiesAutoConfig.Read.All`      |
+| `update-auto-auditing-config` | `SecurityIdentitiesSettings.ReadWrite.All` | `SecurityIdentitiesAutoConfig.ReadWrite.All` |
+| `list-identity-accounts`      | `SecurityIdentitiesActions.Read.All`       | `SecurityIdentitiesAccount.Read.All`         |
+| `get-identity-account`        | `SecurityIdentitiesActions.Read.All`       | `SecurityIdentitiesAccount.Read.All`         |
+
+### Refactored — use precise SecurityIdentitiesMigration.\* permissions for sensorMigration tools
+
+The 3 sensorMigration tools shipped in 0.10.0 declared the broader `SecurityIdentitiesSensors.*` permissions. Microsoft publishes the more precise `SecurityIdentitiesMigration.*` scopes specifically for `/security/identities/sensorMigration` endpoints — switching to those reduces the permission surface granted to the app.
+
+| Tool                     | Before (broad)                            | After (precise)                             |
+| ------------------------ | ----------------------------------------- | ------------------------------------------- |
+| `list-sensor-migrations` | `SecurityIdentitiesSensors.Read.All`      | `SecurityIdentitiesMigration.Read.All`      |
+| `get-sensor-migration`   | `SecurityIdentitiesSensors.Read.All`      | `SecurityIdentitiesMigration.Read.All`      |
+| `migrate-sensors`        | `SecurityIdentitiesSensors.ReadWrite.All` | `SecurityIdentitiesMigration.ReadWrite.All` |
+
+The `SecurityIdentitiesSensors.*` permissions remain declared on the other 5 sensor tools (drill-down, update, deployment-key get/regenerate) which legitimately operate on the sensors collection itself.
+
+### Net new Graph permissions required (vs 0.11.0)
+
+To support the 7 fixed/refactored tools, these additional application permissions must be admin-consented on the app registration:
+
+- `SecurityIdentitiesAutoConfig.Read.All`
+- `SecurityIdentitiesAutoConfig.ReadWrite.All`
+- `SecurityIdentitiesAccount.Read.All`
+- `SecurityIdentitiesMigration.Read.All`
+- `SecurityIdentitiesMigration.ReadWrite.All`
+
+(The non-existent `SecurityIdentitiesSettings.*` and `SecurityIdentitiesActions.Read.All` listed in 0.10.0 release notes were never grantable in the first place and are removed from the requirements.)
+
 ## [0.11.0] — 2026-05-25
 
 ### Added — Microsoft Purview expansion (596 tools)
