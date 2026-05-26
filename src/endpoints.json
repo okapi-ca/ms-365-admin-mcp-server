@@ -4555,5 +4555,26 @@
     "toolName": "get-chat-message",
     "appPermissions": ["ChatMessage.Read.All"],
     "llmTip": "Gets a specific message in a chat by ID. Returns full message details including body content, attachments (with embedded image URLs), reactions, replies (via $expand). Use after list-chat-messages identified a message of interest. Same legal + billing caveats as list-chat-messages."
+  },
+  {
+    "pathPattern": "/copilot/reports/getMicrosoft365CopilotUsageUserDetail(period='{period}')",
+    "method": "get",
+    "toolName": "get-copilot-usage-user-detail",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Gets per-user Microsoft 365 Copilot usage detail over a period — for adoption tracking and license utilization analysis. period: 'D7' | 'D30' | 'D90' | 'D180'. Returns one row per user (UPN, display name, last activity date, last activity dates per Copilot-enabled app: Outlook, Teams, Word, Excel, PowerPoint, OneNote, Loop, M365 Chat). Useful for: identifying inactive license assignments (Copilot license costs ~$30 USD/user/month → ROI analysis), spotting power users vs dormant, planning training rollouts. Anonymized at the org level if 'Display concealed names in reports' is enabled in admin center."
+  },
+  {
+    "pathPattern": "/copilot/reports/getMicrosoft365CopilotUserCountSummary(period='{period}')",
+    "method": "get",
+    "toolName": "get-copilot-user-count-summary",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Gets the Microsoft 365 Copilot user count summary over a period (D7/D30/D90/D180). Returns active vs. total enabled counts per Copilot-integrated app. Higher-level than get-copilot-usage-user-detail — gives the top-line adoption number without per-user names. Use for executive reporting / KPI dashboards (% adoption among licensed users)."
+  },
+  {
+    "pathPattern": "/copilot/reports/getMicrosoft365CopilotUserCountTrend(period='{period}')",
+    "method": "get",
+    "toolName": "get-copilot-user-count-trend",
+    "appPermissions": ["Reports.Read.All"],
+    "llmTip": "Gets the Microsoft 365 Copilot user count trend (time series) over a period (D7/D30/D90/D180). Returns one data point per day with active counts per app. Use for trend reporting (week-over-week adoption growth, post-training adoption bump, Friday usage drop, etc.). Pair with get-copilot-user-count-summary (snapshot) for full adoption picture."
   }
 ]
