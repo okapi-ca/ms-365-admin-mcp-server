@@ -4498,5 +4498,27 @@
     "toolName": "list-user-meeting-attendance-records",
     "appPermissions": ["OnlineMeetingArtifact.Read.All"],
     "llmTip": "Lists individual attendance records for an attendance report — one record per participant per join session. Each record has identity (UPN/displayName), emailAddress, role (organizer | presenter | attendee), totalAttendanceInSeconds (cumulative across all joins for this report), and attendanceIntervals (array of {joinDateTime, leaveDateTime, durationInSeconds} — useful for detecting drops/rejoins). Tip: it's more efficient to use get-user-meeting-attendance-report with $expand=attendanceRecords than to call this endpoint separately. REQUIRES Application Access Policy on the target user."
+  },
+  {
+    "pathPattern": "/teamwork/deletedChats",
+    "method": "get",
+    "toolName": "list-deleted-chats",
+    "appPermissions": ["Chat.ManageDeletion.All"],
+    "llmTip": "Lists Teams chats that have been soft-deleted tenant-wide — chats deleted by users (or by deletion policies) but still recoverable. Each has id (the chat-id, immutable across delete/restore), chatType (oneOnOne | group | meeting), topic (display name for group/meeting chats), createdDateTime, lastMessagePreview (snippet of last message before deletion), deletedDateTime. Retention window: typically 30 days before Microsoft purges deleted chats permanently. Use to audit recent chat deletions or identify chats to restore via undo-delete-chat. Supports $filter (e.g. on deletedDateTime), $top, $skip, $orderby."
+  },
+  {
+    "pathPattern": "/teamwork/deletedChats/{deletedChat-id}",
+    "method": "get",
+    "toolName": "get-deleted-chat",
+    "appPermissions": ["Chat.ManageDeletion.All"],
+    "llmTip": "Gets a specific deleted Teams chat by ID. Returns the same fields as list-deleted-chats plus members (snapshot of participants at deletion time) and viewpoint (per-caller chat state). Use before calling undo-delete-chat to confirm the chat identity and the participants who will regain access on restore."
+  },
+  {
+    "pathPattern": "/teamwork/deletedChats/{deletedChat-id}/undoDelete",
+    "method": "post",
+    "toolName": "undo-delete-chat",
+    "appPermissions": ["Chat.ManageDeletion.All"],
+    "riskLevel": "medium",
+    "llmTip": "Restores a soft-deleted Teams chat to active state. Empty request body. All original participants regain access; the chat reappears in their Teams client. IMPORTANT: this operation is NOT supported for non-admin users (per Microsoft docs) — it's an admin recovery flow only. CONSIDERATIONS: (1) participants who left the organization between delete and restore may have lost access independently; (2) message history is preserved as it was at deletion time, not subsequent activity (deleted chats accept no new messages); (3) consider notifying participants before restoring sensitive chats — they may have expected deletion to be permanent. Returns 204 on success."
   }
 ]
