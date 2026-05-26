@@ -2220,14 +2220,14 @@
     "pathPattern": "/security/identities/settings/autoAuditingConfiguration",
     "method": "get",
     "toolName": "get-auto-auditing-config",
-    "appPermissions": ["SecurityIdentitiesSettings.Read.All"],
+    "appPermissions": ["SecurityIdentitiesAutoConfig.Read.All"],
     "llmTip": "Gets the Defender for Identity auto-auditing configuration. Auto-auditing controls whether DfI automatically configures the recommended Windows audit policies (advanced audit policies on DCs: 'Audit Directory Service Changes', 'Audit Computer Account Management', etc.) on sensors and reverts them if changed locally. Returns enabled (boolean) and lastUpdatedDateTime. Recommended state for production tenants: enabled=true (prevents drift in audit configuration that degrades detection coverage)."
   },
   {
     "pathPattern": "/security/identities/settings/autoAuditingConfiguration",
     "method": "patch",
     "toolName": "update-auto-auditing-config",
-    "appPermissions": ["SecurityIdentitiesSettings.ReadWrite.All"],
+    "appPermissions": ["SecurityIdentitiesAutoConfig.ReadWrite.All"],
     "riskLevel": "medium",
     "llmTip": "Updates the Defender for Identity auto-auditing configuration (partial update). Body example: {\"enabled\":true}. Setting enabled=true causes DfI to enforce the recommended Windows advanced audit policies on every sensor host — if a local admin changes them on the DC, DfI reverts the change on its next sync. Disable only for tenants with custom audit policy frameworks (where DfI's enforcement would conflict). Changes propagate to sensors on their next heartbeat."
   },
@@ -2235,14 +2235,14 @@
     "pathPattern": "/security/identities/identityAccounts",
     "method": "get",
     "toolName": "list-identity-accounts",
-    "appPermissions": ["SecurityIdentitiesActions.Read.All"],
+    "appPermissions": ["SecurityIdentitiesAccount.Read.All"],
     "llmTip": "Lists identity accounts observed by Microsoft Defender for Identity — synced AD / Entra ID / Okta accounts that DfI has correlated with detected activity. Each has accountId, displayName, identityProvider (entraID | activeDirectory | okta), upn / sAMAccountName, domain, isSensitive (privileged), and lastActivityDateTime. Use to identify the canonical DfI account-id needed for invoke-identity-account-action (which requires the DfI identityAccountsId, NOT the AD objectGuid). Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
   },
   {
     "pathPattern": "/security/identities/identityAccounts/{identityAccounts-id}",
     "method": "get",
     "toolName": "get-identity-account",
-    "appPermissions": ["SecurityIdentitiesActions.Read.All"],
+    "appPermissions": ["SecurityIdentitiesAccount.Read.All"],
     "llmTip": "Gets a specific identity account by DfI identityAccounts id. Returns full details including identityProvider, sourceId (the AD objectGuid / Entra objectId / Okta id), upn, displayName, lastActivityDateTime, sensitivity flags, group memberships observed by DfI. Use to confirm an account's identityProvider before calling invoke-identity-account-action — the action set differs by provider (e.g. forcePasswordReset works for activeDirectory only)."
   },
   {
