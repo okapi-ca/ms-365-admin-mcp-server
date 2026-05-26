@@ -26,14 +26,14 @@ This release also introduces a comprehensive **legal-discovery playbook** (`docs
 
 ### Use case differentiation
 
-| Aspect | Preliminary triage (this release) | Formal legal discovery (PR #117) |
-|---|---|---|
-| Tools | `list-chat-messages`, `get-chat-message` direct | `create-ediscovery-case` + custodian + search + reviewSet + export |
-| Court admissibility | No chain-of-custody | Signed exports, audit trail complete |
-| Audit | Graph API audit (basic) | Purview eDiscovery audit (linked to case) |
-| Preservation | None — if user deletes, content lost | Legal hold prevents purge |
-| Scope | Per-user chats only | Mailbox + chats + groups + meetings + OneDrive + SharePoint |
-| When to use | Decide whether to open a formal case | Subpoena, litigation, regulatory, HR with potential litigation |
+| Aspect              | Preliminary triage (this release)               | Formal legal discovery (PR #117)                                   |
+| ------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| Tools               | `list-chat-messages`, `get-chat-message` direct | `create-ediscovery-case` + custodian + search + reviewSet + export |
+| Court admissibility | No chain-of-custody                             | Signed exports, audit trail complete                               |
+| Audit               | Graph API audit (basic)                         | Purview eDiscovery audit (linked to case)                          |
+| Preservation        | None — if user deletes, content lost            | Legal hold prevents purge                                          |
+| Scope               | Per-user chats only                             | Mailbox + chats + groups + meetings + OneDrive + SharePoint        |
+| When to use         | Decide whether to open a formal case            | Subpoena, litigation, regulatory, HR with potential litigation     |
 
 ### Playbook
 
@@ -45,6 +45,14 @@ This release also introduces a comprehensive **legal-discovery playbook** (`docs
 - KQL examples (Teams chats only, cross-source, subject-rights)
 - Sample prompts per phase + full-run single-shot prompt
 - Comparison table vs preliminary triage
+
+### Microsoft billing for Chat.Read.All — NO LONGER METERED
+
+`Chat.Read.All` / `ChatMessage.Read.All` in **application** permission mode were previously metered via the Teams Export API tier (~$0.75 / 1000 messages from 2024 to 2025-08-24). **Microsoft de-metered the Teams Export APIs on 2025-08-25** — no Azure subscription billing setup required to use these tools at any scale.
+
+The only Graph API still metered as of 0.13.0 is `assignSensitivityLabel` ($0.00185/call) which this server does not expose. Meeting recordings / transcripts content download (also not yet exposed) still use a per-license `model=A` parameter (free with M365 E5) or `model=B` (per-call).
+
+See [`docs/METERED_APIS.md`](docs/METERED_APIS.md) for the full current state of metered APIs relevant to this server.
 
 ### LEGAL CAVEAT (PIPEDA / Loi 25 / RGPD)
 
