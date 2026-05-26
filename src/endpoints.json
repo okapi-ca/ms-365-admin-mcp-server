@@ -4625,5 +4625,37 @@
     "toolName": "get-ai-meeting-insight",
     "appPermissions": ["AiEnterpriseInteraction.Read.All"],
     "llmTip": "Gets a single Copilot meeting insight by id. Returns the full content (summary text, action items list, key topics, etc.) for the insight specified. Use after list-ai-meeting-insights identified a specific insight type of interest."
+  },
+  {
+    "pathPattern": "/copilot/agentRegistrations",
+    "method": "get",
+    "toolName": "list-copilot-agent-registrations",
+    "appPermissions": ["AgentRegistration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists registered Copilot agents (custom agents built via Copilot Studio or via partner integrations) in the tenant. Each has id, displayName, createdBy, sourceCreatedDateTime, sourceLastModifiedDateTime, agent card manifest. Use as the entry point for AI governance — answer 'which Copilot agents are active in our tenant?' (equivalent of OAuth app inventory but for AI agents). Supports $filter, $top, $skip. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/copilot/agentRegistrations/{agentRegistration-id}",
+    "method": "get",
+    "toolName": "get-copilot-agent-registration",
+    "appPermissions": ["AgentRegistration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Copilot agent registration by ID. Returns full agent card manifest (endpoint URL, capabilities, scopes), createdBy, dates. Use to audit a specific agent's configuration when investigating data access patterns or compliance with internal AI usage policies. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/copilot/admin/policySettings",
+    "method": "get",
+    "toolName": "list-copilot-policy-settings",
+    "appPermissions": ["CopilotPolicySettings.Read"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Microsoft 365 Copilot policy settings configured for the tenant. Each setting has id, displayName, value, defaultValue, dataType (boolean | string | number | enum), description, updatedDateTime. Examples of settings: 'Copilot for Outlook enabled', 'Copilot Chat web grounding allowed', 'Microsoft 365 Chat web search', 'Copilot retention period in interaction history'. Use to audit which Copilot features are enabled tenant-wide. Beta-only endpoint."
+  },
+  {
+    "pathPattern": "/copilot/admin/policySettings/{copilotPolicySetting-id}",
+    "method": "get",
+    "toolName": "get-copilot-policy-setting",
+    "appPermissions": ["CopilotPolicySettings.Read"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a specific Copilot policy setting by ID. Returns the setting's current value plus its default, dataType, allowed values (for enum-type), description, last update timestamp. Use to drill into a specific policy after list-copilot-policy-settings identified it. Beta-only endpoint."
   }
 ]
