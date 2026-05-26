@@ -8,6 +8,61 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-05-26
+
+### Added — Microsoft 365 Copilot admin expansion (622 tools)
+
+Fourteen new tools completing the Microsoft 365 Copilot admin surface — usage analytics, interaction history audit, AI users + meeting insights, and agent governance. Builds on the 2 pre-existing Copilot tools (`get-copilot-admin-settings`, `get-copilot-limited-mode`) to bring total Copilot tool count to 16.
+
+**Usage reports (3 tools)** — adoption tracking + license utilization:
+
+- `get-copilot-usage-user-detail` (period D7/D30/D90/D180) — per-user activity dates per app
+- `get-copilot-user-count-summary` — adoption snapshot
+- `get-copilot-user-count-trend` — time series
+
+**Interaction history audit (2 tools)** — read user prompts + Copilot responses for compliance / investigation:
+
+- `get-all-copilot-interactions` — tenant-wide function
+- `get-user-copilot-interactions` — per-user function
+
+**AI users + meeting insights (5 tools)** — navigate Copilot's per-user data + retrieve AI-generated meeting recaps:
+
+- `list-ai-users` (Copilot-licensed inventory)
+- `get-ai-user`
+- `list-ai-user-online-meetings`
+- `list-ai-meeting-insights` (summary, action items, key topics, mentions)
+- `get-ai-meeting-insight`
+
+**Agent registrations + policy settings — beta (4 tools)** — AI governance:
+
+- `list-copilot-agent-registrations` (beta) — inventory of custom Copilot agents
+- `get-copilot-agent-registration` (beta)
+- `list-copilot-policy-settings` (beta)
+- `get-copilot-policy-setting` (beta)
+
+### IMPORTANT — Privacy + legal caveats for interaction reads
+
+The 2 interaction-history tools (`get-all-copilot-interactions`, `get-user-copilot-interactions`) return **the actual prompt content tenant-wide or per-user**. This is high-impact surveillance access — same framework as Chat.Read.All:
+
+- Admin reads of Copilot interactions without a formal eDiscovery case must be documented with motif légitime in the internal investigation journal per PIPEDA / Loi 25 / RGPD.
+- For formal legal discovery (subpoena, litigation, regulatory request), prefer eDiscovery v3 workflow (see [`docs/playbooks/legal-discovery.md`](docs/playbooks/legal-discovery.md)) which provides chain-of-custody.
+- License prerequisite: the target user must have Microsoft 365 Copilot with the Graph-grounded chat service plan active.
+
+### New Graph permissions required
+
+Must be admin-consented on the app registration (none of these were declared prior to 0.14.0):
+
+- `AiEnterpriseInteraction.Read.All` — for the 7 interaction history + AI users + meeting insights tools
+- `AgentRegistration.Read.All` — for the 2 agent registrations tools (beta)
+- `CopilotPolicySettings.Read` — for the 2 policy settings tools (beta)
+
+The existing `Reports.Read.All` covers the 3 usage reports tools.
+
+### Notes
+
+- 10 of 14 new tools target Graph v1.0 (stable). 4 tools (agent registrations + policy settings) are beta-only.
+- 195/195 tests still pass, no regressions on existing 608 tools.
+
 ## [0.13.0] — 2026-05-26
 
 ### Added — Teams chat investigation reads (Chat.Read.All) + legal-discovery playbook (608 tools)
