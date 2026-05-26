@@ -1127,14 +1127,13 @@ Notes:
 - **`activate-sensor-candidates`** triggers sensor installation on detected hosts using the deployment access key flow. Verify with `get-sensor-candidate` first — wrong serverId installs on the wrong host.
 - **`update-auto-auditing-config`** with `enabled=true` makes DfI enforce the recommended Windows advanced audit policies on every sensor host (revert local admin overrides on next heartbeat) — recommended for production.
 
-New Graph permissions required since v0.10.0 (must be consented on the app registration):
+New Graph permissions required since v0.10.0 / 0.11.1 (must be consented on the app registration):
 
-- `SecurityIdentitiesSensors.Read.All`
-- `SecurityIdentitiesSensors.ReadWrite.All`
-- `SecurityIdentitiesSettings.Read.All`
-- `SecurityIdentitiesSettings.ReadWrite.All`
-- `SecurityIdentitiesActions.Read.All`
-- `SecurityIdentitiesActions.ReadWrite.All`
+- `SecurityIdentitiesSensors.Read.All` + `SecurityIdentitiesSensors.ReadWrite.All` (sensors mgmt)
+- `SecurityIdentitiesAutoConfig.Read.All` + `SecurityIdentitiesAutoConfig.ReadWrite.All` (autoAuditingConfiguration)
+- `SecurityIdentitiesAccount.Read.All` (identityAccounts list/get)
+- `SecurityIdentitiesActions.ReadWrite.All` (identityAccounts invokeAction — break-glass)
+- `SecurityIdentitiesMigration.Read.All` + `SecurityIdentitiesMigration.ReadWrite.All` (sensorMigration, beta)
 
 ### Threat intelligence+ (7)
 
@@ -1341,10 +1340,11 @@ RoleManagement.Read.Directory
 RoleManagementPolicy.Read.Directory
 SecurityAlert.Read.All
 SecurityEvents.Read.All
-SecurityIdentitiesActions.Read.All
+SecurityIdentitiesAccount.Read.All
+SecurityIdentitiesAutoConfig.Read.All
 SecurityIdentitiesHealth.Read.All
+SecurityIdentitiesMigration.Read.All
 SecurityIdentitiesSensors.Read.All
-SecurityIdentitiesSettings.Read.All
 SecurityIncident.Read.All
 ServiceHealth.Read.All
 ServiceMessage.Read.All
@@ -1401,8 +1401,9 @@ RoleManagement.ReadWrite.Directory
 RoleManagementPolicy.ReadWrite.Directory
 SecurityAlert.ReadWrite.All
 SecurityIdentitiesActions.ReadWrite.All
+SecurityIdentitiesAutoConfig.ReadWrite.All
+SecurityIdentitiesMigration.ReadWrite.All
 SecurityIdentitiesSensors.ReadWrite.All
-SecurityIdentitiesSettings.ReadWrite.All
 SecurityIncident.ReadWrite.All
 Sites.ReadWrite.All
 Team.Create
