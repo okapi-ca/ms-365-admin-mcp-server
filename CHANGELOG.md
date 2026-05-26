@@ -8,6 +8,52 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-05-26
+
+### Added — Teams advanced: meeting attendance + deleted chats (603 tools)
+
+Seven new tools for Teams admin scenarios that are NOT covered by the user-delegated productivity flow (e.g. the sibling `ms365-advanced` MCP). Both sub-themes operate on data the calling admin is NOT a participant of — meetings of arbitrary users, chats deleted tenant-wide.
+
+**Online meeting drill-down + attendance reports (4 tools)** — for HR audits, GDPR / Loi 25 subject-rights requests, compliance investigations:
+
+- `get-user-online-meeting` (GET `/users/{user-id}/onlineMeetings/{onlineMeeting-id}`)
+- `list-user-meeting-attendance-reports` (GET .../attendanceReports)
+- `get-user-meeting-attendance-report` (GET .../attendanceReports/{id})
+- `list-user-meeting-attendance-records` (GET .../attendanceRecords)
+
+**Deleted chats restore (3 tools)** — admin-only recovery flow:
+
+- `list-deleted-chats` (GET /teamwork/deletedChats)
+- `get-deleted-chat` (GET by ID)
+- `undo-delete-chat` (POST .../undoDelete, medium)
+
+### IMPORTANT — Application Access Policy required for meeting tools
+
+The 4 meeting tools target the app-only path `/users/{user-id}/onlineMeetings/*` which requires a tenant-level **Application Access Policy** explicitly granted to each target user via PowerShell:
+
+```powershell
+New-CsApplicationAccessPolicy -Identity "ms365-admin-mcp" -AppIds "<app-id>" -Description "Targeted meeting access"
+Grant-CsApplicationAccessPolicy -PolicyName "ms365-admin-mcp" -Identity <target-user-upn>
+```
+
+Without that policy, requests return 403 even with `OnlineMeetings.Read.All` + `OnlineMeetingArtifact.Read.All` consented. This is intentional: it gates access at the user level rather than tenant-wide, supporting targeted-investigation patterns without broad surveillance capability.
+
+For LCI's use case, the recommended pattern is to grant the policy only on demand during a specific investigation (HR, legal, compliance), and revoke after.
+
+### New Graph permissions required
+
+Must be admin-consented on the app registration (none of these were declared prior to 0.12.0):
+
+- `OnlineMeetings.Read.All` — for the meeting object metadata
+- `OnlineMeetingArtifact.Read.All` — for attendance reports + records
+- `Chat.ManageDeletion.All` — for listing / restoring deleted chats
+
+### Notes
+
+- All 7 new tools target Graph v1.0 (stable).
+- `undo-delete-chat` is classified `medium` (not `high`) because the operation is reversible — the chat returns to its original state with all original participants, no permissions escalation, no data corruption. The `medium` rating reflects the surprise-factor for participants who expected deletion to be permanent.
+- 195/195 tests still pass, no regressions on existing 596 tools.
+
 ## [0.11.1] — 2026-05-26
 
 ### Fixed — correct DfI permission names that don't exist in Microsoft Graph
