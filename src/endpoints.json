@@ -4470,5 +4470,33 @@
     "appPermissions": ["RecordsManagement.ReadWrite.All"],
     "riskLevel": "medium",
     "llmTip": "Creates a retention event type — the category definition that event-based retention labels reference. Body example: {\"displayName\":\"Project closed\",\"description\":\"Triggered when an LCI project is marked closed in the PMO system\"}. After creation, label admins can author event-based retention labels that reference this eventType's id. Then operational scripts call create-retention-event with the same eventType to trigger retention on tagged content."
+  },
+  {
+    "pathPattern": "/users/{user-id}/onlineMeetings/{onlineMeeting-id}",
+    "method": "get",
+    "toolName": "get-user-online-meeting",
+    "appPermissions": ["OnlineMeetings.Read.All"],
+    "llmTip": "Gets a Teams online meeting on behalf of a specific user (app-only path). Returns subject, organizer, startDateTime / endDateTime, joinWebUrl, audioConferencing (dial-in numbers/conferenceId), chatInfo (thread for the meeting chat), participants (organizer + attendees), allowedPresenters, lobbyBypassSettings, recordAutomatically, isBroadcast. REQUIRES Application Access Policy: the LCI app reg must have a CsApplicationAccessPolicy granted to the target user-id (via PowerShell Grant-CsApplicationAccessPolicy) — without it, 403. The meeting-id is the canonical onlineMeeting id (not the joinWebUrl's videoTeleconferenceId). Use to audit meeting metadata for compliance / discovery scenarios where the admin is not a meeting participant."
+  },
+  {
+    "pathPattern": "/users/{user-id}/onlineMeetings/{onlineMeeting-id}/attendanceReports",
+    "method": "get",
+    "toolName": "list-user-meeting-attendance-reports",
+    "appPermissions": ["OnlineMeetingArtifact.Read.All"],
+    "llmTip": "Lists attendance reports for a Teams online meeting on behalf of a user. Each report covers ONE session of the meeting — recurring meetings have multiple reports (one per occurrence), and a meeting that drops and resumes generates separate reports. Each has id, totalParticipantCount, meetingStartDateTime, meetingEndDateTime. Reports are only available AFTER the meeting ends (typically within 1-2 hours). REQUIRES Application Access Policy on the target user. The attendanceRecords array is empty in list responses — use get-user-meeting-attendance-report or pass $expand=attendanceRecords to retrieve participant-level details. Supports $filter, $top, $skip, $select, $orderby."
+  },
+  {
+    "pathPattern": "/users/{user-id}/onlineMeetings/{onlineMeeting-id}/attendanceReports/{meetingAttendanceReport-id}",
+    "method": "get",
+    "toolName": "get-user-meeting-attendance-report",
+    "appPermissions": ["OnlineMeetingArtifact.Read.All"],
+    "llmTip": "Gets a specific attendance report by ID for a Teams online meeting (app-only). Pass $expand=attendanceRecords to get participant-level details inline (recommended — avoids a second call to list-user-meeting-attendance-records). REQUIRES Application Access Policy on the target user. Useful for: HR audits (who attended this mandatory training?), engagement reporting (avg participant duration), GDPR / Loi 25 subject-rights requests, forensic investigations (who joined this meeting at what time?)."
+  },
+  {
+    "pathPattern": "/users/{user-id}/onlineMeetings/{onlineMeeting-id}/attendanceReports/{meetingAttendanceReport-id}/attendanceRecords",
+    "method": "get",
+    "toolName": "list-user-meeting-attendance-records",
+    "appPermissions": ["OnlineMeetingArtifact.Read.All"],
+    "llmTip": "Lists individual attendance records for an attendance report — one record per participant per join session. Each record has identity (UPN/displayName), emailAddress, role (organizer | presenter | attendee), totalAttendanceInSeconds (cumulative across all joins for this report), and attendanceIntervals (array of {joinDateTime, leaveDateTime, durationInSeconds} — useful for detecting drops/rejoins). Tip: it's more efficient to use get-user-meeting-attendance-report with $expand=attendanceRecords than to call this endpoint separately. REQUIRES Application Access Policy on the target user."
   }
 ]
