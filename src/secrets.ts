@@ -17,6 +17,17 @@ export interface AppSecrets {
   tenantId: string;
   clientSecret?: string;
   cloudType: CloudType;
+  // Optional dedicated OAuth *client* app, distinct from the resource app above
+  // (`clientId` is the protected resource: token audience + `api://{clientId}/access_as_user`).
+  // When set, the OAuth proxy authenticates to Entra as this client for the
+  // authorization_code / refresh_token / device_code flows. Because the client is
+  // then no longer the same app as the resource, a refresh can request
+  // `api://{resourceClientId}/access_as_user` without the self-reference that
+  // triggers AADSTS90009 — and the issued token carries `access_as_user`, letting
+  // SEC-F03 stay enabled. Leave unset to keep the single self-resource app
+  // (refresh falls back to `{clientId}/.default`; SEC-F03 must be disabled).
+  oauthClientId?: string;
+  oauthClientSecret?: string;
 }
 
 interface SecretsProvider {
@@ -31,6 +42,8 @@ class EnvironmentSecretsProvider implements SecretsProvider {
       tenantId: requiredEnv('MS365_ADMIN_MCP_TENANT_ID'),
       clientSecret: requiredEnv('MS365_ADMIN_MCP_CLIENT_SECRET'),
       cloudType,
+      oauthClientId: process.env.MS365_ADMIN_MCP_OAUTH_CLIENT_ID?.trim() || undefined,
+      oauthClientSecret: process.env.MS365_ADMIN_MCP_OAUTH_CLIENT_SECRET?.trim() || undefined,
     };
   }
 }
@@ -51,14 +64,21 @@ class KeyVaultSecretsProvider implements SecretsProvider {
 
     logger.info(`Fetching secrets from Key Vault: ${this.vaultUrl}`);
 
-    const [clientIdSecret, tenantIdSecret, clientSecretResult, cloudTypeResult] = await Promise.all(
-      [
-        client.getSecret('ms365-admin-mcp-client-id'),
-        client.getSecret('ms365-admin-mcp-tenant-id'),
-        client.getSecret('ms365-admin-mcp-client-secret').catch(() => null),
-        client.getSecret('ms365-admin-mcp-cloud-type').catch(() => null),
-      ]
-    );
+    const [
+      clientIdSecret,
+      tenantIdSecret,
+      clientSecretResult,
+      cloudTypeResult,
+      oauthClientIdResult,
+      oauthClientSecretResult,
+    ] = await Promise.all([
+      client.getSecret('ms365-admin-mcp-client-id'),
+      client.getSecret('ms365-admin-mcp-tenant-id'),
+      client.getSecret('ms365-admin-mcp-client-secret').catch(() => null),
+      client.getSecret('ms365-admin-mcp-cloud-type').catch(() => null),
+      client.getSecret('ms365-admin-mcp-oauth-client-id').catch(() => null),
+      client.getSecret('ms365-admin-mcp-oauth-client-secret').catch(() => null),
+    ]);
 
     if (!clientIdSecret.value) {
       throw new Error('Required secret ms365-admin-mcp-client-id not found in Key Vault');
@@ -71,6 +91,8 @@ class KeyVaultSecretsProvider implements SecretsProvider {
       tenantId: tenantIdSecret?.value || '',
       clientSecret: clientSecretResult?.value,
       cloudType: parseCloudType(cloudTypeResult?.value),
+      oauthClientId: oauthClientIdResult?.value || undefined,
+      oauthClientSecret: oauthClientSecretResult?.value || undefined,
     };
   }
 }

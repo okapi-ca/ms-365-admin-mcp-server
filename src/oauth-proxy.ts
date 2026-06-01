@@ -13,8 +13,17 @@ export interface OAuthProxyOptions {
   // fallback was removed and callers must supply a trusted public URL.
   publicUrl: string;
   tenantId: string;
+  // The protected-resource app: token audience + `api://{clientId}/access_as_user`.
   clientId: string;
   clientSecret?: string;
+  // Optional dedicated OAuth *client* app (distinct from `clientId`). When set, the
+  // proxy authenticates to Entra as this client for authorization_code / refresh_token
+  // / device_code. This removes the client==resource self-reference, so refresh can
+  // request `api://{clientId}/access_as_user` without AADSTS90009 and the token carries
+  // `access_as_user`. When unset, the proxy uses `clientId`/`clientSecret` (self-resource
+  // mode) and refresh falls back to `{clientId}/.default`. See AppSecrets.oauthClientId.
+  oauthClientId?: string;
+  oauthClientSecret?: string;
   scopes: string[];
   enableDynamicRegistration: boolean;
   // SEC-F04b + SEC-F05: externalised storage for PKCE bridge + DCR client
@@ -97,6 +106,12 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
   const storage = options.storage;
   const issuer = stripTrailingSlash(options.publicUrl);
   const authority = `https://login.microsoftonline.com/${options.tenantId}`;
+  // Upstream Entra client identity. Defaults to the resource app (self-resource mode)
+  // unless a dedicated OAuth client app is configured. `separateOAuthClient` gates the
+  // refresh-token scope strategy below (per-scope vs {clientId}/.default).
+  const upstreamClientId = options.oauthClientId ?? options.clientId;
+  const upstreamClientSecret = options.oauthClientSecret ?? options.clientSecret;
+  const separateOAuthClient = !!options.oauthClientId && options.oauthClientId !== options.clientId;
   const fallbackScope =
     options.scopes.length > 0
       ? options.scopes.join(' ')
@@ -203,7 +218,7 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     const upstreamScope = scopeList.join(' ');
 
     const form = new URLSearchParams();
-    form.set('client_id', options.clientId);
+    form.set('client_id', upstreamClientId);
     form.set('scope', upstreamScope);
 
     try {
@@ -321,7 +336,7 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     const upstreamScope = scopeList.join(' ');
 
     const upstream = new URL(`${authority}/oauth2/v2.0/authorize`);
-    upstream.searchParams.set('client_id', options.clientId);
+    upstream.searchParams.set('client_id', upstreamClientId);
     upstream.searchParams.set('response_type', 'code');
     upstream.searchParams.set('redirect_uri', redirectUri);
     upstream.searchParams.set('response_mode', 'query');
@@ -370,8 +385,8 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
     }
 
     const form = new URLSearchParams();
-    form.set('client_id', options.clientId);
-    if (options.clientSecret) form.set('client_secret', options.clientSecret);
+    form.set('client_id', upstreamClientId);
+    if (upstreamClientSecret) form.set('client_secret', upstreamClientSecret);
 
     if (grantType === 'authorization_code') {
       const code = body.code as string | undefined;
@@ -445,23 +460,27 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       }
       form.set('grant_type', 'refresh_token');
       form.set('refresh_token', refreshToken);
-      // AADSTS90009: our app registration is BOTH the OAuth client (client_id
-      // forwarded above) AND the protected resource (api://{clientId}/access_as_user).
-      // Entra tolerates this self-reference on the authorization_code exchange but
-      // rejects it on refresh_token: "Application is requesting a token for itself.
-      // This scenario is supported only if resource is specified using the /.default
-      // scope of that resource." This broke token renewal for all callers — sessions
-      // died ~70 min after each interactive sign-in and never recovered.
+      // Refresh-token scope strategy depends on whether a dedicated OAuth client app
+      // is configured (see upstreamClientId / separateOAuthClient above).
       //
-      // The fix follows Entra's stated requirement literally — request the resource's
-      // /.default scope. NEITHER forwarding mcp-remote's per-scope value
-      // (api://{clientId}/access_as_user) NOR omitting scope works: with no explicit
-      // scope Entra still reissues against the refresh token's original resource
-      // (api://{clientId}), the same self-reference, and re-triggers 90009 (confirmed
-      // in prod on the omit-scope revision --0000029). /.default satisfies the rule
-      // and still yields the consented delegated scopes; offline_access keeps the
-      // refresh token rotating.
-      form.set('scope', `api://${options.clientId}/.default offline_access`);
+      // - Separate client app (preferred): client != resource, so we request the
+      //   resource per-scope `api://{clientId}/access_as_user`. No self-reference, so
+      //   no AADSTS90009, and the issued token carries `access_as_user` — letting
+      //   SEC-F03 stay enabled.
+      //
+      // - Self-resource fallback (no oauthClientId): the app is BOTH client and
+      //   resource. Entra rejects `refresh_token` for that self-reference unless the
+      //   resource is named by its GUID-based app identifier with /.default:
+      //   "Application is requesting a token for itself ... supported only if resource
+      //   is specified using the GUID based App Identifier." Forwarding the per-scope
+      //   value or omitting scope both fail (confirmed in prod). `{clientId}/.default`
+      //   works but the token then carries Graph delegated scopes (not access_as_user),
+      //   so SEC-F03 must be disabled in that mode. offline_access keeps the RT rotating.
+      if (separateOAuthClient) {
+        form.set('scope', `api://${options.clientId}/access_as_user offline_access`);
+      } else {
+        form.set('scope', `${options.clientId}/.default offline_access`);
+      }
     } else if (grantType === DEVICE_CODE_GRANT) {
       // RFC 8628 §3.4: token redemption for a device_code. Entra returns
       // authorization_pending / slow_down / expired_token / access_denied

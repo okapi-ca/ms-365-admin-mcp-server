@@ -7,6 +7,15 @@
 //   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-tenant-id     --value <...>
 //   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-client-secret --value <...>
 //
+// OPTIONAL — dedicated OAuth client app (recommended for oauthMode, see src/secrets.ts
+// AppSecrets.oauthClientId). Seed these to make the OAuth proxy authenticate to Entra as a
+// SEPARATE client app instead of the resource app itself. This removes the client==resource
+// self-reference (AADSTS90009) on refresh, so the user token carries `access_as_user` and the
+// SEC-F03 scp check can stay enabled (set requiredUserScopes=access_as_user). The client app
+// needs the delegated `access_as_user` permission on the resource app + the same redirect URIs:
+//   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-oauth-client-id     --value <client-app-id>
+//   az keyvault secret set --vault-name <kv> --name ms365-admin-mcp-oauth-client-secret --value <client-app-secret>
+//
 // Graph API application permissions must be granted to the app registration whose
 // clientId is stored in Key Vault (this template does not touch Entra ID).
 
