@@ -449,19 +449,21 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       // forwarded above) AND the protected resource (api://{clientId}/access_as_user).
       // Entra tolerates this self-reference on the authorization_code exchange but
       // rejects it on refresh_token: "Application is requesting a token for itself.
-      // This scenario is supported only if resource is specified using the /.default
-      // scope of that resource." This broke token renewal for all callers — sessions
-      // died ~70 min after each interactive sign-in and never recovered.
+      // This scenario is supported only if resource is specified using the GUID based
+      // App Identifier." This broke token renewal for all callers — sessions died
+      // ~70 min after each interactive sign-in and never recovered.
       //
-      // The fix follows Entra's stated requirement literally — request the resource's
-      // /.default scope. NEITHER forwarding mcp-remote's per-scope value
-      // (api://{clientId}/access_as_user) NOR omitting scope works: with no explicit
-      // scope Entra still reissues against the refresh token's original resource
-      // (api://{clientId}), the same self-reference, and re-triggers 90009 (confirmed
-      // in prod on the omit-scope revision --0000029). /.default satisfies the rule
-      // and still yields the consented delegated scopes; offline_access keeps the
-      // refresh token rotating.
-      form.set('scope', `api://${options.clientId}/.default offline_access`);
+      // The fix follows Entra's stated requirement literally. When an app requests a
+      // token for itself, AADSTS90009 is only avoided when the resource is named by
+      // its GUID-based app identifier with /.default — i.e. "{clientId}/.default",
+      // NOT the api://{clientId}/.default URI form (Entra rejects that with
+      // "...supported only if resource is specified using the GUID based App
+      // Identifier") and NOT the per-scope api://{clientId}/access_as_user value, and
+      // NOT omitting scope (Entra then reissues against the refresh token's original
+      // api://{clientId} resource — same self-reference). Both wrong forms were
+      // confirmed against prod. {clientId}/.default yields the consented delegated
+      // scopes; offline_access keeps the refresh token rotating.
+      form.set('scope', `${options.clientId}/.default offline_access`);
     } else if (grantType === DEVICE_CODE_GRANT) {
       // RFC 8628 §3.4: token redemption for a device_code. Entra returns
       // authorization_pending / slow_down / expired_token / access_denied

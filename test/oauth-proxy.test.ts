@@ -232,12 +232,13 @@ describe('SEC-F04b /token — client authentication required', () => {
 
   // AADSTS90009 regression: the app reg is both the OAuth client and the
   // protected resource. On refresh, Entra rejects the self-reference unless the
-  // resource is requested via its /.default scope ("Application is requesting a
-  // token for itself ... supported only if resource is specified using the
-  // /.default scope"). Forwarding mcp-remote's per-scope value OR omitting scope
-  // both fail (the latter confirmed in prod). The refresh branch must rewrite the
-  // scope to api://{clientId}/.default (+ offline_access for RT rotation).
-  it('rewrites the refresh_token scope to api://{clientId}/.default (AADSTS90009 fix)', async () => {
+  // resource is named by its GUID-based app identifier with /.default —
+  // "{clientId}/.default". Three forms were rejected against prod: the per-scope
+  // api://{clientId}/access_as_user value, omitting scope, and the URI form
+  // api://{clientId}/.default ("...supported only if resource is specified using
+  // the GUID based App Identifier"). The refresh branch must rewrite the scope to
+  // the GUID form {clientId}/.default (+ offline_access for RT rotation).
+  it('rewrites the refresh_token scope to {clientId}/.default GUID form (AADSTS90009 fix)', async () => {
     const { clientId, clientSecret } = await register();
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ access_token: 'new-at', refresh_token: 'new-rt' }), {
@@ -265,11 +266,13 @@ describe('SEC-F04b /token — client authentication required', () => {
     );
     expect(upstreamBody.get('grant_type')).toBe('refresh_token');
     expect(upstreamBody.get('refresh_token')).toBe('legit-rt');
-    // The load-bearing assertion: the upstream scope is the resource /.default,
-    // not the per-scope value the client sent, and offline_access is preserved.
+    // The load-bearing assertion: the upstream scope is the GUID-form resource
+    // /.default ({clientId}/.default, NOT the api:// URI form), not the per-scope
+    // value the client sent, and offline_access is preserved.
     const upstreamScope = (upstreamBody.get('scope') ?? '').split(/\s+/).filter(Boolean);
-    expect(upstreamScope).toContain(`api://${CLIENT_ID}/.default`);
+    expect(upstreamScope).toContain(`${CLIENT_ID}/.default`);
     expect(upstreamScope).toContain('offline_access');
+    expect(upstreamScope).not.toContain(`api://${CLIENT_ID}/.default`);
     expect(upstreamScope).not.toContain(`api://${CLIENT_ID}/access_as_user`);
   });
 
