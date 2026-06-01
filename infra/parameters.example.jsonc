@@ -35,6 +35,18 @@
     "allowedClients": {
       "value": "<comma-separated Entra app IDs for machine-to-machine access, or empty>"
     },
+
+    // Pass --allow-writes to enable mutation tools (default false = read-only).
+    "allowWrites": { "value": false },
+
+    // SEC-F03 scp check. Default "access_as_user". MUST be "" (disabled) for the
+    // self-resource OAuth design (app is both OAuth client and protected
+    // resource): on refresh Entra only honours {clientId}/.default, and that
+    // token's scp carries Graph delegated scopes, never access_as_user — so a
+    // non-empty value 403s every refreshed token. Identity stays gated by
+    // audience + authorizedUsers + tenant.
+    "requiredUserScopes": { "value": "" },
+
     "acrLoginServer": { "value": "" },
 
     // --- VNet integration (set vnetIntegrated=true to deploy an internal CAE) ---
