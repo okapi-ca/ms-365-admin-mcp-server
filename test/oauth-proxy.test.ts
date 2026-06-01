@@ -230,6 +230,44 @@ describe('SEC-F04b /token — client authentication required', () => {
     expect(body.access_token).toBe('new-at');
   });
 
+  // AADSTS90009 regression: the app reg is both the OAuth client and the
+  // protected resource (api://{clientId}/access_as_user). Forwarding the
+  // client's self-resource scope on refresh makes Entra reject the grant
+  // ("Application is requesting a token for itself"), which broke token renewal
+  // for every caller. The refresh branch must NOT forward the client scope —
+  // Entra reissues against the originally-granted scope (RFC 6749 §6).
+  it('does not forward the client scope to Entra on refresh_token (AADSTS90009 guard)', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ access_token: 'new-at', refresh_token: 'new-rt' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: 'legit-rt',
+        // mcp-remote re-sends the granted scope verbatim — this is exactly the
+        // value that triggers AADSTS90009 when forwarded to the token endpoint.
+        scope: `api://${CLIENT_ID}/access_as_user`,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const upstreamBody = new URLSearchParams(
+      String((fetchMock.mock.calls[0][1] as { body: string }).body)
+    );
+    expect(upstreamBody.get('grant_type')).toBe('refresh_token');
+    expect(upstreamBody.get('refresh_token')).toBe('legit-rt');
+    // The load-bearing assertion: no scope is forwarded to Entra.
+    expect(upstreamBody.has('scope')).toBe(false);
+  });
+
   it('accepts Basic auth (client_secret_basic) as an alternative to body auth', async () => {
     const { clientId, clientSecret } = await register();
     fetchMock.mockResolvedValue(
