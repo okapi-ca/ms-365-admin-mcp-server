@@ -230,6 +230,49 @@ describe('SEC-F04b /token — client authentication required', () => {
     expect(body.access_token).toBe('new-at');
   });
 
+  // AADSTS90009 regression: the app reg is both the OAuth client and the
+  // protected resource. On refresh, Entra rejects the self-reference unless the
+  // resource is requested via its /.default scope ("Application is requesting a
+  // token for itself ... supported only if resource is specified using the
+  // /.default scope"). Forwarding mcp-remote's per-scope value OR omitting scope
+  // both fail (the latter confirmed in prod). The refresh branch must rewrite the
+  // scope to api://{clientId}/.default (+ offline_access for RT rotation).
+  it('rewrites the refresh_token scope to api://{clientId}/.default (AADSTS90009 fix)', async () => {
+    const { clientId, clientSecret } = await register();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ access_token: 'new-at', refresh_token: 'new-rt' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    const res = await realFetch(`${baseUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: 'legit-rt',
+        // mcp-remote re-sends the granted per-scope value; the proxy must NOT
+        // forward it — it is exactly what triggers AADSTS90009.
+        scope: `api://${CLIENT_ID}/access_as_user`,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const upstreamBody = new URLSearchParams(
+      String((fetchMock.mock.calls[0][1] as { body: string }).body)
+    );
+    expect(upstreamBody.get('grant_type')).toBe('refresh_token');
+    expect(upstreamBody.get('refresh_token')).toBe('legit-rt');
+    // The load-bearing assertion: the upstream scope is the resource /.default,
+    // not the per-scope value the client sent, and offline_access is preserved.
+    const upstreamScope = (upstreamBody.get('scope') ?? '').split(/\s+/).filter(Boolean);
+    expect(upstreamScope).toContain(`api://${CLIENT_ID}/.default`);
+    expect(upstreamScope).toContain('offline_access');
+    expect(upstreamScope).not.toContain(`api://${CLIENT_ID}/access_as_user`);
+  });
+
   it('accepts Basic auth (client_secret_basic) as an alternative to body auth', async () => {
     const { clientId, clientSecret } = await register();
     fetchMock.mockResolvedValue(
