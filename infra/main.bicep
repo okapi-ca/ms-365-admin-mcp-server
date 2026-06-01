@@ -44,6 +44,12 @@ param minReplicas int = 0
 @minValue(1)
 param maxReplicas int = 3
 
+@description('Container vCPU. Must form a valid Container Apps CPU/memory pair with containerMemory (e.g. 0.5/1Gi, 1.0/2Gi, 2.0/4Gi). Default 1.0 — the server rebuilds its full tool set (600+) per MCP request, which OOMed the previous 0.5/1Gi sizing.')
+param containerCpu string = '1.0'
+
+@description('Container memory. Must pair with containerCpu (see above). Default 2Gi.')
+param containerMemory string = '2Gi'
+
 @description('Tags applied to every resource (must satisfy org tag policies)')
 param tags object = {}
 
@@ -379,8 +385,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           ]
           args: containerArgs
           resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
+            cpu: json(containerCpu)
+            memory: containerMemory
           }
           env: [
             {
