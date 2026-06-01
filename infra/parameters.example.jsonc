@@ -39,13 +39,19 @@
     // Pass --allow-writes to enable mutation tools (default false = read-only).
     "allowWrites": { "value": false },
 
-    // SEC-F03 scp check. Default "access_as_user". MUST be "" (disabled) for the
-    // self-resource OAuth design (app is both OAuth client and protected
-    // resource): on refresh Entra only honours {clientId}/.default, and that
-    // token's scp carries Graph delegated scopes, never access_as_user — so a
-    // non-empty value 403s every refreshed token. Identity stays gated by
-    // audience + authorizedUsers + tenant.
-    "requiredUserScopes": { "value": "" },
+    // SEC-F03 scp check on user tokens. Default "access_as_user".
+    //  - Two-app model (dedicated OAuth client app, recommended): keep
+    //    "access_as_user" — refresh tokens carry that scope, SEC-F03 stays on.
+    //  - Self-resource fallback (no dedicated client app): set "" to DISABLE,
+    //    because Entra only honours refresh via {clientId}/.default, whose token
+    //    carries Graph scopes (not access_as_user) and would 403 otherwise.
+    "requiredUserScopes": { "value": "access_as_user" },
+
+    // Container sizing. Must be a valid Container Apps CPU/memory pair.
+    // Default 1.0/2Gi — 0.5/1Gi OOMs because the server rebuilds its full
+    // tool set (600+) on every MCP request.
+    "containerCpu": { "value": "1.0" },
+    "containerMemory": { "value": "2Gi" },
 
     "acrLoginServer": { "value": "" },
 
