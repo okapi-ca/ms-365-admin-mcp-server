@@ -16,7 +16,10 @@ function sha256(input: string): string {
   return base64url(crypto.createHash('sha256').update(input).digest());
 }
 
-async function buildServer(storage: MemoryStorage): Promise<{ url: string; server: Server }> {
+async function buildServer(
+  storage: MemoryStorage,
+  overrides: Partial<OAuthProxyOptions> = {}
+): Promise<{ url: string; server: Server }> {
   const app = express();
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
@@ -28,6 +31,7 @@ async function buildServer(storage: MemoryStorage): Promise<{ url: string; serve
     scopes: ['openid', 'profile', 'email', 'offline_access', `api://${CLIENT_ID}/access_as_user`],
     enableDynamicRegistration: true,
     storage,
+    ...overrides,
   };
   registerOAuthRoutes(app as Express, options);
 
@@ -230,14 +234,12 @@ describe('SEC-F04b /token — client authentication required', () => {
     expect(body.access_token).toBe('new-at');
   });
 
-  // AADSTS90009 regression: the app reg is both the OAuth client and the
-  // protected resource. On refresh, Entra rejects the self-reference unless the
-  // resource is requested via its /.default scope ("Application is requesting a
-  // token for itself ... supported only if resource is specified using the
-  // /.default scope"). Forwarding mcp-remote's per-scope value OR omitting scope
-  // both fail (the latter confirmed in prod). The refresh branch must rewrite the
-  // scope to api://{clientId}/.default (+ offline_access for RT rotation).
-  it('rewrites the refresh_token scope to api://{clientId}/.default (AADSTS90009 fix)', async () => {
+  // AADSTS90009 regression — SELF-RESOURCE mode (no dedicated OAuth client app).
+  // The app reg is both client and resource; Entra honours refresh only when the
+  // resource is named by its GUID-based app identifier with /.default. Forwarding
+  // the per-scope value, the api:// URI .default form, or omitting scope all fail
+  // (confirmed in prod). The refresh branch must rewrite to {clientId}/.default.
+  it('uses {clientId}/.default GUID form on refresh in self-resource mode (AADSTS90009)', async () => {
     const { clientId, clientSecret } = await register();
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ access_token: 'new-at', refresh_token: 'new-rt' }), {
@@ -265,12 +267,14 @@ describe('SEC-F04b /token — client authentication required', () => {
     );
     expect(upstreamBody.get('grant_type')).toBe('refresh_token');
     expect(upstreamBody.get('refresh_token')).toBe('legit-rt');
-    // The load-bearing assertion: the upstream scope is the resource /.default,
-    // not the per-scope value the client sent, and offline_access is preserved.
+    // GUID-form resource /.default — not the api:// URI form, not the per-scope value.
     const upstreamScope = (upstreamBody.get('scope') ?? '').split(/\s+/).filter(Boolean);
-    expect(upstreamScope).toContain(`api://${CLIENT_ID}/.default`);
+    expect(upstreamScope).toContain(`${CLIENT_ID}/.default`);
     expect(upstreamScope).toContain('offline_access');
+    expect(upstreamScope).not.toContain(`api://${CLIENT_ID}/.default`);
     expect(upstreamScope).not.toContain(`api://${CLIENT_ID}/access_as_user`);
+    // Self-resource mode authenticates upstream as the resource app itself.
+    expect(upstreamBody.get('client_id')).toBe(CLIENT_ID);
   });
 
   it('accepts Basic auth (client_secret_basic) as an alternative to body auth', async () => {
@@ -687,5 +691,86 @@ describe('RFC 8628 /token device_code grant', () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe('authorization_pending');
+  });
+});
+
+describe('Dedicated OAuth client app (separate client/resource)', () => {
+  const OAUTH_CLIENT_ID = '33333333-3333-3333-3333-333333333333';
+  let scStorage: MemoryStorage;
+  let scUrl: string;
+  let scServer: Server;
+
+  beforeAll(async () => {
+    scStorage = new MemoryStorage();
+    const built = await buildServer(scStorage, {
+      oauthClientId: OAUTH_CLIENT_ID,
+      oauthClientSecret: 'oauth-client-secret',
+    });
+    scUrl = built.url;
+    scServer = built.server;
+  });
+
+  afterAll(() => {
+    scServer.close();
+  });
+
+  async function scRegister(): Promise<{ clientId: string; clientSecret: string }> {
+    const res = await realFetch(`${scUrl}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redirect_uris: ['http://localhost/cb'] }),
+    });
+    const body = (await res.json()) as { client_id: string; client_secret: string };
+    return { clientId: body.client_id, clientSecret: body.client_secret };
+  }
+
+  it('authenticates upstream as the dedicated client and requests the resource per-scope on refresh', async () => {
+    const { clientId, clientSecret } = await scRegister();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ access_token: 'new-at', refresh_token: 'new-rt' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    const res = await realFetch(`${scUrl}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: 'legit-rt',
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const upstreamBody = new URLSearchParams(
+      String((fetchMock.mock.calls[0][1] as { body: string }).body)
+    );
+    // Upstream identity is the dedicated OAuth client app — NOT the resource app.
+    expect(upstreamBody.get('client_id')).toBe(OAUTH_CLIENT_ID);
+    expect(upstreamBody.get('client_secret')).toBe('oauth-client-secret');
+    // No self-reference → request the resource per-scope, so the token carries
+    // access_as_user (lets SEC-F03 stay enabled). No /.default fallback here.
+    const upstreamScope = (upstreamBody.get('scope') ?? '').split(/\s+/).filter(Boolean);
+    expect(upstreamScope).toContain(`api://${CLIENT_ID}/access_as_user`);
+    expect(upstreamScope).toContain('offline_access');
+    expect(upstreamScope).not.toContain(`${CLIENT_ID}/.default`);
+  });
+
+  it('sends the dedicated client_id on the upstream /authorize redirect', async () => {
+    const { clientId } = await scRegister();
+    const verifier = base64url(crypto.randomBytes(32));
+    const challenge = sha256(verifier);
+    const res = await realFetch(
+      `${scUrl}/authorize?client_id=${clientId}&redirect_uri=http%3A%2F%2Flocalhost%2Fcb&code_challenge=${challenge}&code_challenge_method=S256`,
+      { redirect: 'manual' }
+    );
+    expect(res.status).toBe(302);
+    const upstream = new URL(res.headers.get('location')!);
+    // The redirect to Entra carries the dedicated client, not the resource app.
+    expect(upstream.searchParams.get('client_id')).toBe(OAUTH_CLIENT_ID);
+    // Resource scope is still requested against the resource app.
+    expect(upstream.searchParams.get('scope')).toContain(`api://${CLIENT_ID}/access_as_user`);
   });
 });
