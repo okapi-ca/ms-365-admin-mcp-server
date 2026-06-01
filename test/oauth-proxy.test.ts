@@ -231,12 +231,13 @@ describe('SEC-F04b /token — client authentication required', () => {
   });
 
   // AADSTS90009 regression: the app reg is both the OAuth client and the
-  // protected resource (api://{clientId}/access_as_user). Forwarding the
-  // client's self-resource scope on refresh makes Entra reject the grant
-  // ("Application is requesting a token for itself"), which broke token renewal
-  // for every caller. The refresh branch must NOT forward the client scope —
-  // Entra reissues against the originally-granted scope (RFC 6749 §6).
-  it('does not forward the client scope to Entra on refresh_token (AADSTS90009 guard)', async () => {
+  // protected resource. On refresh, Entra rejects the self-reference unless the
+  // resource is requested via its /.default scope ("Application is requesting a
+  // token for itself ... supported only if resource is specified using the
+  // /.default scope"). Forwarding mcp-remote's per-scope value OR omitting scope
+  // both fail (the latter confirmed in prod). The refresh branch must rewrite the
+  // scope to api://{clientId}/.default (+ offline_access for RT rotation).
+  it('rewrites the refresh_token scope to api://{clientId}/.default (AADSTS90009 fix)', async () => {
     const { clientId, clientSecret } = await register();
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ access_token: 'new-at', refresh_token: 'new-rt' }), {
@@ -250,8 +251,8 @@ describe('SEC-F04b /token — client authentication required', () => {
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: 'legit-rt',
-        // mcp-remote re-sends the granted scope verbatim — this is exactly the
-        // value that triggers AADSTS90009 when forwarded to the token endpoint.
+        // mcp-remote re-sends the granted per-scope value; the proxy must NOT
+        // forward it — it is exactly what triggers AADSTS90009.
         scope: `api://${CLIENT_ID}/access_as_user`,
         client_id: clientId,
         client_secret: clientSecret,
@@ -264,8 +265,12 @@ describe('SEC-F04b /token — client authentication required', () => {
     );
     expect(upstreamBody.get('grant_type')).toBe('refresh_token');
     expect(upstreamBody.get('refresh_token')).toBe('legit-rt');
-    // The load-bearing assertion: no scope is forwarded to Entra.
-    expect(upstreamBody.has('scope')).toBe(false);
+    // The load-bearing assertion: the upstream scope is the resource /.default,
+    // not the per-scope value the client sent, and offline_access is preserved.
+    const upstreamScope = (upstreamBody.get('scope') ?? '').split(/\s+/).filter(Boolean);
+    expect(upstreamScope).toContain(`api://${CLIENT_ID}/.default`);
+    expect(upstreamScope).toContain('offline_access');
+    expect(upstreamScope).not.toContain(`api://${CLIENT_ID}/access_as_user`);
   });
 
   it('accepts Basic auth (client_secret_basic) as an alternative to body auth', async () => {

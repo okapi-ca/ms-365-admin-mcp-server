@@ -448,19 +448,20 @@ export function registerOAuthRoutes(app: Express, options: OAuthProxyOptions): v
       // AADSTS90009: our app registration is BOTH the OAuth client (client_id
       // forwarded above) AND the protected resource (api://{clientId}/access_as_user).
       // Entra tolerates this self-reference on the authorization_code exchange but
-      // rejects it on refresh_token when the request carries the self-resource scope
-      // explicitly ("Application is requesting a token for itself"). mcp-remote
-      // re-sends the granted scope (api://{clientId}/access_as_user) verbatim on every
-      // refresh, which broke token renewal for all callers — sessions died ~70 min
-      // after each interactive sign-in and never recovered.
+      // rejects it on refresh_token: "Application is requesting a token for itself.
+      // This scenario is supported only if resource is specified using the /.default
+      // scope of that resource." This broke token renewal for all callers — sessions
+      // died ~70 min after each interactive sign-in and never recovered.
       //
-      // Fix: do NOT forward the client's scope on refresh. Per RFC 6749 §6 the scope
-      // parameter is optional and, when omitted, Entra reissues against the scope
-      // originally granted to the refresh token — sidestepping the self-resource
-      // evaluation entirely. Mirroring /authorize's normalized scope would NOT help:
-      // it still contains api://{clientId}/access_as_user and re-triggers 90009 at the
-      // token endpoint. If a future Entra change requires an explicit scope here, the
-      // documented fallback is api://{clientId}/.default (not the per-scope form).
+      // The fix follows Entra's stated requirement literally — request the resource's
+      // /.default scope. NEITHER forwarding mcp-remote's per-scope value
+      // (api://{clientId}/access_as_user) NOR omitting scope works: with no explicit
+      // scope Entra still reissues against the refresh token's original resource
+      // (api://{clientId}), the same self-reference, and re-triggers 90009 (confirmed
+      // in prod on the omit-scope revision --0000029). /.default satisfies the rule
+      // and still yields the consented delegated scopes; offline_access keeps the
+      // refresh token rotating.
+      form.set('scope', `api://${options.clientId}/.default offline_access`);
     } else if (grantType === DEVICE_CODE_GRANT) {
       // RFC 8628 §3.4: token redemption for a device_code. Entra returns
       // authorization_pending / slow_down / expired_token / access_denied
