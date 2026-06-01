@@ -47,6 +47,12 @@ param oauthMode bool = false
 @description('Comma-separated Entra user object IDs (oid) authorized to authenticate via OAuth. Required when oauthMode=true.')
 param authorizedUsers string = ''
 
+@description('Enable write/mutation tools by passing --allow-writes. Default false (read-only). Set true for admin deployments that perform mutations.')
+param allowWrites bool = false
+
+@description('Scopes a user token must carry in its scp claim (SEC-F03), passed via MS365_ADMIN_MCP_REQUIRED_USER_SCOPES. Default "access_as_user". Set to "" to DISABLE the check — required for the self-resource OAuth design (app is both client and resource), where refresh_token grants are honoured only via {clientId}/.default and the resulting token carries Graph delegated scopes, never access_as_user. Identity then stays gated by audience + authorizedUsers + tenant.')
+param requiredUserScopes string = 'access_as_user'
+
 @description('Public URL that browsers reach the server at (used in OAuth metadata issuer). Leave empty to let the server derive it from request headers.')
 param publicUrl string = ''
 
@@ -157,7 +163,10 @@ var authorizedUserArgs = (oauthMode && !empty(authorizedUsers)) ? [
   '--authorized-users'
   authorizedUsers
 ] : []
-var containerArgs = concat(baseArgs, serviceAuthArgs, oauthArgs, publicUrlArgs, authorizedUserArgs)
+var allowWritesArgs = allowWrites ? [
+  '--allow-writes'
+] : []
+var containerArgs = concat(baseArgs, serviceAuthArgs, oauthArgs, publicUrlArgs, authorizedUserArgs, allowWritesArgs)
 
 // --- User-Assigned Managed Identity ---
 
@@ -388,6 +397,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'AZURE_STORAGE_TABLE_NAME'
               value: oauthTableName
+            }
+            {
+              // SEC-F03 scp check. Empty value disables it (required for the
+              // self-resource OAuth design — see the requiredUserScopes param).
+              name: 'MS365_ADMIN_MCP_REQUIRED_USER_SCOPES'
+              value: requiredUserScopes
             }
           ]
         }
