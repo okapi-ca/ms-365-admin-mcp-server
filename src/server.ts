@@ -132,10 +132,20 @@ class AdminGraphServer {
       }
 
       // SEC-F03: default to requiring `access_as_user` in scp. An empty string disables the check.
+      // The CLI flag wins; otherwise fall back to MS365_ADMIN_MCP_REQUIRED_USER_SCOPES so a
+      // container deployment can tune (or disable) the check without rewriting startup args.
+      // Disabling is required for the self-resource OAuth design: when the app is both the
+      // OAuth client and the protected resource, Entra only honours refresh_token grants via
+      // the {clientId}/.default scope (see oauth-proxy.ts), and that token's scp carries the
+      // app's Graph delegated permissions — never `access_as_user`. Requiring access_as_user
+      // therefore 403s every refreshed token. Identity remains gated by audience + the
+      // authorized-users oid allowlist + tenant, so dropping the scp check is defensible.
+      const rawRequiredScopes =
+        this.options.requiredUserScopes ?? process.env.MS365_ADMIN_MCP_REQUIRED_USER_SCOPES;
       const requiredScopes =
-        this.options.requiredUserScopes === undefined
+        rawRequiredScopes === undefined
           ? ['access_as_user']
-          : this.options.requiredUserScopes
+          : rawRequiredScopes
               .split(',')
               .map((s: string) => s.trim())
               .filter(Boolean);
