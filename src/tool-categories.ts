@@ -106,9 +106,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   },
   retention: {
     name: 'retention',
-    pattern: /retention-label|file-plan/i,
+    pattern: /retention-event|file-plan/i,
     description:
-      'Records Management (retention labels, file plan authorities, categories, citations, departments, references)',
+      'Records Management (file plan authorities, categories, citations, departments, references, retention events). Note: listing/getting retentionLabels themselves is not supported with application permissions in Microsoft Graph — use delegated access or Security & Compliance PowerShell.',
   },
   files: {
     name: 'files',
