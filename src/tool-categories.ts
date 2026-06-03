@@ -110,6 +110,12 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
     description:
       'Records Management (retention labels, file plan authorities, categories, citations, departments, references)',
   },
+  files: {
+    name: 'files',
+    pattern: /user-drive|drive-root|drive-item|drive-children/i,
+    description:
+      "OneDrive / user drive access (DSAR enumeration: a user's personal drive, root, items, and children)",
+  },
   teamsadmin: {
     name: 'teamsadmin',
     pattern:

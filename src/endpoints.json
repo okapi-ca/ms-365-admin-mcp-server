@@ -2703,6 +2703,38 @@
     "llmTip": "Gets the default document library (drive) for a SharePoint site. Returns id, name, driveType, webUrl, quota."
   },
   {
+    "pathPattern": "/users/{user-id}/drive",
+    "method": "get",
+    "toolName": "get-user-drive",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Gets a user's OneDrive for Business (personal drive). Returns the drive id, driveType ('business'), owner, quota, and webUrl. Use this for DSAR/Loi 25 access requests: a user's OneDrive is a personal site that GET /sites/{...:/personal/...} cannot reach with app permissions — go through /users/{user-id}/drive instead. user-id can be the UPN (e.g. carolann.poulin@lcieducation.com) or the object id. Take the returned drive id and pass it to get-drive-root, then list-drive-children, to enumerate the content."
+  },
+  {
+    "pathPattern": "/drives/{drive-id}/root",
+    "method": "get",
+    "toolName": "get-drive-root",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Gets the root folder driveItem of a drive (from get-user-drive). Returns the root item id, name, folder.childCount, and webUrl. Pass the root item id to list-drive-children to enumerate top-level files and folders."
+  },
+  {
+    "pathPattern": "/drives/{drive-id}/items/{driveItem-id}/children",
+    "method": "get",
+    "toolName": "list-drive-children",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Lists the children (files and subfolders) of a driveItem in a drive. For the top level, pass the root item id from get-drive-root. Each child returns id, name, size, file/folder facet, createdDateTime, lastModifiedDateTime, webUrl, and @microsoft.graph.downloadUrl for files. Recurse by calling again with a child folder's id. Supports $top, $select, $orderby."
+  },
+  {
+    "pathPattern": "/drives/{drive-id}/items/{driveItem-id}",
+    "method": "get",
+    "toolName": "get-drive-item",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Gets metadata for a specific driveItem (file or folder) by id. Returns name, size, file/folder facet, createdBy, lastModifiedBy, timestamps, webUrl, and @microsoft.graph.downloadUrl (a short-lived, pre-authenticated link to download file content without an auth header)."
+  },
+  {
     "pathPattern": "/sites/{site-id}/lists",
     "method": "get",
     "toolName": "list-site-lists",
