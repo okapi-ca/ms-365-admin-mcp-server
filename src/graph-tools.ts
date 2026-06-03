@@ -59,6 +59,33 @@ export function encodePathParamValue(rawValue: string): string {
   return encodeURIComponent(rawValue);
 }
 
+// SEC-F (handoff Finding 3): recursive Microsoft Graph entity bodies are emitted
+// by the generator as `z.lazy(() => z.object(...))` schemas (51 of them today —
+// accessPackage, channel, domain, list, ediscoverySearch, etc.). Some MCP clients
+// cannot render a JSON Schema for a lazy/recursive parameter and downgrade the
+// `body` argument to a JSON *string*. Server-side Zod validation then rejects it
+// with "expected object, received string" — even though the string holds a valid
+// object (this is exactly why create-ediscovery-search failed while
+// create-ediscovery-case/-custodian, whose schemas are non-lazy, succeeded).
+//
+// Wrap every Body param schema in a preprocess step that JSON-parses a string
+// body before validation. To stay safe for endpoints that take a raw text or
+// binary body, only strings that look like a JSON object or array are parsed;
+// primitive-looking and non-JSON strings flow through untouched so the
+// underlying schema still produces a meaningful error.
+export function coerceJsonStringBody(schema: z.ZodTypeAny): z.ZodTypeAny {
+  return z.preprocess((val) => {
+    if (typeof val !== 'string') return val;
+    const trimmed = val.trim();
+    if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return val;
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return val;
+    }
+  }, schema);
+}
+
 const endpointsData = JSON.parse(
   readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
 ) as EndpointConfig[];
@@ -333,7 +360,7 @@ export function registerGraphTools(
     const paramSchema: Record<string, z.ZodTypeAny> = {};
     for (const param of tool.parameters || []) {
       if (param.type === 'Body') {
-        paramSchema[param.name] = (param.schema || z.unknown()).optional();
+        paramSchema[param.name] = coerceJsonStringBody(param.schema || z.unknown()).optional();
       } else if (param.type === 'Path') {
         paramSchema[param.name] = z.string().describe(param.description || param.name);
       } else if (param.type === 'Query') {
