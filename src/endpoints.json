@@ -4309,6 +4309,14 @@
     "llmTip": "Creates a collection search in a case. Body: displayName, description, contentQuery (KQL), dataSourceScopes ('none'|'allTenantMailboxes'|'allTenantSites'|'allCaseCustodians'|'allCaseNoncustodialDataSources')."
   },
   {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches/{ediscoverySearch-id}/microsoft.graph.security.estimateStatistics",
+    "method": "post",
+    "toolName": "estimate-ediscovery-search-statistics",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Runs an estimate of how many emails and documents a search would collect — the scoping step before add-to-review-set in a DSAR/collection workflow. No request body. Long-running: returns 202; poll list-case-operations (action='estimateStatistics') until status='succeeded', then read the result counts (indexedItemCount, indexedItemsSize, mailboxCount, siteCount, unindexedItemCount, unindexedItemsSize) from that operation. Use this to size and justify a collection before pulling content into a review set."
+  },
+  {
     "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}",
     "method": "get",
     "toolName": "get-ediscovery-custodian",
