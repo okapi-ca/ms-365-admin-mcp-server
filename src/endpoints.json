@@ -1480,13 +1480,6 @@
     "llmTip": "Gets SharePoint tenant-level settings. Returns allowedDomainGuidsForSyncApp, availableManagedPathsForSiteCreation, deletedUserPersonalSiteRetentionPeriodInDays, excludedFileExtensionsForSyncApp, idleSessionSignOut, imageTaggingOption, isCommentingOnSitePagesEnabled, isFileActivityNotificationEnabled, isLoopEnabled, isMacSyncAppEnabled, isResharingByExternalUsersEnabled, isSharePointMobileNotificationEnabled, isSharePointNewsfeedEnabled, isSiteCreationEnabled, isSiteCreationUIEnabled, isSitePagesCreationEnabled, isSitesStorageLimitAutomatic, knowledgeIntelligenceEnabled, personalSiteDefaultStorageLimitInMB, sharingAllowedDomainList, sharingBlockedDomainList, sharingCapability, sharingDomainRestrictionMode, siteCreationDefaultManagedPath, siteCreationDefaultStorageLimitInMB, tenantDefaultTimezone."
   },
   {
-    "pathPattern": "/security/labels/retentionLabels",
-    "method": "get",
-    "toolName": "list-retention-labels",
-    "appPermissions": ["RecordsManagement.Read.All"],
-    "llmTip": "Lists retention labels from Microsoft Purview Records Management. Each has displayName, descriptionForAdmins, descriptionForUsers, retentionDuration, retentionTrigger, behaviorDuringRetentionPeriod, actionAfterRetentionPeriod (none, delete, startDispositionReview), isInUse, createdDateTime, lastModifiedDateTime, and labelToBeApplied."
-  },
-  {
     "pathPattern": "/security/labels/authorities",
     "method": "get",
     "toolName": "list-file-plan-authorities",
@@ -2701,6 +2694,38 @@
     "toolName": "get-site-default-drive",
     "appPermissions": ["Sites.Read.All"],
     "llmTip": "Gets the default document library (drive) for a SharePoint site. Returns id, name, driveType, webUrl, quota."
+  },
+  {
+    "pathPattern": "/users/{user-id}/drive",
+    "method": "get",
+    "toolName": "get-user-drive",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Gets a user's OneDrive for Business (personal drive). Returns the drive id, driveType ('business'), owner, quota, and webUrl. Use this for DSAR/Loi 25 access requests: a user's OneDrive is a personal site that GET /sites/{...:/personal/...} cannot reach with app permissions — go through /users/{user-id}/drive instead. user-id can be the UPN (e.g. carolann.poulin@lcieducation.com) or the object id. Take the returned drive id and pass it to get-drive-root, then list-drive-children, to enumerate the content."
+  },
+  {
+    "pathPattern": "/drives/{drive-id}/root",
+    "method": "get",
+    "toolName": "get-drive-root",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Gets the root folder driveItem of a drive (from get-user-drive). Returns the root item id, name, folder.childCount, and webUrl. Pass the root item id to list-drive-children to enumerate top-level files and folders."
+  },
+  {
+    "pathPattern": "/drives/{drive-id}/items/{driveItem-id}/children",
+    "method": "get",
+    "toolName": "list-drive-children",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Lists the children (files and subfolders) of a driveItem in a drive. For the top level, pass the root item id from get-drive-root. Each child returns id, name, size, file/folder facet, createdDateTime, lastModifiedDateTime, webUrl, and @microsoft.graph.downloadUrl for files. Recurse by calling again with a child folder's id. Supports $top, $select, $orderby."
+  },
+  {
+    "pathPattern": "/drives/{drive-id}/items/{driveItem-id}",
+    "method": "get",
+    "toolName": "get-drive-item",
+    "appPermissions": ["Files.Read.All"],
+    "riskLevel": "medium",
+    "llmTip": "Gets metadata for a specific driveItem (file or folder) by id. Returns name, size, file/folder facet, createdBy, lastModifiedBy, timestamps, webUrl, and @microsoft.graph.downloadUrl (a short-lived, pre-authenticated link to download file content without an auth header)."
   },
   {
     "pathPattern": "/sites/{site-id}/lists",
@@ -4282,6 +4307,14 @@
     "appPermissions": ["eDiscovery.ReadWrite.All"],
     "riskLevel": "medium",
     "llmTip": "Creates a collection search in a case. Body: displayName, description, contentQuery (KQL), dataSourceScopes ('none'|'allTenantMailboxes'|'allTenantSites'|'allCaseCustodians'|'allCaseNoncustodialDataSources')."
+  },
+  {
+    "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/searches/{ediscoverySearch-id}/microsoft.graph.security.estimateStatistics",
+    "method": "post",
+    "toolName": "estimate-ediscovery-search-statistics",
+    "appPermissions": ["eDiscovery.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Runs an estimate of how many emails and documents a search would collect — the scoping step before add-to-review-set in a DSAR/collection workflow. No request body. Long-running: returns 202; poll list-case-operations (action='estimateStatistics') until status='succeeded', then read the result counts (indexedItemCount, indexedItemsSize, mailboxCount, siteCount, unindexedItemCount, unindexedItemsSize) from that operation. Use this to size and justify a collection before pulling content into a review set."
   },
   {
     "pathPattern": "/security/cases/ediscoveryCases/{ediscoveryCase-id}/custodians/{ediscoveryCustodian-id}",
