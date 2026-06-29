@@ -59,31 +59,43 @@ export function encodePathParamValue(rawValue: string): string {
   return encodeURIComponent(rawValue);
 }
 
-// SEC-F (handoff Finding 3): recursive Microsoft Graph entity bodies are emitted
-// by the generator as `z.lazy(() => z.object(...))` schemas (51 of them today —
-// accessPackage, channel, domain, list, ediscoverySearch, etc.). Some MCP clients
-// cannot render a JSON Schema for a lazy/recursive parameter and downgrade the
-// `body` argument to a JSON *string*. Server-side Zod validation then rejects it
-// with "expected object, received string" — even though the string holds a valid
-// object (this is exactly why create-ediscovery-search failed while
-// create-ediscovery-case/-custodian, whose schemas are non-lazy, succeeded).
+// SEC-F (handoff Finding 3 + export-review-set follow-up): the generator emits
+// imperfect Zod schemas for Graph request bodies, and over-strict local
+// validation produced false rejections that blocked otherwise-valid requests.
+// Two observed failure modes:
 //
-// Wrap every Body param schema in a preprocess step that JSON-parses a string
-// body before validation. To stay safe for endpoints that take a raw text or
-// binary body, only strings that look like a JSON object or array are parsed;
-// primitive-looking and non-JSON strings flow through untouched so the
-// underlying schema still produces a meaningful error.
+//  1. Recursive entity bodies are `z.lazy(() => z.object(...))`; some MCP clients
+//     can't render a JSON Schema for a lazy parameter and downgrade the `body`
+//     argument to a JSON *string* — rejected with "expected object, received
+//     string" (e.g. create-ediscovery-search).
+//  2. Graph flagged-enum fields nested inside a body (e.g. export-review-set's
+//     `exportOptions`/`exportStructure`) are emitted as `object` but Graph
+//     expects a comma-separated string — rejected with the same error, one level
+//     deep, where a top-level string-parse can't help.
+//
+// Microsoft Graph is the authority on body validity, so this wrapper keeps the
+// generated schema only as *guidance* (it still drives the tool's input hints)
+// and never hard-rejects on it:
+//   - a JSON-object/array *string* body is parsed first (mode 1), then
+//   - validation accepts EITHER the generated schema (preferred) OR any value
+//     (`z.any()`), so a payload that is valid for Graph but not for the imperfect
+//     local schema passes through untouched (mode 2). executeGraphTool already
+//     forwards the raw body on a strict-schema miss, so the round-trip is intact.
+// Non-JSON / primitive strings are left as-is for raw text / binary bodies.
 export function coerceJsonStringBody(schema: z.ZodTypeAny): z.ZodTypeAny {
-  return z.preprocess((val) => {
-    if (typeof val !== 'string') return val;
-    const trimmed = val.trim();
-    if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return val;
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      return val;
-    }
-  }, schema);
+  return z.preprocess(
+    (val) => {
+      if (typeof val !== 'string') return val;
+      const trimmed = val.trim();
+      if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return val;
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return val;
+      }
+    },
+    z.union([schema, z.any()])
+  );
 }
 
 const endpointsData = JSON.parse(

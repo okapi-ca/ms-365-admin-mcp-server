@@ -60,10 +60,30 @@ describe('coerceJsonStringBody', () => {
     expect(wrapped.parse('123')).toBe('123');
   });
 
-  it('leaves an unparseable object-looking string for the schema to reject', () => {
+  it('never hard-rejects a body the generated schema does not match (Graph validates)', () => {
+    // A nested Graph flagged-enum field (e.g. export-review-set exportOptions)
+    // is generated as an object but Graph expects a comma-separated string.
+    // Strict validation used to throw "expected object, received string"; now the
+    // payload passes through untouched so it can reach Graph.
+    const exportLike = z.object({
+      outputName: z.string().nullish(),
+      exportOptions: z.object({}).passthrough(), // mis-generated: should be a string enum
+      exportStructure: z.object({}).passthrough(),
+    });
+    const wrapped = coerceJsonStringBody(exportLike);
+    const body = {
+      outputName: 'DSAR-export',
+      exportOptions: 'originalFiles,fileInfo',
+      exportStructure: 'directory',
+    };
+    expect(wrapped.parse(body)).toEqual(body);
+  });
+
+  it('passes an unparseable object-looking string through (no hard reject)', () => {
     const wrapped = coerceJsonStringBody(z.object({ a: z.string() }));
-    // Looks like an object but is malformed JSON → returned as-is → schema fails.
-    expect(() => wrapped.parse('{not valid json')).toThrow();
+    // Malformed JSON → returned as-is; accepted by the permissive fallback rather
+    // than throwing locally.
+    expect(wrapped.parse('{not valid json')).toBe('{not valid json');
   });
 
   it('is undefined-safe when made optional (body omitted)', () => {
