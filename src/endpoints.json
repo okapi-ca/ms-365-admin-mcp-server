@@ -3525,6 +3525,30 @@
     "llmTip": "Adds a member to a group. Body requires @odata.id pointing to the directoryObject (e.g., https://graph.microsoft.com/v1.0/users/{id})."
   },
   {
+    "pathPattern": "/groups/{group-id}/members/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-group-member",
+    "appPermissions": ["GroupMember.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Removes a member from a group. directoryObject-id is the member's object id (not the membership id) — get it from list-group-members. Core offboarding operation. Refuses up front on dynamic groups (membership is computed from membershipRule) and on groups synchronised from on-premises AD (write in AD instead). For a role-assignable group (isAssignableToRole true), RoleManagement.ReadWrite.Directory is required on top of GroupMember.ReadWrite.All."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/owners/$ref",
+    "method": "post",
+    "toolName": "add-group-owner",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds an owner to a group. Body: {\"@odata.id\":\"https://graph.microsoft.com/v1.0/users/{id}\"}. Use to remediate an ownerless group, or to add a second owner before removing the current one (Graph refuses to remove the last owner). An owner can edit a dynamic group's membershipRule and thereby grant itself licences or access, so treat this as a privilege grant."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/owners/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-group-owner",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes an owner from a group. directoryObject-id is the owner's object id — get it from list-group-owners. Refuses up front when the target is the group's only owner (add a replacement with add-group-owner first) and on groups synchronised from on-premises AD. For a role-assignable group (isAssignableToRole true), RoleManagement.ReadWrite.Directory is required on top of Group.ReadWrite.All."
+  },
+  {
     "pathPattern": "/applications/{application-id}",
     "method": "patch",
     "toolName": "update-application",
