@@ -175,16 +175,16 @@ You exceeded 100 req/min on `/mcp` from the source IP. Either back off, reshape 
 
 Symptom: `npx ms-365-admin-mcp-auth --server https://...` or a plain `curl https://.../health` fails with **Could not resolve host: `<cae-name>.<env-subdomain>.canadacentral.azurecontainerapps.io`** even though the VPN is connected.
 
-**Context.** When the Container App Environment is VNet-integrated and `internal: true`, the CAE only has a private IP (e.g. `172.22.2.113`) reachable through the corporate VPN. DNS resolution for `<env-subdomain>.canadacentral.azurecontainerapps.io` comes from a **Private DNS Zone** linked to the hub VNet, which your VPN profile is supposed to push as your DNS server.
+**Context.** When the Container App Environment is VNet-integrated and `internal: true`, the CAE only has a private IP (e.g. `<cae-private-ip>`) reachable through the corporate VPN. DNS resolution for `<env-subdomain>.canadacentral.azurecontainerapps.io` comes from a **Private DNS Zone** linked to the hub VNet, which your VPN profile is supposed to push as your DNS server.
 
 **Quick diagnostic — force the DNS query through the VPN-pushed server**
 
 Windows PowerShell:
 
 ```powershell
-# Replace 172.22.2.9 with your hub DNS server IP. Find yours via:
+# Replace <hub-dns-ip> with your hub DNS server IP. Find yours via:
 #   Get-NetIPConfiguration | Where-Object InterfaceAlias -Match 'VPN' | Select DnsServer
-Resolve-DnsName ca-cc-mcpms365admin-p.bravecliff-2d3b4e20.canadacentral.azurecontainerapps.io -Server 172.22.2.9
+Resolve-DnsName <your-app>.<env-subdomain>.canadacentral.azurecontainerapps.io -Server <hub-dns-ip>
 ```
 
 macOS / Linux:
@@ -192,7 +192,7 @@ macOS / Linux:
 ```bash
 # Get your VPN's pushed DNS first:
 #   scutil --dns | grep -A2 'resolver #' | head
-dig @172.22.2.9 ca-cc-mcpms365admin-p.bravecliff-2d3b4e20.canadacentral.azurecontainerapps.io
+dig @<hub-dns-ip> <your-app>.<env-subdomain>.canadacentral.azurecontainerapps.io
 ```
 
 **Interpretation**

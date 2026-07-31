@@ -84,10 +84,11 @@ describe('auth-bootstrap serverUrlHash — mcp-remote compatibility', () => {
   // resource) it collapses to md5(serverUrl). If this test breaks, mcp-remote
   // changed its hashing and the bootstrap needs to be updated in lockstep.
 
-  it('produces md5(url) for the known production server', () => {
-    const url =
-      'https://ca-cc-mcpms365admin-p.bravecliff-2d3b4e20.canadacentral.azurecontainerapps.io/mcp';
-    expect(serverUrlHash(url)).toBe('2bc8cc6be5f807260c835f0910d79117');
+  it('produces md5(url) for a Container Apps server URL', () => {
+    // Example host, not a real deployment: the assertion pins mcp-remote's
+    // hashing, which any URL of this shape exercises equally well.
+    const url = 'https://example-app.example-env.canadacentral.azurecontainerapps.io/mcp';
+    expect(serverUrlHash(url)).toBe('7122f5e63b7968ba4964012eb4ab85ef');
   });
 
   it('is a 32-character lowercase hex digest', () => {

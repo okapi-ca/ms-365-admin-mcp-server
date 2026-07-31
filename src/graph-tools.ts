@@ -121,7 +121,8 @@ const APP_ONLY_PERMISSIONS = new Set([
   'ThreatHunting.Read.All',
   'CopilotSettings-Internal.ReadWrite.All',
   'PrintConnector.Read.All',
-  // Not found as delegated in Graph SP oauth2PermissionScopes (confirmed during CYSEC-1424)
+  // Not found as delegated in Graph SP oauth2PermissionScopes (confirmed when the
+  // delegated-consent rollout tried to grant them)
   'AppRoleAssignment.Read.All',
   'CallRecords.Read.All',
   'Device.ReadWrite.All',
