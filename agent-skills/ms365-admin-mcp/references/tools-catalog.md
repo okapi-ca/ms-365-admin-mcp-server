@@ -1,6 +1,6 @@
 # Tools catalogue
 
-Index of the 515 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
+Index of the 641 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
 
 ## Source of truth
 
@@ -33,6 +33,10 @@ node dist/index.js --list-permissions  # show required Graph permissions
 | `sharepointadmin` | SharePoint tenant administration                                          | `usecase-sharepointadmin.md`                    |
 | `retention`       | Records management                                                        | `usecase-retention.md`                          |
 
+## Pre-flight guardrails
+
+Five write tools refuse before reaching Graph rather than relaying its 4xx: `remove-group-owner` (last owner), `remove-group-member` (dynamic group), all three group tools (on-premises-synced group), and `delete-role-assignment` / `remove-directory-role-member` (last active Global Administrator — unconditional). The refusal message names the remedy. See [`src/guardrails.ts`](../../../src/guardrails.ts).
+
 ## Index by risk level (write tools)
 
 ### Critical — require out-of-band sign-off
@@ -51,6 +55,7 @@ The chat operator's confirmation is not enough for these. Prepare the dry-run, d
 - `wipe-managed-device`
 - `clean-windows-device`
 - `add-directory-role-member`
+- `delete-role-assignment`, `remove-directory-role-member` — both refuse **unconditionally** on the tenant's last active Global Administrator; no parameter overrides it
 - `create-pim-role-assignment-request` (on privileged roles)
 - `create-pim-role-eligibility-request`
 - `disable-user-account` (on privileged or break-glass accounts)
@@ -87,11 +92,16 @@ The chat operator's confirmation is not enough for these. Prepare the dry-run, d
 - `create-pim-group-assignment-request`, `create-pim-group-eligibility-request`
 - `create-attack-simulation`
 - `create-role-management-policy-assignment`, `update-role-management-policy`
+- `add-group-owner`, `remove-group-owner` — a group owner can rewrite a dynamic group's `membershipRule`, so ownership is a privilege grant
+- `delete-oauth2-grant` — a grant with `consentType: AllPrincipals` revokes an app's delegated access for every user at once
+- `delete-sp-app-role-assignment`, `delete-user-app-role-assignment`
+- `remove-administrative-unit-member`
+- `delete-user-phone-auth-method`, `delete-user-fido2-auth-method`, `delete-user-authenticator-auth-method`, `delete-user-software-oath-auth-method`, `delete-user-windows-hello-auth-method`, `delete-user-email-auth-method`, `delete-user-temporary-access-pass-auth-method`
 
 ### Medium — confirmation recommended
 
-- `update-user`, `assign-user-license`
-- `create-group`, `update-group`, `add-group-member`
+- `assign-user-license`
+- `create-group`, `update-group`, `add-group-member`, `remove-group-member`
 - `create-administrative-unit`, `update-administrative-unit`, `add-administrative-unit-member`
 - `verify-domain`
 - `set-application-verified-publisher`
