@@ -96,8 +96,7 @@ function getSigningKey(
  * surfaced to downstream tool registration.
  */
 export type ValidateEntraTokenResult =
-  | { ok: true; claims: ServiceTokenClaims }
-  | { ok: false; reason: 'invalid_token' };
+  { ok: true; claims: ServiceTokenClaims } | { ok: false; reason: 'invalid_token' };
 
 export async function validateEntraTokenExplain(
   token: string,
