@@ -8,6 +8,8 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.15.1] — 2026-07-31
+
 ### Security
 
 - Removed single-tenant deployment material that had been committed to this repository instead of its private fork: four platform setup guides addressed to one tenant's administrators, a directory of migration-planning notes with its companion audit script, and one consent-granting script. Between them they exposed a production hostname, an internal DNS resolver address, an admin account naming convention, a resource group name and internal tracker URLs. Nothing in the public documentation linked to them, so no reference was broken.
