@@ -96,7 +96,7 @@ If `success: false`, see [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md#authentica
 
 ## Step 5. Narrow the permission scope (optional but recommended)
 
-The default set includes every permission across all 515 tools. For a specific use case, grant only what's needed:
+The default set includes every permission required by every tool the server exposes. Run `--list-permissions` for the exact set — the tool count moves with every release, so it is not repeated here. For a specific use case, grant only what's needed:
 
 1. Decide on the preset(s) you'll use (e.g., `identity,security`).
 2. Run `--list-permissions --preset identity,security` and grant only those.
