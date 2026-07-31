@@ -3514,7 +3514,7 @@
     "toolName": "delete-user",
     "appPermissions": ["User.ReadWrite.All"],
     "riskLevel": "critical",
-    "llmTip": "Deletes a user from the directory. The user is moved to deletedItems and can be restored within 30 days. Always confirm with operator before executing."
+    "llmTip": "Deletes a user from the directory. The user is moved to deletedItems and can be restored within 30 days. Always confirm with operator before executing. ORDER MATTERS during an offboarding: while the account still holds a directory role, this returns 403 Authorization_RequestDenied and the account is left in place. Revoke roles first (delete-role-assignment or remove-directory-role-member), then delete. Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/users/{user-id}/assignLicense",
@@ -3594,7 +3594,7 @@
     "toolName": "remove-group-owner",
     "appPermissions": ["Group.ReadWrite.All"],
     "riskLevel": "high",
-    "llmTip": "Removes an owner from a group. directoryObject-id is the owner's object id — get it from list-group-owners. Refuses up front when the target is the group's only owner (add a replacement with add-group-owner first) and on groups synchronised from on-premises AD. For a role-assignable group (isAssignableToRole true), RoleManagement.ReadWrite.Directory is required on top of Group.ReadWrite.All."
+    "llmTip": "Removes an owner from a group. directoryObject-id is the owner's object id — get it from list-group-owners. Refuses up front when the target is the group's only owner (add a replacement with add-group-owner first) and on groups synchronised from on-premises AD. For a role-assignable group (isAssignableToRole true), RoleManagement.ReadWrite.Directory is required on top of Group.ReadWrite.All. Adding a replacement owner does not take effect instantly: for a few seconds the service still counts one owner, and this tool's last-owner refusal — like Graph's own — correctly fires during that window. Confirm with list-group-owners that both owners are visible, then retry on refusal. Measured at ~6s on a live tenant 2026-07-31."
   },
   {
     "pathPattern": "/applications/{application-id}",
@@ -3634,7 +3634,7 @@
     "toolName": "delete-role-assignment",
     "appPermissions": ["RoleManagement.ReadWrite.Directory"],
     "riskLevel": "critical",
-    "llmTip": "Deletes a directory role assignment, revoking the admin privilege it granted. This is the modern path and the one to reach for first: run list-role-assignments with $filter=principalId eq '{user-id}' and pass back the assignment's own id. Do not pass the user id or the role id. CRITICAL: refuses unconditionally when the assignment is the tenant's last active Global Administrator, and that refusal cannot be overridden by a parameter. Assignments created through PIM as eligible or time-bound are not removed here — use the create-pim-*-request tools with action adminRemove."
+    "llmTip": "Deletes a directory role assignment, revoking the admin privilege it granted. This is the modern path and the one to reach for first: run list-role-assignments with $filter=principalId eq '{user-id}' and pass back the assignment's own id. Do not pass the user id or the role id. CRITICAL: refuses unconditionally when the assignment is the tenant's last active Global Administrator, and that refusal cannot be overridden by a parameter. Assignments created through PIM as eligible or time-bound are not removed here — use the create-pim-*-request tools with action adminRemove. The roleAssignments projection lags its own writes: an id read moments earlier can answer 404 Request_ResourceNotFound on the first delete and succeed on a retry. Treat a 404 here as retryable rather than as a wrong id. Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/directoryRoles/{directoryRole-id}/members/{directoryObject-id}/$ref",

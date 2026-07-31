@@ -309,22 +309,29 @@ async function executeGraphTool(
             }
             break;
           case 'Body':
-            if (paramDef.schema) {
-              const parseResult = paramDef.schema.safeParse(paramValue);
-              if (!parseResult.success) {
-                const wrapped = { [paramName]: paramValue };
-                const wrappedResult = paramDef.schema.safeParse(wrapped);
-                if (wrappedResult.success) {
-                  body = wrapped;
-                } else {
-                  body = paramValue;
-                }
-              } else {
-                body = paramValue;
-              }
-            } else {
-              body = paramValue;
-            }
+            // SEC-F2: forward the caller's payload verbatim. Microsoft Graph is the
+            // authority on body validity — see coerceJsonStringBody above for why the
+            // generated schema is guidance only — so a local parse result has nothing
+            // useful to contribute here.
+            //
+            // A previous revision, on a schema miss, re-parsed the payload wrapped as
+            // `{ [paramName]: payload }` and sent that whenever the wrapped form
+            // validated. Every generated Body parameter is named `body`, so the wrapped
+            // form is `{ body: … }` — a shape no Graph resource accepts. It fired on all
+            // six POST …/$ref endpoints, whose generated schema is
+            // `z.record(z.object({}).partial().passthrough())`: the real payload
+            // `{ "@odata.id": "https://…" }` FAILS that record because the value is a
+            // string, while `{ body: { "@odata.id": … } }` PASSES because the value is an
+            // object. The wrap therefore won by accident and Graph answered
+            // 400 Request_BadRequest, "An unexpected 'EndOfInput' node was found when
+            // reading from the JSON reader. A 'StartObject' node was expected."
+            //
+            // add-group-member, add-directory-role-member, add-administrative-unit-member,
+            // add-application-owner and add-sp-owner were all unusable as a result — five
+            // pre-existing tools, silently broken. Surfaced by replaying a real
+            // offboarding end to end against the tenant rather than by any unit test,
+            // because no test asserted the bytes on the wire.
+            body = paramValue;
             break;
           case 'Header':
             headers[fixedParamName] = `${paramValue}`;
