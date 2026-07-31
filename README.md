@@ -298,20 +298,25 @@ node dist/index.js --verify-login
 | `list-devices` | GET    |
 | `get-device`   | GET    |
 
-### Groups (8)
+### Groups (11)
 
-| Tool                 | Method | Risk     |
-| -------------------- | ------ | -------- |
-| `list-groups`        | GET    |          |
-| `get-group`          | GET    |          |
-| `list-group-members` | GET    |          |
-| `list-group-owners`  | GET    |          |
-| `create-group`       | POST   | medium   |
-| `update-group`       | PATCH  | medium   |
-| `delete-group`       | DELETE | critical |
-| `add-group-member`   | POST   | medium   |
+| Tool                  | Method | Risk     |
+| --------------------- | ------ | -------- |
+| `list-groups`         | GET    |          |
+| `get-group`           | GET    |          |
+| `list-group-members`  | GET    |          |
+| `list-group-owners`   | GET    |          |
+| `create-group`        | POST   | medium   |
+| `update-group`        | PATCH  | medium   |
+| `delete-group`        | DELETE | critical |
+| `add-group-member`    | POST   | medium   |
+| `remove-group-member` | DELETE | medium   |
+| `add-group-owner`     | POST   | high     |
+| `remove-group-owner`  | DELETE | high     |
 
-### Directory roles & PIM (7)
+`remove-group-member`, `add-group-owner` and `remove-group-owner` run pre-flight guardrails: they refuse on an on-premises-synced group, a member removal on a dynamic group, and the removal of a group's only owner. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#guardrails--srcguardrailsts).
+
+### Directory roles & PIM (9)
 
 | Tool                            | Method | Risk     |
 | ------------------------------- | ------ | -------- |
@@ -322,18 +327,23 @@ node dist/index.js --verify-login
 | `list-pim-eligible-assignments` | GET    |          |
 | `list-pim-active-assignments`   | GET    |          |
 | `add-directory-role-member`     | POST   | critical |
+| `delete-role-assignment`        | DELETE | critical |
+| `remove-directory-role-member`  | DELETE | critical |
 
-### Administrative units (7)
+`delete-role-assignment` is the one to reach for: `list-role-assignments` with `$filter=principalId eq '{user-id}'` already returns the assignment id it takes. `remove-directory-role-member` covers roles activated the legacy way. Both refuse **unconditionally** on the tenant's last active Global Administrator — an anti-lockout guardrail no parameter overrides.
 
-| Tool                               | Method | Risk   |
-| ---------------------------------- | ------ | ------ |
-| `list-administrative-units`        | GET    |        |
-| `get-administrative-unit`          | GET    |        |
-| `list-administrative-unit-members` | GET    |        |
-| `create-administrative-unit`       | POST   | medium |
-| `update-administrative-unit`       | PATCH  | medium |
-| `delete-administrative-unit`       | DELETE | high   |
-| `add-administrative-unit-member`   | POST   | medium |
+### Administrative units (8)
+
+| Tool                                | Method | Risk   |
+| ----------------------------------- | ------ | ------ |
+| `list-administrative-units`         | GET    |        |
+| `get-administrative-unit`           | GET    |        |
+| `list-administrative-unit-members`  | GET    |        |
+| `create-administrative-unit`        | POST   | medium |
+| `update-administrative-unit`        | PATCH  | medium |
+| `delete-administrative-unit`        | DELETE | high   |
+| `add-administrative-unit-member`    | POST   | medium |
+| `remove-administrative-unit-member` | DELETE | high   |
 
 ### Conditional access (3)
 
@@ -343,18 +353,23 @@ node dist/index.js --verify-login
 | `get-conditional-access-policy`    | GET    |
 | `list-named-locations`             | GET    |
 
-### Applications & app roles (8)
+### Applications & app roles (11)
 
-| Tool                             | Method | Risk     |
-| -------------------------------- | ------ | -------- |
-| `list-applications`              | GET    |          |
-| `list-service-principals`        | GET    |          |
-| `list-oauth2-grants`             | GET    |          |
-| `list-user-app-role-assignments` | GET    |          |
-| `list-sp-app-role-assignments`   | GET    |          |
-| `update-application`             | PATCH  | high     |
-| `delete-application`             | DELETE | critical |
-| `update-service-principal`       | PATCH  | high     |
+| Tool                              | Method | Risk     |
+| --------------------------------- | ------ | -------- |
+| `list-applications`               | GET    |          |
+| `list-service-principals`         | GET    |          |
+| `list-oauth2-grants`              | GET    |          |
+| `list-user-app-role-assignments`  | GET    |          |
+| `list-sp-app-role-assignments`    | GET    |          |
+| `update-application`              | PATCH  | high     |
+| `delete-application`              | DELETE | critical |
+| `update-service-principal`        | PATCH  | high     |
+| `delete-oauth2-grant`             | DELETE | high     |
+| `delete-sp-app-role-assignment`   | DELETE | high     |
+| `delete-user-app-role-assignment` | DELETE | high     |
+
+`delete-oauth2-grant` is the remediation for an illicit consent grant: `list-oauth2-grants` identifies it, this revokes it. A grant with `consentType: AllPrincipals` revokes the app's delegated access for every user at once — check the blast radius first, and pair with `revoke-user-sessions`, since revoking consent does not end existing sessions.
 
 ### App credentials & owners (7)
 
@@ -770,21 +785,29 @@ Notes:
 | `get-app-consent-request`    | GET    |
 | `list-user-consent-requests` | GET    |
 
-### Incident response (11) -- requires `--allow-writes`
+### Incident response (17) -- requires `--allow-writes`
 
-| Tool                                     | Method | Risk     |
-| ---------------------------------------- | ------ | -------- |
-| `disable-user-account`                   | PATCH  | critical |
-| `revoke-user-sessions`                   | POST   | high     |
-| `add-security-alert-comment`             | POST   | low      |
-| `update-device`                          | PATCH  | high     |
-| `confirm-compromised-users`              | POST   | high     |
-| `dismiss-risky-users`                    | POST   | high     |
-| `delete-user-phone-auth-method`          | DELETE | high     |
-| `confirm-compromised-service-principals` | POST   | high     |
-| `dismiss-risky-service-principals`       | POST   | high     |
-| `confirm-safe-users`                     | POST   | high     |
-| `run-hunting-query`                      | POST   | low      |
+| Tool                                            | Method | Risk     |
+| ----------------------------------------------- | ------ | -------- |
+| `disable-user-account`                          | PATCH  | critical |
+| `revoke-user-sessions`                          | POST   | high     |
+| `add-security-alert-comment`                    | POST   | low      |
+| `update-device`                                 | PATCH  | high     |
+| `confirm-compromised-users`                     | POST   | high     |
+| `dismiss-risky-users`                           | POST   | high     |
+| `delete-user-phone-auth-method`                 | DELETE | high     |
+| `delete-user-fido2-auth-method`                 | DELETE | high     |
+| `delete-user-authenticator-auth-method`         | DELETE | high     |
+| `delete-user-software-oath-auth-method`         | DELETE | high     |
+| `delete-user-windows-hello-auth-method`         | DELETE | high     |
+| `delete-user-email-auth-method`                 | DELETE | high     |
+| `delete-user-temporary-access-pass-auth-method` | DELETE | high     |
+| `confirm-compromised-service-principals`        | POST   | high     |
+| `dismiss-risky-service-principals`              | POST   | high     |
+| `confirm-safe-users`                            | POST   | high     |
+| `run-hunting-query`                             | POST   | low      |
+
+One deletion tool per authentication-method collection, since the ids are collection-scoped and not interchangeable. Run `list-user-auth-methods` first and match on `@odata.type` to pick the right tool and id. Graph refuses the deletion when the method is the user's only remaining MFA factor and MFA is required.
 
 ### Intune device remote actions (16) -- requires `--allow-writes`
 
