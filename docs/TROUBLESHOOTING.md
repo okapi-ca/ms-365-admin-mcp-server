@@ -286,7 +286,7 @@ ls ~/.mcp-auth/mcp-remote-*/        # *_debug.log is mcp-remote's own log
 When the browser path is blocked (Platform SSO, headless Docker, remote SSH, devcontainer, GitHub Codespaces, any admin machine without a working browser), use the device_code bootstrap. The server exposes RFC 8628's `device_authorization_endpoint` since v0.6.0; the `ms-365-admin-mcp-auth` binary shipped alongside pre-seeds `mcp-remote`'s cache so Claude Desktop / Claude Code never needs to open a browser.
 
 ```bash
-npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+npx -p @okapi-ca/ms-365-admin-mcp-server@latest ms-365-admin-mcp-auth \
   --server https://your-mcp-host.azurecontainerapps.io/mcp
 ```
 
@@ -326,7 +326,7 @@ Then relaunch Claude Desktop / Claude Code — `mcp-remote` finds the cache and 
 
 ```bash
 # On your Mac, once:
-npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+npx -p @okapi-ca/ms-365-admin-mcp-server@latest ms-365-admin-mcp-auth \
   --server https://your-mcp-host.azurecontainerapps.io/mcp
 
 # Then run Claude Code in Docker with the cache mounted read-only:
@@ -341,7 +341,7 @@ docker run -it \
 docker run -it --rm \
   -v mcp-auth:/root/.mcp-auth \
   node:22-alpine \
-  npx @okapi-ca/ms-365-admin-mcp-server@latest auth \
+  npx -p @okapi-ca/ms-365-admin-mcp-server@latest ms-365-admin-mcp-auth \
     --server https://your-mcp-host.azurecontainerapps.io/mcp
 
 # Subsequent Claude Code containers reuse the same named volume:
