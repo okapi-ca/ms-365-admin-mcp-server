@@ -580,7 +580,7 @@ Server changes:
 
 New binary `ms-365-admin-mcp-auth` (shipped alongside the server):
 
-- `npx @okapi-ca/ms-365-admin-mcp-server auth --server <url>` performs the full device_code bootstrap: DCR `/register`, `POST /devicecode`, polls `/token`, writes `<hash>_client_info.json` and `<hash>_tokens.json` into `~/.mcp-auth/mcp-remote-<version>/` (mode 0600).
+- `npx -p @okapi-ca/ms-365-admin-mcp-server ms-365-admin-mcp-auth --server <url>` performs the full device_code bootstrap: DCR `/register`, `POST /devicecode`, polls `/token`, writes `<hash>_client_info.json` and `<hash>_tokens.json` into `~/.mcp-auth/mcp-remote-<version>/` (mode 0600).
 - Cache key = `md5(serverUrl)`, matching `mcp-remote`'s `getServerUrlHash` exactly; a regression test locks the hash against the known production URL.
 - Best-effort clipboard copy (`pbcopy` / `clip` / `wl-copy` / `xclip`), auto-disabled under `CI=true` or non-TTY.
 - Documented exit codes (0 ok, 1 usage, 2 network, 3 denied, 4 timeout) for Docker / CI wrappers.
