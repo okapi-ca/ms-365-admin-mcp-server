@@ -8,6 +8,18 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Security
+
+- Removed single-tenant deployment material that had been committed to this repository instead of its private fork: four platform setup guides addressed to one tenant's administrators, a directory of migration-planning notes with its companion audit script, and one consent-granting script. Between them they exposed a production hostname, an internal DNS resolver address, an admin account naming convention, a resource group name and internal tracker URLs. Nothing in the public documentation linked to them, so no reference was broken.
+- Scrubbed the same class of value from the documents that stay. The VNet DNS troubleshooting section now uses placeholders, which also widens it from one deployment to any private Container Apps environment. The security review's tracking table keeps its GitHub issue links and drops the internal tracker column; the findings themselves are unchanged. Two example mailbox addresses became `contoso.com` equivalents — one of them sat in a tool description, so it shipped on every release. An `auth-bootstrap` test pinned the hash algorithm against a real deployment URL _and its digest_; both are now an example host, because a digest of a sensitive value is still a disclosure.
+
+  This does not undo past exposure. The history retains it and this repository is public, cloned and published, so the removed values should be treated as disclosed rather than recovered.
+
+### Changed
+
+- `docs/APP_REGISTRATION.md` no longer quotes a tool total. It claimed 515 against a catalogue of 641 — and it is the document an operator follows when granting Graph consent, so the stale figure sat exactly where scope decisions get made. It now points at `--list-permissions` rather than carrying a number that rots.
+- A new `docs-tool-count` suite fails the build when a document quotes an exact tool total that disagrees with `endpoints.json`, or hedges above it. Subset counts and dated security reviews stay out of scope, so the guard is silent wherever a count legitimately is not the catalogue total. `README.md` was already pinned by `readme-inventory`; every other document was not, which is how this drift went unnoticed.
+
 ## [0.15.0] — 2026-07-31
 
 ### Added — privilege revocation for admin offboarding (641 tools)
