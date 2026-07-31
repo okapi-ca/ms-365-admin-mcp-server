@@ -40,12 +40,18 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
           cache: npm
+      # OIDC trusted publishing needs npm >= 11.5.1; setup-node with Node 20
+      # ships npm 10.x, which fails the exchange with an unhelpful message.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run generate
       - run: npm run build
+      # No NODE_AUTH_TOKEN: authentication comes from the OIDC token minted by
+      # `id-token: write` above, against the trusted publisher configured on
+      # npmjs.com for this repository and this workflow filename. Renaming this
+      # file, or moving the publish step to another workflow, breaks publishing
+      # until the npm-side configuration is updated to match.
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-docker:
     needs: verify
