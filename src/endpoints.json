@@ -3581,6 +3581,38 @@
     "llmTip": "Adds a member to a directory role. Body requires @odata.id pointing to the user or service principal. CRITICAL: grants admin privileges."
   },
   {
+    "pathPattern": "/roleManagement/directory/roleAssignments/{unifiedRoleAssignment-id}",
+    "method": "delete",
+    "toolName": "delete-role-assignment",
+    "appPermissions": ["RoleManagement.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a directory role assignment, revoking the admin privilege it granted. This is the modern path and the one to reach for first: run list-role-assignments with $filter=principalId eq '{user-id}' and pass back the assignment's own id. Do not pass the user id or the role id. CRITICAL: refuses unconditionally when the assignment is the tenant's last active Global Administrator, and that refusal cannot be overridden by a parameter. Assignments created through PIM as eligible or time-bound are not removed here — use the create-pim-*-request tools with action adminRemove."
+  },
+  {
+    "pathPattern": "/directoryRoles/{directoryRole-id}/members/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-directory-role-member",
+    "appPermissions": ["RoleManagement.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Removes a member from an activated directory role. Legacy counterpart to delete-role-assignment — prefer delete-role-assignment, and use this one for roles activated the old way, where you hold a directoryRole id and a member id rather than an assignment id. CRITICAL: refuses unconditionally when the target is the tenant's last active Global Administrator, and that refusal cannot be overridden by a parameter."
+  },
+  {
+    "pathPattern": "/oauth2PermissionGrants/{oAuth2PermissionGrant-id}",
+    "method": "delete",
+    "toolName": "delete-oauth2-grant",
+    "appPermissions": ["DelegatedPermissionGrant.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Revokes a delegated permission grant (OAuth2 consent). This is the remediation for an illicit consent grant attack: list-oauth2-grants identifies the grant, this removes it. Pass the grant's own id. Deleting a grant with consentType AllPrincipals revokes the app's delegated access for every user in the tenant at once, so confirm the blast radius before executing. Revoking consent does not sign existing sessions out — pair with revoke-user-sessions on the affected users."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}/members/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-administrative-unit-member",
+    "appPermissions": ["AdministrativeUnit.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a member (user or group) from an administrative unit. directoryObject-id is the member's object id. Membership in an administrative unit is what scopes a scoped-role admin's reach, so removing it narrows delegated administration."
+  },
+  {
     "pathPattern": "/domains",
     "method": "post",
     "toolName": "create-domain",
@@ -3931,6 +3963,22 @@
     "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Assigns an app role to a user, group, or service principal. Body: {\"principalId\":\"<user-or-group-id>\",\"resourceId\":\"<servicePrincipal-id>\",\"appRoleId\":\"<role-guid-or-00000000-0000-0000-0000-000000000000>\"}."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo/{appRoleAssignment-id}",
+    "method": "delete",
+    "toolName": "delete-sp-app-role-assignment",
+    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Revokes an app role assignment on an enterprise application, viewed from the resource side. appRoleAssignment-id is the assignment's own id — read it from the servicePrincipal's appRoleAssignedTo collection. For an application permission held by another service principal, this is how you take that permission away. Use delete-user-app-role-assignment instead when you are working from a user's list of assigned apps."
+  },
+  {
+    "pathPattern": "/users/{user-id}/appRoleAssignments/{appRoleAssignment-id}",
+    "method": "delete",
+    "toolName": "delete-user-app-role-assignment",
+    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a user's app role assignment, revoking their access to an enterprise application. Use list-user-app-role-assignments to get the assignment id — it is not the app id or the appRoleId. Same underlying object as delete-sp-app-role-assignment, addressed from the user side, which is the convenient direction during offboarding."
   },
   {
     "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests",
