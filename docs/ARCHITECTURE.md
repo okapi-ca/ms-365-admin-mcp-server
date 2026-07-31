@@ -75,6 +75,7 @@ Thin `fetch` wrapper that:
 - Adds the bearer token from `AuthManager`
 - Applies the cloud-specific base URL (`getCloudEndpoints`)
 - Normalizes errors into MCP-friendly `CallToolResult` shapes
+- Sends an explicit `Accept-Language` (`DEFAULT_ACCEPT_LANGUAGE`). Not cosmetic: Node's `fetch` otherwise supplies the Fetch-spec default `Accept-Language: *`, and Graph's PIM / `identityGovernance` backends parse that into a .NET `CultureInfo`, where `*` is not a valid culture identifier — every PIM read failed with HTTP 400 `CultureNotFoundException` until this header was set. A per-call header still overrides it — which is also how the diagnosis was confirmed read-only against the live tenant on 2026-07-31: forcing the wildcard back reproduced the 400 on 4/4 PIM routes, the explicit tag cleared all four, and `list-role-assignments` (which does not localise its payload) answered 200 under both.
 
 ### Tool registration — `src/graph-tools.ts`
 
@@ -83,7 +84,7 @@ The core of the server. For each endpoint definition:
 1. Build a Zod schema from the generated client's parameter metadata (path, query, header, body, plus OData-friendly descriptions for `$filter`, `$select`, `$top`).
 2. Compose a tool description, optionally augmented with `llmTip` and a `RISK LEVEL` warning for non-GET operations (`graph-tools.ts:290-303`).
 3. Register via `server.tool(alias, description, paramSchema, hints, handler)`.
-4. The handler (`executeGraphTool`) stitches params into the path, query string, and body, then calls `graphClient.graphRequest`.
+4. The handler (`executeGraphTool`) runs the pre-flight guardrails when the tool has any, then stitches params into the path, query string, and body, then calls `graphClient.graphRequest`.
 
 Skipping logic:
 
@@ -95,6 +96,26 @@ Security hardening inside the handler (grep for `SEC-` comments):
 - `SEC-A` — path-param skip-encoding validated against traversal
 - `SEC-D` — query-string encoding via `encodeURIComponent`
 - `excludeResponse: true` opt-in to drop the body for operations where the LLM only needs success/failure
+
+### Guardrails — `src/guardrails.ts`
+
+Pre-flight checks for privilege-revocation tools, run by `executeGraphTool` before the write leaves the process. `hasGuardrails(alias)` decides whether a tool has any; only five do today (`remove-group-member`, `remove-group-owner`, `add-group-owner`, `delete-role-assignment`, `remove-directory-role-member`).
+
+They exist because Graph's own refusals name neither cause nor remedy — and in one case Graph does not refuse at all: removing the sole owner of a _security_ group succeeds and leaves the group permanently unowned.
+
+| Check                    | Fires on              | Posture                            |
+| ------------------------ | --------------------- | ---------------------------------- |
+| Last owner               | `remove-group-owner`  | Refuse; point at `add-group-owner` |
+| Dynamic group            | `remove-group-member` | Refuse; quote the `membershipRule` |
+| On-premises-synced       | all three group tools | Refuse; the write belongs in AD    |
+| Last active Global Admin | both role tools       | Refuse, unconditionally            |
+| Role-assignable group    | group tools           | Annotate a 403; never refuses      |
+
+Failure posture is per-check and deliberate. The three group checks **fail open** — their pre-flight is a convenience, Graph still adjudicates the write, and a throttled read must not block a legitimate offboarding; the skipped check comes back as an operator-facing notice. The Global Administrator check **fails closed** — a read it cannot complete is itself a refusal, since the failure it guards against (losing all administrative access to the tenant) is not self-recoverable. No tool parameter overrides it.
+
+The module takes an injected `GraphReader` and holds no Graph client, so every branch is unit-testable without MCP or MSAL. `makeGuardrailReader` in `graph-tools.ts` supplies the real one; it requests `rawResponse` so `@odata.type` survives, which the Global Admin count needs to tell a role-assignable group apart from a disabled user.
+
+Refusals are server-generated, so they return as `isError` and bypass the untrusted-content envelope. Fail-open notices are prepended _outside_ the envelope — inside it, the preamble would label the server's own warning as untrusted data.
 
 ### Presets — `src/tool-categories.ts`
 
@@ -192,10 +213,11 @@ Every non-GET tool carries a `riskLevel`. See [RISK_MODEL.md](RISK_MODEL.md) for
 
 ## Write protection
 
-Two layers:
+Three layers:
 
 1. **Registration-time.** If the server is started without `--allow-writes`, non-GET tools are skipped entirely during registration (`graph-tools.ts:232-235`). They are not exposed to the MCP client.
 2. **Permission-time.** `--list-permissions` only emits write scopes when `--allow-writes` is set, so the operator granting admin consent naturally follows least privilege.
+3. **Call-time.** Privilege-revocation tools run the pre-flight guardrails described above before the request leaves the process. This layer is narrow by design — it covers the operations whose failure mode is irreversible, not writes in general.
 
 ## Extensibility points
 
@@ -207,7 +229,7 @@ Two layers:
 
 ## Testing
 
-- **Vitest** (`test/`). Unit tests focus on auth validation, tool parameter parsing, preset regex combinations, token validation, risk-level serialization.
+- **Vitest** (`test/`). Unit tests focus on auth validation, tool parameter parsing, preset regex combinations, token validation, risk-level serialization, guardrail decisions and their wiring into the handler, and outbound Graph headers.
 - **MCP Inspector** for interactive E2E testing (`npm run inspector`).
 - **`--verify-login`** as a smoke test against a real tenant.
 

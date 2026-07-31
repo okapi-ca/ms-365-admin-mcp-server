@@ -554,6 +554,54 @@
     "llmTip": "Deletes a phone authentication method for a user. Use list-user-auth-methods first to get the phoneAuthenticationMethod ID. Useful for removing a compromised phone number during incident response. Cannot delete if it is the user's only MFA method and MFA is required."
   },
   {
+    "pathPattern": "/users/{user-id}/authentication/fido2Methods/{fido2AuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-fido2-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a FIDO2 security key or passkey registration for a user. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.fido2AuthenticationMethod. Use when a hardware key is lost or unreturned at offboarding. Cannot delete if it is the user's only remaining MFA method and MFA is required."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/microsoftAuthenticatorMethods/{microsoftAuthenticatorAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-authenticator-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Microsoft Authenticator registration for a user, removing both push approval and passwordless sign-in from that device. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.microsoftAuthenticatorAuthenticationMethod. Primary action when a phone holding the Authenticator app is lost or compromised. Cannot delete if it is the user's only remaining MFA method and MFA is required."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/softwareOathMethods/{softwareOathAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-software-oath-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a software OATH (TOTP authenticator app) registration for a user. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.softwareOathAuthenticationMethod. Cannot delete if it is the user's only remaining MFA method and MFA is required."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/windowsHelloForBusinessMethods/{windowsHelloForBusinessAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-windows-hello-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Windows Hello for Business registration for a user. Registrations are per device, so a user may have several — run list-user-auth-methods and match on @odata.type #microsoft.graph.windowsHelloForBusinessAuthenticationMethod, then use displayName to identify the right device. Use when a device is lost or not returned at offboarding."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/emailMethods/{emailAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-email-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a user's email authentication method, which is used for self-service password reset rather than for sign-in MFA. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.emailAuthenticationMethod. Remove it when the address is a personal mailbox that should no longer be able to drive a password reset."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/temporaryAccessPassMethods/{temporaryAccessPassAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-temporary-access-pass-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Temporary Access Pass for a user. A TAP is a time-limited passcode that can satisfy MFA on its own, so an unused or unexpected one is a live credential worth revoking immediately during incident response. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.temporaryAccessPassAuthenticationMethod."
+  },
+  {
     "pathPattern": "/reports/getOneDriveUsageAccountDetail(period='{period}')",
     "method": "get",
     "toolName": "get-onedrive-usage-report",
@@ -709,14 +757,14 @@
     "method": "get",
     "toolName": "list-pim-group-assignment-schedules",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups."
+    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilitySchedules",
     "method": "get",
     "toolName": "list-pim-group-eligibility-schedules",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active."
+    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/termsOfUse/agreements",
@@ -1970,7 +2018,7 @@
     "method": "get",
     "toolName": "list-pim-group-assignment-instances",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime."
+    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests",
@@ -1984,7 +2032,7 @@
     "method": "get",
     "toolName": "list-pim-group-eligibility-instances",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType."
+    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/accessReviews/historyDefinitions",
@@ -3466,7 +3514,7 @@
     "toolName": "delete-user",
     "appPermissions": ["User.ReadWrite.All"],
     "riskLevel": "critical",
-    "llmTip": "Deletes a user from the directory. The user is moved to deletedItems and can be restored within 30 days. Always confirm with operator before executing."
+    "llmTip": "Deletes a user from the directory. The user is moved to deletedItems and can be restored within 30 days. Always confirm with operator before executing. ORDER MATTERS during an offboarding: while the account still holds a directory role, this returns 403 Authorization_RequestDenied and the account is left in place. Revoke roles first (delete-role-assignment or remove-directory-role-member), then delete. Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/users/{user-id}/assignLicense",
@@ -3525,6 +3573,30 @@
     "llmTip": "Adds a member to a group. Body requires @odata.id pointing to the directoryObject (e.g., https://graph.microsoft.com/v1.0/users/{id})."
   },
   {
+    "pathPattern": "/groups/{group-id}/members/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-group-member",
+    "appPermissions": ["GroupMember.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Removes a member from a group. directoryObject-id is the member's object id (not the membership id) — get it from list-group-members. Core offboarding operation. Refuses up front on dynamic groups (membership is computed from membershipRule) and on groups synchronised from on-premises AD (write in AD instead). For a role-assignable group (isAssignableToRole true), RoleManagement.ReadWrite.Directory is required on top of GroupMember.ReadWrite.All."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/owners/$ref",
+    "method": "post",
+    "toolName": "add-group-owner",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Adds an owner to a group. Body: {\"@odata.id\":\"https://graph.microsoft.com/v1.0/users/{id}\"}. Use to remediate an ownerless group, or to add a second owner before removing the current one (Graph refuses to remove the last owner). An owner can edit a dynamic group's membershipRule and thereby grant itself licences or access, so treat this as a privilege grant."
+  },
+  {
+    "pathPattern": "/groups/{group-id}/owners/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-group-owner",
+    "appPermissions": ["Group.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes an owner from a group. directoryObject-id is the owner's object id — get it from list-group-owners. Refuses up front when the target is the group's only owner (add a replacement with add-group-owner first) and on groups synchronised from on-premises AD. For a role-assignable group (isAssignableToRole true), RoleManagement.ReadWrite.Directory is required on top of Group.ReadWrite.All. Adding a replacement owner does not take effect instantly: for a few seconds the service still counts one owner, and this tool's last-owner refusal — like Graph's own — correctly fires during that window. Confirm with list-group-owners that both owners are visible, then retry on refusal. Measured at ~6s on a live tenant 2026-07-31."
+  },
+  {
     "pathPattern": "/applications/{application-id}",
     "method": "patch",
     "toolName": "update-application",
@@ -3555,6 +3627,38 @@
     "appPermissions": ["RoleManagement.ReadWrite.Directory"],
     "riskLevel": "critical",
     "llmTip": "Adds a member to a directory role. Body requires @odata.id pointing to the user or service principal. CRITICAL: grants admin privileges."
+  },
+  {
+    "pathPattern": "/roleManagement/directory/roleAssignments/{unifiedRoleAssignment-id}",
+    "method": "delete",
+    "toolName": "delete-role-assignment",
+    "appPermissions": ["RoleManagement.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Deletes a directory role assignment, revoking the admin privilege it granted. This is the modern path and the one to reach for first: run list-role-assignments with $filter=principalId eq '{user-id}' and pass back the assignment's own id. Do not pass the user id or the role id. CRITICAL: refuses unconditionally when the assignment is the tenant's last active Global Administrator, and that refusal cannot be overridden by a parameter. Assignments created through PIM as eligible or time-bound are not removed here — use the create-pim-*-request tools with action adminRemove. The roleAssignments projection lags its own writes: an id read moments earlier can answer 404 Request_ResourceNotFound on the first delete and succeed on a retry. Treat a 404 here as retryable rather than as a wrong id. Verified against the live service 2026-07-31."
+  },
+  {
+    "pathPattern": "/directoryRoles/{directoryRole-id}/members/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-directory-role-member",
+    "appPermissions": ["RoleManagement.ReadWrite.Directory"],
+    "riskLevel": "critical",
+    "llmTip": "Removes a member from an activated directory role. Legacy counterpart to delete-role-assignment — prefer delete-role-assignment, and use this one for roles activated the old way, where you hold a directoryRole id and a member id rather than an assignment id. CRITICAL: refuses unconditionally when the target is the tenant's last active Global Administrator, and that refusal cannot be overridden by a parameter."
+  },
+  {
+    "pathPattern": "/oauth2PermissionGrants/{oAuth2PermissionGrant-id}",
+    "method": "delete",
+    "toolName": "delete-oauth2-grant",
+    "appPermissions": ["DelegatedPermissionGrant.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Revokes a delegated permission grant (OAuth2 consent). This is the remediation for an illicit consent grant attack: list-oauth2-grants identifies the grant, this removes it. Pass the grant's own id. Deleting a grant with consentType AllPrincipals revokes the app's delegated access for every user in the tenant at once, so confirm the blast radius before executing. Revoking consent does not sign existing sessions out — pair with revoke-user-sessions on the affected users."
+  },
+  {
+    "pathPattern": "/directory/administrativeUnits/{administrativeUnit-id}/members/{directoryObject-id}/$ref",
+    "method": "delete",
+    "toolName": "remove-administrative-unit-member",
+    "appPermissions": ["AdministrativeUnit.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a member (user or group) from an administrative unit. directoryObject-id is the member's object id. Membership in an administrative unit is what scopes a scoped-role admin's reach, so removing it narrows delegated administration."
   },
   {
     "pathPattern": "/domains",
@@ -3907,6 +4011,22 @@
     "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Assigns an app role to a user, group, or service principal. Body: {\"principalId\":\"<user-or-group-id>\",\"resourceId\":\"<servicePrincipal-id>\",\"appRoleId\":\"<role-guid-or-00000000-0000-0000-0000-000000000000>\"}."
+  },
+  {
+    "pathPattern": "/servicePrincipals/{servicePrincipal-id}/appRoleAssignedTo/{appRoleAssignment-id}",
+    "method": "delete",
+    "toolName": "delete-sp-app-role-assignment",
+    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Revokes an app role assignment on an enterprise application, viewed from the resource side. appRoleAssignment-id is the assignment's own id — read it from the servicePrincipal's appRoleAssignedTo collection. For an application permission held by another service principal, this is how you take that permission away. Use delete-user-app-role-assignment instead when you are working from a user's list of assigned apps."
+  },
+  {
+    "pathPattern": "/users/{user-id}/appRoleAssignments/{appRoleAssignment-id}",
+    "method": "delete",
+    "toolName": "delete-user-app-role-assignment",
+    "appPermissions": ["AppRoleAssignment.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a user's app role assignment, revoking their access to an enterprise application. Use list-user-app-role-assignments to get the assignment id — it is not the app id or the appRoleId. Same underlying object as delete-sp-app-role-assignment, addressed from the user side, which is the convenient direction during offboarding."
   },
   {
     "pathPattern": "/roleManagement/directory/roleAssignmentScheduleRequests",

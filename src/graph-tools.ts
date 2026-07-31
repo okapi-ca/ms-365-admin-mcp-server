@@ -8,6 +8,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { wrapUntrustedContent } from './untrusted-envelope.js';
 import { effectiveRiskLevel, isToolAllowed, type RiskLevel } from './risk-level.js';
+import {
+  hasGuardrails,
+  runGuardrails,
+  type GraphReader,
+  type GuardrailResult,
+} from './guardrails.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,6 +162,61 @@ interface CallToolResult {
   [key: string]: unknown;
 }
 
+/**
+ * Reader handed to the guardrail module. Two properties matter:
+ *   - it rejects on a Graph error instead of resolving an isError envelope, so a
+ *     failed pre-flight is distinguishable from an empty result;
+ *   - it requests `rawResponse`, keeping `@odata.type` intact — the
+ *     last-Global-Admin count needs it to tell a role-assignable group holding
+ *     the role apart from a disabled user.
+ */
+function makeGuardrailReader(graphClient: GraphClient): GraphReader {
+  return async (endpoint: string) => {
+    const result = (await graphClient.graphRequest(endpoint, {
+      rawResponse: true,
+    })) as CallToolResult;
+    const text = result.content?.[0]?.text ?? '';
+
+    if (result.isError) {
+      let detail = text;
+      try {
+        const parsed = JSON.parse(text) as { error?: unknown };
+        if (typeof parsed.error === 'string') detail = parsed.error;
+      } catch {
+        // Keep the raw text as the failure detail.
+      }
+      throw new Error(detail);
+    }
+
+    return JSON.parse(text) as Record<string, unknown>;
+  };
+}
+
+/**
+ * Guardrail check 5: Graph answered the write with a 403 and the pre-flight
+ * gathered context that explains why. Append it to the error the operator sees
+ * rather than relaying the bare denial.
+ */
+function appendErrorHints(result: CallToolResult, hints: string[]): CallToolResult {
+  const text = result.content?.[0]?.text ?? '';
+  if (!text.includes('403')) return result;
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return result;
+  }
+
+  return {
+    ...result,
+    content: [
+      { type: 'text', text: JSON.stringify({ ...payload, guardrailContext: hints }) },
+      ...result.content.slice(1),
+    ],
+  };
+}
+
 async function executeGraphTool(
   tool: (typeof api.endpoints)[0],
   config: EndpointConfig | undefined,
@@ -164,6 +225,27 @@ async function executeGraphTool(
 ): Promise<CallToolResult> {
   logger.info(`Tool ${tool.alias} called with params: [${Object.keys(params).join(', ')}]`);
   try {
+    // Pre-flight guardrails for privilege-revocation tools — see guardrails.ts
+    // for the five checks and their per-check failure posture. A block never
+    // reaches Graph; the result is server-generated, so it bypasses the
+    // untrusted-content envelope like any other error.
+    let guardrail: GuardrailResult | undefined;
+    if (hasGuardrails(tool.alias)) {
+      guardrail = await runGuardrails(tool.alias, params, makeGuardrailReader(graphClient));
+      if (guardrail.blocked) {
+        logger.warn(`Guardrail blocked ${tool.alias}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ error: guardrail.reason, guardrail: tool.alias }),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
     const parameterDefinitions = tool.parameters || [];
 
     let path = tool.path;
@@ -227,22 +309,29 @@ async function executeGraphTool(
             }
             break;
           case 'Body':
-            if (paramDef.schema) {
-              const parseResult = paramDef.schema.safeParse(paramValue);
-              if (!parseResult.success) {
-                const wrapped = { [paramName]: paramValue };
-                const wrappedResult = paramDef.schema.safeParse(wrapped);
-                if (wrappedResult.success) {
-                  body = wrapped;
-                } else {
-                  body = paramValue;
-                }
-              } else {
-                body = paramValue;
-              }
-            } else {
-              body = paramValue;
-            }
+            // SEC-F2: forward the caller's payload verbatim. Microsoft Graph is the
+            // authority on body validity — see coerceJsonStringBody above for why the
+            // generated schema is guidance only — so a local parse result has nothing
+            // useful to contribute here.
+            //
+            // A previous revision, on a schema miss, re-parsed the payload wrapped as
+            // `{ [paramName]: payload }` and sent that whenever the wrapped form
+            // validated. Every generated Body parameter is named `body`, so the wrapped
+            // form is `{ body: … }` — a shape no Graph resource accepts. It fired on all
+            // six POST …/$ref endpoints, whose generated schema is
+            // `z.record(z.object({}).partial().passthrough())`: the real payload
+            // `{ "@odata.id": "https://…" }` FAILS that record because the value is a
+            // string, while `{ body: { "@odata.id": … } }` PASSES because the value is an
+            // object. The wrap therefore won by accident and Graph answered
+            // 400 Request_BadRequest, "An unexpected 'EndOfInput' node was found when
+            // reading from the JSON reader. A 'StartObject' node was expected."
+            //
+            // add-group-member, add-directory-role-member, add-administrative-unit-member,
+            // add-application-owner and add-sp-owner were all unusable as a result — five
+            // pre-existing tools, silently broken. Surfaced by replaying a real
+            // offboarding end to end against the tenant rather than by any unit test,
+            // because no test asserted the bytes on the wire.
+            body = paramValue;
             break;
           case 'Header':
             headers[fixedParamName] = `${paramValue}`;
@@ -297,11 +386,27 @@ async function executeGraphTool(
 
     // SEC-G02: wrap Graph response in an untrusted-content envelope before it
     // becomes part of the LLM context. Errors pass through unchanged.
-    const graphResult = (await graphClient.graphRequest(
-      fullPath,
-      requestOptions
-    )) as CallToolResult;
-    return wrapUntrustedContent(graphResult, tool.alias);
+    let graphResult = (await graphClient.graphRequest(fullPath, requestOptions)) as CallToolResult;
+
+    if (graphResult.isError && guardrail && guardrail.errorHints.length > 0) {
+      graphResult = appendErrorHints(graphResult, guardrail.errorHints);
+    }
+
+    const wrapped = wrapUntrustedContent(graphResult, tool.alias);
+
+    // A guardrail notice is server-generated, so it is prepended *outside* the
+    // envelope — inside it, the preamble would label our own warning untrusted.
+    if (guardrail && guardrail.notices.length > 0) {
+      return {
+        ...wrapped,
+        content: [
+          { type: 'text' as const, text: guardrail.notices.join('\n\n') },
+          ...wrapped.content,
+        ],
+      };
+    }
+
+    return wrapped;
   } catch (error) {
     logger.error(`Error executing tool ${tool.alias}: ${(error as Error).message}`);
     return {

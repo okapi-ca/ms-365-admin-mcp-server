@@ -8,6 +8,84 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-07-31
+
+### Added — privilege revocation for admin offboarding (641 tools)
+
+Fifteen new tools closing the grant-without-revocation asymmetry. An admin offboarding could not be completed through this server: privilege grants were exposed broadly, their revocations almost not at all. The same gap left an illicit consent grant with no remediation path — `list-oauth2-grants` would name the malicious grant with no way to remove it.
+
+**Groups (3 tools)** — the offboarding blocker. A departing admin who was a group's sole owner left it ownerless with no repair path:
+
+- `remove-group-member` (medium) — `DELETE /groups/{id}/members/{directoryObject-id}/$ref`
+- `add-group-owner` (high) — `POST /groups/{id}/owners/$ref`
+- `remove-group-owner` (high) — `DELETE /groups/{id}/owners/{directoryObject-id}/$ref`
+
+Owners rank higher than members: a group owner can rewrite a dynamic group's `membershipRule` and thereby grant itself licences or access.
+
+**Roles, consent and app roles (6 tools)**:
+
+- `delete-role-assignment` (critical) — pairs with `list-role-assignments`, which already returns the id it consumes. The modern path, and the one to reach for first.
+- `remove-directory-role-member` (critical) — for roles activated the legacy way, where only a `directoryRole` id and a member id are in hand.
+- `delete-oauth2-grant` (high) — remediation for an illicit consent grant. `consentType: AllPrincipals` revokes an app's delegated access for every user at once; revoking consent does not end existing sessions, so pair with `revoke-user-sessions`.
+- `delete-sp-app-role-assignment` / `delete-user-app-role-assignment` (high) — same object, resource side and user side.
+- `remove-administrative-unit-member` (high) — narrows a scoped-role admin's reach.
+
+**Authentication methods (6 tools, all high)** — `list-user-auth-methods` could enumerate every credential but only phone methods could be deleted: `fido2`, `microsoftAuthenticator`, `softwareOath`, `windowsHelloForBusiness`, `email`, `temporaryAccessPass`. One tool per Graph collection, since the ids are collection-scoped and not interchangeable — match on `@odata.type` from `list-user-auth-methods`.
+
+`delete-oauth2-grant`, `delete-role-assignment` and `remove-directory-role-member` also join the `response` preset: stripping a compromised account's admin roles is incident response, not only offboarding.
+
+### Added — pre-flight guardrails on privilege revocation
+
+Graph refuses some of these operations without naming cause or remedy, and in one case does not refuse at all: removing the sole owner of a **security** group succeeds and leaves the group permanently unowned. Five checks now run before the write (`src/guardrails.ts`):
+
+| Check                            | Fires on              | Posture                            |
+| -------------------------------- | --------------------- | ---------------------------------- |
+| Last owner                       | `remove-group-owner`  | Refuse; point at `add-group-owner` |
+| Dynamic group                    | `remove-group-member` | Refuse; quote the `membershipRule` |
+| On-premises-synced               | the three group tools | Refuse; the write belongs in AD    |
+| Last active Global Administrator | both role tools       | Refuse, **unconditionally**        |
+| Role-assignable group            | group tools           | Annotate a 403; never refuses      |
+
+Failure posture is per-check. The group checks **fail open** — their pre-flight is a convenience, Graph still adjudicates, and a throttled read must not block a legitimate offboarding; a skipped check is reported as a notice. The Global Administrator check **fails closed** — a read it cannot complete is itself a refusal, because losing all administrative access to the tenant is not self-recoverable. No parameter overrides it.
+
+### Fixed — request bodies were double-wrapped, breaking every add-member tool
+
+`executeGraphTool` re-parsed a body wrapped as `{ body: payload }` on a generated-schema miss and sent that when it validated. Every generated Body parameter is named `body`, a shape no Graph resource accepts. It fired on all six POST `…/$ref` endpoints, whose schema is `z.record(z.object({}).partial().passthrough())`: the real `{"@odata.id": "…"}` fails that record (string value) while the wrapped form passes (object value), so the wrap won by accident and Graph answered `400 Request_BadRequest`.
+
+**Five pre-existing tools were unusable**: `add-group-member`, `add-directory-role-member`, `add-administrative-unit-member`, `add-application-owner`, `add-sp-owner`. Surfaced by replaying a real offboarding end to end, not by any unit test — `test/request-body-wire.test.ts` now asserts the bytes on the wire.
+
+### Fixed — every PIM read returned HTTP 400 CultureNotFoundException
+
+Node's `fetch` (undici) appends the Fetch-spec default `Accept-Language: *` when the header is absent. Graph's PIM / `identityGovernance` backends feed that into a .NET `CultureInfo`, where `*` is not a valid culture identifier. Routes that do not localise their payload never noticed, which is why `list-role-assignments` worked with the same token and the same `$filter`. The client now sends an explicit `en-US`, overridable per call.
+
+Confirmed read-only against a live tenant: forcing the wildcard back reproduced the 400 on 4/4 PIM routes, the explicit tag cleared all four, and `list-role-assignments` answered 200 under both.
+
+### Fixed — four PIM-for-Groups routes require a `$filter`
+
+With the culture error cleared, `list-pim-group-assignment-schedules`, `list-pim-group-eligibility-schedules`, `list-pim-group-assignment-instances` and `list-pim-group-eligibility-instances` still answer `400 MissingParameters` on an unfiltered call. Graph wants `principalId` or `groupId`; `accessId` alone is not enough. The descriptions now say so. The two `*ScheduleRequests` routes have no such constraint.
+
+### Fixed — README tool inventory was 56 tools behind and advertised two phantom tools
+
+`update-user` (the only PATCH on `/users/{id}` is the deliberately narrow `disable-user-account`) and `list-retention-labels` (unsupported with application permissions) were listed but never registered — worse than a stale count, since an operator plans around a tool that does not answer. Reconciled to exactly 641 across endpoints, README rows and the sum of section headings, with duplicates and every section count corrected. `test/readme-inventory.test.ts` makes recurrence a build failure.
+
+### Operational findings, each verified against a live tenant
+
+- `delete-user` answers `403 Authorization_RequestDenied` while the account still holds a directory role, and leaves the account in place. **Revoke roles before deleting.**
+- A replacement group owner is not counted instantly (~6s measured). Both Graph and the last-owner guardrail correctly refuse during that window — confirm with `list-group-owners`, then retry.
+- The `roleAssignments` projection lags its own writes: an id read moments earlier can 404 on the first `delete-role-assignment` and succeed on retry. A 404 is retryable, not a wrong id.
+
+### New Graph permissions required
+
+- `DelegatedPermissionGrant.ReadWrite.All` — `delete-oauth2-grant`
+- `AppRoleAssignment.ReadWrite.All` — the two app-role revocations (already required by `create-sp-app-role-assignment`)
+- `RoleManagement.Read.Directory` — read side of the anti-lockout pre-flight
+
+`Group.ReadWrite.All`, `GroupMember.ReadWrite.All`, `RoleManagement.ReadWrite.Directory`, `AdministrativeUnit.ReadWrite.All` and `UserAuthenticationMethod.ReadWrite.All` were already in the manifest.
+
+### Notes
+
+- There is still no purge tool: `list-deleted-users` / `list-deleted-groups` exist with no restore and no purge. Same read-without-action asymmetry, left for follow-up.
+
 ## [0.14.0] — 2026-05-26
 
 ### Added — Microsoft 365 Copilot admin expansion (622 tools)
