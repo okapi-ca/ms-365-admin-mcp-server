@@ -75,7 +75,7 @@ Thin `fetch` wrapper that:
 - Adds the bearer token from `AuthManager`
 - Applies the cloud-specific base URL (`getCloudEndpoints`)
 - Normalizes errors into MCP-friendly `CallToolResult` shapes
-- Sends an explicit `Accept-Language` (`DEFAULT_ACCEPT_LANGUAGE`). Not cosmetic: Node's `fetch` otherwise supplies the Fetch-spec default `Accept-Language: *`, and Graph's PIM / `identityGovernance` backends parse that into a .NET `CultureInfo`, where `*` is not a valid culture identifier — every PIM read failed with HTTP 400 `CultureNotFoundException` until this header was set. A per-call header still overrides it.
+- Sends an explicit `Accept-Language` (`DEFAULT_ACCEPT_LANGUAGE`). Not cosmetic: Node's `fetch` otherwise supplies the Fetch-spec default `Accept-Language: *`, and Graph's PIM / `identityGovernance` backends parse that into a .NET `CultureInfo`, where `*` is not a valid culture identifier — every PIM read failed with HTTP 400 `CultureNotFoundException` until this header was set. A per-call header still overrides it — which is also how the diagnosis was confirmed read-only against the live tenant on 2026-07-31: forcing the wildcard back reproduced the 400 on 4/4 PIM routes, the explicit tag cleared all four, and `list-role-assignments` (which does not localise its payload) answered 200 under both.
 
 ### Tool registration — `src/graph-tools.ts`
 

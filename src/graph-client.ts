@@ -74,6 +74,12 @@ class GraphClient {
       // of the $filter used. Sending an explicit, valid language tag overrides
       // undici's default. Declared before ...options.headers so a per-endpoint
       // or per-call override still wins.
+      //
+      // Confirmed against the live tenant on 2026-07-31, read-only: forcing
+      // `Accept-Language: *` reproduced the 400 on 4/4 PIM routes, the explicit
+      // tag cleared all four, and list-role-assignments — which does not
+      // localise its payload — answered 200 under both. That control is why the
+      // bug looked like a permission problem for so long.
       'Accept-Language': DEFAULT_ACCEPT_LANGUAGE,
       ...options.headers,
     };

@@ -757,14 +757,14 @@
     "method": "get",
     "toolName": "list-pim-group-assignment-schedules",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups."
+    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilitySchedules",
     "method": "get",
     "toolName": "list-pim-group-eligibility-schedules",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active."
+    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/termsOfUse/agreements",
@@ -2018,7 +2018,7 @@
     "method": "get",
     "toolName": "list-pim-group-assignment-instances",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime."
+    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests",
@@ -2032,7 +2032,7 @@
     "method": "get",
     "toolName": "list-pim-group-eligibility-instances",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType."
+    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/accessReviews/historyDefinitions",
