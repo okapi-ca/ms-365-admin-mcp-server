@@ -2749,7 +2749,7 @@
     "toolName": "get-user-drive",
     "appPermissions": ["Files.Read.All"],
     "riskLevel": "medium",
-    "llmTip": "Gets a user's OneDrive for Business (personal drive). Returns the drive id, driveType ('business'), owner, quota, and webUrl. Use this for DSAR/Loi 25 access requests: a user's OneDrive is a personal site that GET /sites/{...:/personal/...} cannot reach with app permissions — go through /users/{user-id}/drive instead. user-id can be the UPN (e.g. carolann.poulin@lcieducation.com) or the object id. Take the returned drive id and pass it to get-drive-root, then list-drive-children, to enumerate the content."
+    "llmTip": "Gets a user's OneDrive for Business (personal drive). Returns the drive id, driveType ('business'), owner, quota, and webUrl. Use this for DSAR/Loi 25 access requests: a user's OneDrive is a personal site that GET /sites/{...:/personal/...} cannot reach with app permissions — go through /users/{user-id}/drive instead. user-id can be the UPN (e.g. user@contoso.com) or the object id. Take the returned drive id and pass it to get-drive-root, then list-drive-children, to enumerate the content."
   },
   {
     "pathPattern": "/drives/{drive-id}/root",

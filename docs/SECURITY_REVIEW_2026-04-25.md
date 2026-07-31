@@ -357,20 +357,17 @@ ingress: {
 
 ## 7. Tracking
 
-The 8 Medium findings ([SEC-001](#sec-001--skipencoding-validation-accepts-percent-encoding) through [SEC-008](#sec-008--bicep-default-public-ingress--storage-allow)) are tracked dual-track:
+The 8 Medium findings ([SEC-001](#sec-001--skipencoding-validation-accepts-percent-encoding) through [SEC-008](#sec-008--bicep-default-public-ingress--storage-allow)) are tracked as GitHub issues in `okapi-ca/ms-365-admin-mcp-server` under the `security` label.
 
-- **GitHub issues** (`okapi-ca/ms-365-admin-mcp-server`, `security` label) — engineering follow-up
-- **Jira CYSEC tasks** (parent epic CYSEC-1330) — LCI Education governance follow-up
-
-| Finding | GitHub                                                               | Jira                                                               |
-| ------- | -------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| SEC-001 | [#68](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/68) | [CYSEC-1473](https://lcieducation.atlassian.net/browse/CYSEC-1473) |
-| SEC-002 | [#69](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/69) | [CYSEC-1474](https://lcieducation.atlassian.net/browse/CYSEC-1474) |
-| SEC-003 | [#70](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/70) | [CYSEC-1475](https://lcieducation.atlassian.net/browse/CYSEC-1475) |
-| SEC-004 | [#71](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/71) | [CYSEC-1476](https://lcieducation.atlassian.net/browse/CYSEC-1476) |
-| SEC-005 | [#72](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/72) | [CYSEC-1477](https://lcieducation.atlassian.net/browse/CYSEC-1477) |
-| SEC-006 | [#73](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/73) | [CYSEC-1480](https://lcieducation.atlassian.net/browse/CYSEC-1480) |
-| SEC-007 | [#74](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/74) | [CYSEC-1478](https://lcieducation.atlassian.net/browse/CYSEC-1478) |
-| SEC-008 | [#75](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/75) | [CYSEC-1479](https://lcieducation.atlassian.net/browse/CYSEC-1479) |
+| Finding | GitHub                                                               |
+| ------- | -------------------------------------------------------------------- |
+| SEC-001 | [#68](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/68) |
+| SEC-002 | [#69](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/69) |
+| SEC-003 | [#70](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/70) |
+| SEC-004 | [#71](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/71) |
+| SEC-005 | [#72](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/72) |
+| SEC-006 | [#73](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/73) |
+| SEC-007 | [#74](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/74) |
+| SEC-008 | [#75](https://github.com/okapi-ca/ms-365-admin-mcp-server/issues/75) |
 
 Lows and Informationals (SEC-009 through SEC-020) are tracked in this document only and will be revisited at the next periodic review.

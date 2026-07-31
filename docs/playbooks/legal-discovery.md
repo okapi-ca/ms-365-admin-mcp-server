@@ -179,11 +179,11 @@ Releasing hold prematurely means deleted items become eligible for permanent pur
 
 ### Phase 1 — preservation
 
-> Ouvre un dossier eDiscovery "Subpoena Smith vs LCI 2026-05" pour le user jean.tremblay@lcieducation.com. Applique le legal hold sur ses mailbox, OneDrive et Teams chats. Confirme que le hold est appliqué.
+> Ouvre un dossier eDiscovery "Subpoena Smith vs Contoso 2026-05" pour le user jean.tremblay@contoso.com. Applique le legal hold sur ses mailbox, OneDrive et Teams chats. Confirme que le hold est appliqué.
 
 ### Phase 2 — collection
 
-> Crée une recherche dans le dossier "Subpoena Smith vs LCI 2026-05" qui capture tous les chats Teams de jean.tremblay entre 2024-01-01 et 2024-12-31 contenant les mots "contrat", "Smith" ou "confidentiel". Attends le résultat de l'estimation et donne-moi le hit count.
+> Crée une recherche dans le dossier "Subpoena Smith vs Contoso 2026-05" qui capture tous les chats Teams de jean.tremblay entre 2024-01-01 et 2024-12-31 contenant les mots "contrat", "Smith" ou "confidentiel". Attends le résultat de l'estimation et donne-moi le hit count.
 
 ### Phase 3 — review set
 
@@ -199,7 +199,7 @@ Releasing hold prematurely means deleted items become eligible for permanent pur
 
 ### Full-run single-shot prompt
 
-> Démarre un workflow eDiscovery complet pour le subpoena reçu aujourd'hui visant jean.tremblay@lcieducation.com pour des chats Teams 2024 contenant "contrat" ou "Smith". Trace toutes les étapes : case → custodian + hold → search → wait → review set → addToReviewSet → wait → tag "Responsive" → export en format originalFiles+fileInfo+tags+text per-custodian. Confirme à chaque étape avant de passer à la suivante (les long-running ops peuvent prendre 30-60 min chacune).
+> Démarre un workflow eDiscovery complet pour le subpoena reçu aujourd'hui visant jean.tremblay@contoso.com pour des chats Teams 2024 contenant "contrat" ou "Smith". Trace toutes les étapes : case → custodian + hold → search → wait → review set → addToReviewSet → wait → tag "Responsive" → export en format originalFiles+fileInfo+tags+text per-custodian. Confirme à chaque étape avant de passer à la suivante (les long-running ops peuvent prendre 30-60 min chacune).
 
 ## Demo talking points
 
