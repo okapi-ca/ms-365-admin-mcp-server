@@ -554,6 +554,54 @@
     "llmTip": "Deletes a phone authentication method for a user. Use list-user-auth-methods first to get the phoneAuthenticationMethod ID. Useful for removing a compromised phone number during incident response. Cannot delete if it is the user's only MFA method and MFA is required."
   },
   {
+    "pathPattern": "/users/{user-id}/authentication/fido2Methods/{fido2AuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-fido2-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a FIDO2 security key or passkey registration for a user. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.fido2AuthenticationMethod. Use when a hardware key is lost or unreturned at offboarding. Cannot delete if it is the user's only remaining MFA method and MFA is required."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/microsoftAuthenticatorMethods/{microsoftAuthenticatorAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-authenticator-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Microsoft Authenticator registration for a user, removing both push approval and passwordless sign-in from that device. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.microsoftAuthenticatorAuthenticationMethod. Primary action when a phone holding the Authenticator app is lost or compromised. Cannot delete if it is the user's only remaining MFA method and MFA is required."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/softwareOathMethods/{softwareOathAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-software-oath-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a software OATH (TOTP authenticator app) registration for a user. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.softwareOathAuthenticationMethod. Cannot delete if it is the user's only remaining MFA method and MFA is required."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/windowsHelloForBusinessMethods/{windowsHelloForBusinessAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-windows-hello-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Windows Hello for Business registration for a user. Registrations are per device, so a user may have several — run list-user-auth-methods and match on @odata.type #microsoft.graph.windowsHelloForBusinessAuthenticationMethod, then use displayName to identify the right device. Use when a device is lost or not returned at offboarding."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/emailMethods/{emailAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-email-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a user's email authentication method, which is used for self-service password reset rather than for sign-in MFA. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.emailAuthenticationMethod. Remove it when the address is a personal mailbox that should no longer be able to drive a password reset."
+  },
+  {
+    "pathPattern": "/users/{user-id}/authentication/temporaryAccessPassMethods/{temporaryAccessPassAuthenticationMethod-id}",
+    "method": "delete",
+    "toolName": "delete-user-temporary-access-pass-auth-method",
+    "appPermissions": ["UserAuthenticationMethod.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Deletes a Temporary Access Pass for a user. A TAP is a time-limited passcode that can satisfy MFA on its own, so an unused or unexpected one is a live credential worth revoking immediately during incident response. Run list-user-auth-methods first and take the id of the entry whose @odata.type is #microsoft.graph.temporaryAccessPassAuthenticationMethod."
+  },
+  {
     "pathPattern": "/reports/getOneDriveUsageAccountDetail(period='{period}')",
     "method": "get",
     "toolName": "get-onedrive-usage-report",

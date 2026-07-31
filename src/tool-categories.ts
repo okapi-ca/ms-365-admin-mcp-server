@@ -63,7 +63,7 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   response: {
     name: 'response',
     pattern:
-      /disable-user|revoke|block|reset|isolate|update-security|delete-user-auth|delete-user-phone|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query|wipe-managed|retire-managed|remote-lock|locate-managed|bypass-activation|apply-hold|remove-hold|delete-oauth2-grant|delete-role-assignment|remove-directory-role-member/i,
+      /disable-user|revoke|block|reset|isolate|update-security|delete-user-[a-z0-9-]*auth-method|update-device|update-user-auth|confirm-compromised|dismiss-risky|confirm-safe|hunting-query|wipe-managed|retire-managed|remote-lock|locate-managed|bypass-activation|apply-hold|remove-hold|delete-oauth2-grant|delete-role-assignment|remove-directory-role-member/i,
     description:
       'Incident response operations (disable user, revoke sessions, revoke illicit consent grants, strip admin roles, confirm compromised/safe, dismiss risk, hunting queries)',
   },
