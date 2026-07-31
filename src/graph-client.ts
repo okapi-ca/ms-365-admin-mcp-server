@@ -2,6 +2,13 @@ import logger from './logger.js';
 import type { AppSecrets } from './secrets.js';
 import { getCloudEndpoints } from './cloud-config.js';
 
+/**
+ * Language tag sent on every Graph request. Must be a valid BCP-47 tag that
+ * .NET's CultureInfo accepts — see the BUG-PIM note in makeRequest for why an
+ * explicit value is mandatory rather than cosmetic.
+ */
+export const DEFAULT_ACCEPT_LANGUAGE = 'en-US';
+
 interface GraphRequestOptions {
   headers?: Record<string, string>;
   method?: string;
@@ -58,6 +65,16 @@ class GraphClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      // BUG-PIM: Node's fetch (undici) appends a spec-default `Accept-Language: *`
+      // whenever the caller omits the header. Microsoft Graph's PIM /
+      // identityGovernance backends feed that value straight into a .NET
+      // CultureInfo lookup, and `*` is not a valid culture identifier — so every
+      // request to those routes failed with HTTP 400 CultureNotFoundException
+      // ("* is an invalid culture identifier"), independently of permissions or
+      // of the $filter used. Sending an explicit, valid language tag overrides
+      // undici's default. Declared before ...options.headers so a per-endpoint
+      // or per-call override still wins.
+      'Accept-Language': DEFAULT_ACCEPT_LANGUAGE,
       ...options.headers,
     };
 
