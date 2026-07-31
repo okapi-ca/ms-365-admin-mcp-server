@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **622 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **641 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -227,7 +227,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (515)
+## Available tools (641)
 
 ### Security (11)
 
@@ -276,7 +276,7 @@ node dist/index.js --verify-login
 | `get-mailbox-usage-report`      | GET    |
 | `get-m365-apps-usage-report`    | GET    |
 
-### Users (10)
+### Users (9)
 
 | Tool                     | Method | Risk     |
 | ------------------------ | ------ | -------- |
@@ -286,10 +286,11 @@ node dist/index.js --verify-login
 | `list-user-auth-methods` | GET    |          |
 | `list-user-devices`      | GET    |          |
 | `create-user`            | POST   | high     |
-| `update-user`            | PATCH  | medium   |
 | `delete-user`            | DELETE | critical |
 | `assign-user-license`    | POST   | medium   |
 | `reprocess-user-license` | POST   | low      |
+
+There is no general-purpose `update-user`. The only PATCH on `/users/{id}` this server exposes is `disable-user-account` (see [Incident response](#incident-response-17----requires---allow-writes)), which is deliberately narrow: it sets `accountEnabled` and nothing else.
 
 ### Devices (2)
 
@@ -830,12 +831,11 @@ One deletion tool per authentication-method collection, since the ids are collec
 | `delete-shared-apple-user`      | POST   | high     |
 | `update-windows-device-account` | POST   | medium   |
 
-### Conditional Access CRUD (8) -- requires `--allow-writes`
+### Conditional Access CRUD (7) -- requires `--allow-writes`
 
 | Tool                                | Method | Risk     |
 | ----------------------------------- | ------ | -------- |
 | `list-conditional-access-templates` | GET    |          |
-| `get-conditional-access-policy`     | GET    |          |
 | `create-conditional-access-policy`  | POST   | high     |
 | `update-conditional-access-policy`  | PATCH  | high     |
 | `delete-conditional-access-policy`  | DELETE | critical |
@@ -854,11 +854,58 @@ One deletion tool per authentication-method collection, since the ids are collec
 | `update-device-configuration` | PATCH  | medium |
 | `delete-device-configuration` | DELETE | high   |
 
-### eDiscovery (1)
+### OneDrive / user drive (DSAR enumeration) (4)
 
-| Tool                    | Method | Risk |
-| ----------------------- | ------ | ---- |
-| `list-ediscovery-cases` | GET    |      |
+Read-only traversal of a user's personal drive, for subject-access requests. Content bytes are not exposed; these return metadata and download URLs.
+
+| Tool                  | Method | Risk |
+| --------------------- | ------ | ---- |
+| `get-user-drive`      | GET    |      |
+| `get-drive-root`      | GET    |      |
+| `list-drive-children` | GET    |      |
+| `get-drive-item`      | GET    |      |
+
+### Purview DSPM (protection scopes) (2)
+
+| Tool                                | Method | Risk |
+| ----------------------------------- | ------ | ---- |
+| `get-data-security-governance-root` | GET    |      |
+| `compute-protection-scopes`         | POST   | low  |
+
+`compute-protection-scopes` is a POST but computes rather than mutates — hence the `low` tier. It still needs `--allow-writes`.
+
+### Teams online meeting attendance (4)
+
+Attendance reporting for a specific user's meetings. App-only access requires an Application Access Policy on the tenant, granted per service principal with `Set-CsApplicationAccessPolicy`; without it Graph answers 403 regardless of the Graph permission.
+
+| Tool                                   | Method | Risk |
+| -------------------------------------- | ------ | ---- |
+| `get-user-online-meeting`              | GET    |      |
+| `list-user-meeting-attendance-reports` | GET    |      |
+| `get-user-meeting-attendance-report`   | GET    |      |
+| `list-user-meeting-attendance-records` | GET    |      |
+
+### Teams deleted chats (3)
+
+| Tool                 | Method | Risk   |
+| -------------------- | ------ | ------ |
+| `list-deleted-chats` | GET    |        |
+| `get-deleted-chat`   | GET    |        |
+| `undo-delete-chat`   | POST   | medium |
+
+Administrative recovery flow for a chat a user deleted. The retention window is Microsoft's, not configurable here.
+
+### Teams chat investigation reads (5)
+
+Triage reads over a user's chats, on `Chat.Read.All`. For court-admissible production use the eDiscovery tools instead — these reads carry no chain of custody.
+
+| Tool                 | Method | Risk |
+| -------------------- | ------ | ---- |
+| `list-user-chats`    | GET    |      |
+| `get-chat`           | GET    |      |
+| `list-chat-members`  | GET    |      |
+| `list-chat-messages` | GET    |      |
+| `get-chat-message`   | GET    |      |
 
 ### Teams call records (11)
 
@@ -944,16 +991,21 @@ One deletion tool per authentication-method collection, since the ids are collec
 | `get-site-analytics`      | GET    |        |
 | `list-site-subsites`      | GET    |        |
 
-### Records Management (6)
+### Records Management (9)
 
-| Tool                         | Method | Risk |
-| ---------------------------- | ------ | ---- |
-| `list-retention-labels`      | GET    |      |
-| `list-file-plan-authorities` | GET    |      |
-| `list-file-plan-categories`  | GET    |      |
-| `list-file-plan-citations`   | GET    |      |
-| `list-file-plan-departments` | GET    |      |
-| `list-file-plan-references`  | GET    |      |
+| Tool                          | Method | Risk   |
+| ----------------------------- | ------ | ------ |
+| `list-file-plan-authorities`  | GET    |        |
+| `list-file-plan-categories`   | GET    |        |
+| `list-file-plan-citations`    | GET    |        |
+| `list-file-plan-departments`  | GET    |        |
+| `list-file-plan-references`   | GET    |        |
+| `get-retention-event`         | GET    |        |
+| `create-retention-event`      | POST   | medium |
+| `get-retention-event-type`    | GET    |        |
+| `create-retention-event-type` | POST   | medium |
+
+Listing or reading `retentionLabels` themselves is **not exposed**: Microsoft Graph does not support it with application permissions. Use delegated access or Security & Compliance PowerShell for that. `list-retention-events` is under [Security advanced](#security-advanced-9).
 
 ### Teams administration (30)
 
@@ -1091,7 +1143,7 @@ One deletion tool per authentication-method collection, since the ids are collec
 | `list-pim-role-eligibility-schedules` | GET    |      |
 | `list-role-resource-namespaces`       | GET    |      |
 
-### Identity Protection+ (2)
+### Identity Protection+ (1)
 
 | Tool                                     | Method | Risk |
 | ---------------------------------------- | ------ | ---- |
@@ -1158,7 +1210,7 @@ New Graph permissions required since v0.10.0 / 0.11.1 (must be consented on the 
 - `SecurityIdentitiesActions.ReadWrite.All` (identityAccounts invokeAction — break-glass)
 - `SecurityIdentitiesMigration.Read.All` + `SecurityIdentitiesMigration.ReadWrite.All` (sensorMigration, beta)
 
-### Threat intelligence+ (7)
+### Threat intelligence+ (6)
 
 | Tool                              | Method | Risk |
 | --------------------------------- | ------ | ---- |
@@ -1168,7 +1220,6 @@ New Graph permissions required since v0.10.0 / 0.11.1 (must be consented on the 
 | `list-threat-intel-host-ports`    | GET    |      |
 | `list-threat-intel-host-trackers` | GET    |      |
 | `list-threat-intel-host-cookies`  | GET    |      |
-| `list-threat-intel-host-pairs`    | GET    |      |
 
 ### Reports+ (5)
 
@@ -1180,12 +1231,45 @@ New Graph permissions required since v0.10.0 / 0.11.1 (must be consented on the 
 | `list-monthly-print-usage-by-printer` | GET    |      |
 | `list-monthly-print-usage-by-user`    | GET    |      |
 
-### Copilot admin (2)
+### Copilot admin (16)
 
-| Tool                         | Method | Risk |
-| ---------------------------- | ------ | ---- |
-| `get-copilot-admin-settings` | GET    |      |
-| `get-copilot-limited-mode`   | GET    |      |
+Settings and policy:
+
+| Tool                           | Method | Risk |
+| ------------------------------ | ------ | ---- |
+| `get-copilot-admin-settings`   | GET    |      |
+| `get-copilot-limited-mode`     | GET    |      |
+| `list-copilot-policy-settings` | GET    |      |
+| `get-copilot-policy-setting`   | GET    |      |
+
+Usage reports:
+
+| Tool                             | Method | Risk |
+| -------------------------------- | ------ | ---- |
+| `get-copilot-usage-user-detail`  | GET    |      |
+| `get-copilot-user-count-summary` | GET    |      |
+| `get-copilot-user-count-trend`   | GET    |      |
+
+Interaction history audit, AI users and meeting insights:
+
+| Tool                            | Method | Risk |
+| ------------------------------- | ------ | ---- |
+| `get-all-copilot-interactions`  | GET    |      |
+| `get-user-copilot-interactions` | GET    |      |
+| `list-ai-users`                 | GET    |      |
+| `get-ai-user`                   | GET    |      |
+| `list-ai-user-online-meetings`  | GET    |      |
+| `list-ai-meeting-insights`      | GET    |      |
+| `get-ai-meeting-insight`        | GET    |      |
+
+Agent registrations:
+
+| Tool                               | Method | Risk |
+| ---------------------------------- | ------ | ---- |
+| `list-copilot-agent-registrations` | GET    |      |
+| `get-copilot-agent-registration`   | GET    |      |
+
+`get-all-copilot-interactions` returns every enterprise Copilot interaction in the tenant — prompts and responses. Treat the output as regulated personal data.
 
 ### Directory+ (5)
 
@@ -1286,22 +1370,67 @@ New Graph permissions required since v0.10.0 / 0.11.1 (must be consented on the 
 | `apply-access-review-decisions`        | POST   | high   |
 | `accept-access-review-recommendations` | POST   | medium |
 
-### eDiscovery v2 (Purview) (12) -- writes require `--allow-writes`
+### eDiscovery (Purview) (33) -- writes require `--allow-writes`
 
-| Tool                               | Method | Risk     |
-| ---------------------------------- | ------ | -------- |
-| `get-ediscovery-case`              | GET    |          |
-| `create-ediscovery-case`           | POST   | medium   |
-| `update-ediscovery-case`           | PATCH  | medium   |
-| `delete-ediscovery-case`           | DELETE | critical |
-| `close-ediscovery-case`            | POST   | medium   |
-| `reopen-ediscovery-case`           | POST   | medium   |
-| `list-ediscovery-custodians`       | GET    |          |
-| `create-ediscovery-custodian`      | POST   | medium   |
-| `apply-hold-ediscovery-custodian`  | POST   | high     |
-| `remove-hold-ediscovery-custodian` | POST   | high     |
-| `list-ediscovery-searches`         | GET    |          |
-| `create-ediscovery-search`         | POST   | medium   |
+Cases and searches:
+
+| Tool                                    | Method | Risk     |
+| --------------------------------------- | ------ | -------- |
+| `list-ediscovery-cases`                 | GET    |          |
+| `get-ediscovery-case`                   | GET    |          |
+| `create-ediscovery-case`                | POST   | medium   |
+| `update-ediscovery-case`                | PATCH  | medium   |
+| `delete-ediscovery-case`                | DELETE | critical |
+| `close-ediscovery-case`                 | POST   | medium   |
+| `reopen-ediscovery-case`                | POST   | medium   |
+| `list-ediscovery-searches`              | GET    |          |
+| `create-ediscovery-search`              | POST   | medium   |
+| `estimate-ediscovery-search-statistics` | POST   | medium   |
+
+Custodians:
+
+| Tool                                | Method | Risk   |
+| ----------------------------------- | ------ | ------ |
+| `list-ediscovery-custodians`        | GET    |        |
+| `get-ediscovery-custodian`          | GET    |        |
+| `create-ediscovery-custodian`       | POST   | medium |
+| `apply-hold-ediscovery-custodian`   | POST   | high   |
+| `remove-hold-ediscovery-custodian`  | POST   | high   |
+| `release-ediscovery-custodian`      | POST   | medium |
+| `update-ediscovery-custodian-index` | POST   | low    |
+
+Non-custodial data sources:
+
+| Tool                                              | Method | Risk   |
+| ------------------------------------------------- | ------ | ------ |
+| `list-ediscovery-noncustodial-data-sources`       | GET    |        |
+| `get-ediscovery-noncustodial-data-source`         | GET    |        |
+| `create-ediscovery-noncustodial-data-source`      | POST   | medium |
+| `apply-hold-ediscovery-noncustodial-data-source`  | POST   | medium |
+| `remove-hold-ediscovery-noncustodial-data-source` | POST   | high   |
+
+Review sets, queries and exports:
+
+| Tool                          | Method | Risk   |
+| ----------------------------- | ------ | ------ |
+| `list-review-sets`            | GET    |        |
+| `get-review-set`              | GET    |        |
+| `create-review-set`           | POST   | low    |
+| `add-to-review-set`           | POST   | medium |
+| `export-review-set`           | POST   | high   |
+| `list-review-set-queries`     | GET    |        |
+| `get-review-set-query`        | GET    |        |
+| `create-review-set-query`     | POST   | low    |
+| `apply-tags-review-set-query` | POST   | medium |
+
+Operations:
+
+| Tool                   | Method | Risk |
+| ---------------------- | ------ | ---- |
+| `list-case-operations` | GET    |      |
+| `get-case-operation`   | GET    |      |
+
+`export-review-set` is the court-admissible production path. Its `exportOptions` / `exportStructure` fields are Graph flagged enums and must be sent as comma-separated **strings**, not objects.
 
 ## Azure AD permissions
 
