@@ -63,8 +63,7 @@ export interface UserTokenClaims {
 export type AuthorizationFailureReason = 'invalid_token' | 'insufficient_scope';
 
 export type AuthorizeUserClaimsResult =
-  | { ok: true; claims: UserTokenClaims }
-  | { ok: false; reason: AuthorizationFailureReason };
+  { ok: true; claims: UserTokenClaims } | { ok: false; reason: AuthorizationFailureReason };
 
 export interface UserTokenPayload {
   iss?: string;
