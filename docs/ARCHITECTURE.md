@@ -142,7 +142,7 @@ Express app with:
 - JWT validation middleware on `/mcp` (see `token-validator.ts`)
 - `/mcp` serves the full catalog; `/mcp/:group` serves one group of the active partition (`--partition`, tables in `tool-partitions.ts`: group → README sections, resolved through the `section` each endpoint carries in `endpoints.json`). The rate limiter and auth middleware prefix-match, so they guard the group routes too; the group filter runs last in `registerGraphTools`, after every write and risk control, and only narrows the catalog. See [Per-domain endpoints](HTTP_DEPLOYMENT.md#per-domain-endpoints)
 - `GET /health` unauthenticated
-- Stateless MCP transport (`StreamableHTTPServerTransport`) — one fresh transport per request
+- Stateless MCP transport (`StreamableHTTPServerTransport`) — one fresh transport and one fresh `McpServer` per request. Only the per-caller decisions are made per request (which tools pass the filters, which `GraphClient` runs them): each tool's input schema, description and `tools/list` entry are built once per process and shared, in the catalog of `graph-tools.ts`. Rebuilding them per request retained ~92 MB per in-flight request, enough for a few concurrent `tools/list` calls to exhaust the default Node heap of a 2 Gi container
 
 ### Token validation — `src/token-validator.ts`
 

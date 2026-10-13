@@ -11,7 +11,7 @@ import {
 import { formatUpnForLog } from './user-token-authorization.js';
 import { registerOAuthRoutes, type OAuthProxyOptions } from './oauth-proxy.js';
 import { registerOAuthRateLimiters } from './oauth-rate-limiters.js';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 export interface HttpServerOptions {
   port: number;
@@ -176,7 +176,9 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
       max: 200,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req) => req.ip ?? 'unknown',
+      // ipKeyGenerator buckets IPv6 clients by /56 subnet: a raw IPv6 address
+      // would let one host rotate through its prefix to dodge the limit.
+      keyGenerator: (req) => ipKeyGenerator(req.ip ?? 'unknown'),
       message: { error: 'Too many requests, please try again later' },
     })
   );

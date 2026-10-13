@@ -44,7 +44,7 @@ param minReplicas int = 0
 @minValue(1)
 param maxReplicas int = 3
 
-@description('Container vCPU. Must form a valid Container Apps CPU/memory pair with containerMemory (e.g. 0.5/1Gi, 1.0/2Gi, 2.0/4Gi). Default 1.0 — the server rebuilds its full tool set (600+) per MCP request, which OOMed the previous 0.5/1Gi sizing.')
+@description('Container vCPU. Must form a valid Container Apps CPU/memory pair with containerMemory (e.g. 0.5/1Gi, 1.0/2Gi, 2.0/4Gi). Default 1.0. In HTTP mode the server builds one McpServer per MCP request; tool schemas are shared across them, but the 0.5/1Gi sizing ran out of memory before they were and has not been re-measured since.')
 param containerCpu string = '1.0'
 
 @description('Container memory. Must pair with containerCpu (see above). Default 2Gi.')

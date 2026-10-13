@@ -32,6 +32,8 @@ function makeMockServer(): { server: McpServer; tools: CapturedTool[] } {
     ) => {
       tools.push({ alias });
     },
+    // registerGraphTools installs its cached tools/list handler here.
+    server: { setRequestHandler: () => {} },
   } as unknown as McpServer;
   return { server, tools };
 }

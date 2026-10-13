@@ -1,4 +1,11 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, type RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { normalizeObjectSchema } from '@modelcontextprotocol/sdk/server/zod-compat.js';
+import { toJsonSchemaCompat } from '@modelcontextprotocol/sdk/server/zod-json-schema-compat.js';
+import {
+  ListToolsRequestSchema,
+  type Tool,
+  type ToolAnnotations,
+} from '@modelcontextprotocol/sdk/types.js';
 import logger from './logger.js';
 import GraphClient from './graph-client.js';
 import { api } from './generated/client.js';
@@ -110,6 +117,8 @@ export function coerceJsonStringBody(schema: z.ZodTypeAny): z.ZodTypeAny {
 const endpointsData = JSON.parse(
   readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
 ) as EndpointConfig[];
+
+const endpointConfigByTool = new Map(endpointsData.map((e) => [e.toolName, e]));
 
 /** Each tool with its README section — the input to `resolvePartition`. */
 export function endpointSections(): { toolName: string; section: string }[] {
@@ -456,8 +465,10 @@ export function registerGraphTools(
     }
   }
 
+  const registeredTools: [CatalogEntry, RegisteredTool][] = [];
+
   for (const tool of api.endpoints) {
-    const endpointConfig = endpointsData.find((e) => e.toolName === tool.alias);
+    const endpointConfig = endpointConfigByTool.get(tool.alias);
 
     if (readOnly && tool.method.toUpperCase() !== 'GET') {
       skippedCount++;
@@ -497,107 +508,37 @@ export function registerGraphTools(
       continue;
     }
 
-    // Build parameter schema from the generated client tool definition
-    const paramSchema: Record<string, z.ZodTypeAny> = {};
-    for (const param of tool.parameters || []) {
-      if (param.type === 'Body') {
-        paramSchema[param.name] = coerceJsonStringBody(
-          param.schema ? shallowBodySchema(param.schema) : z.unknown()
-        ).optional();
-      } else if (param.type === 'Path') {
-        paramSchema[param.name] = z.string().describe(param.description || param.name);
-      } else if (param.type === 'Query') {
-        paramSchema[param.name] = z
-          .string()
-          .describe(param.description || param.name)
-          .optional();
-      } else if (param.type === 'Header') {
-        paramSchema[param.name] = z
-          .string()
-          .describe(param.description || param.name)
-          .optional();
-      }
-    }
-
-    // Improve OData parameter descriptions
-    if (paramSchema['filter'] !== undefined || paramSchema['$filter'] !== undefined) {
-      const key = paramSchema['$filter'] !== undefined ? '$filter' : 'filter';
-      paramSchema[key] = z
-        .string()
-        .describe("OData $filter expression, e.g. status eq 'inProgress'")
-        .optional();
-    }
-    if (paramSchema['select'] !== undefined || paramSchema['$select'] !== undefined) {
-      const key = paramSchema['$select'] !== undefined ? '$select' : 'select';
-      paramSchema[key] = z.string().describe('Comma-separated fields to return').optional();
-    }
-    if (paramSchema['top'] !== undefined || paramSchema['$top'] !== undefined) {
-      const key = paramSchema['$top'] !== undefined ? '$top' : 'top';
-      paramSchema[key] = z
-        .number()
-        .describe(
-          'Page size (Graph $top). Start small (5-15) so responses fit the model context. ' +
-            'Use @odata.nextLink from the response for more rows.'
-        )
-        .optional();
-    }
-
-    paramSchema['excludeResponse'] = z
-      .boolean()
-      .describe('Exclude the full response body and only return success or failure')
-      .optional();
-
-    let toolDescription =
-      tool.description || `Execute ${tool.method.toUpperCase()} request to ${tool.path}`;
-    if (endpointConfig?.llmTip) {
-      toolDescription += `\n\nTIP: ${endpointConfig.llmTip}`;
-    }
-    if (endpointConfig?.riskLevel) {
-      // SEC-G03: read-operation risk copy differs from write-operation copy.
-      const isWrite = tool.method.toUpperCase() !== 'GET';
-      let riskCopy = '';
-      if (isWrite) {
-        if (endpointConfig.riskLevel === 'critical') {
-          riskCopy =
-            'This action is irreversible or has major security impact. Always confirm with the operator before executing.';
-        } else if (endpointConfig.riskLevel === 'high') {
-          riskCopy =
-            'This action has significant impact. Verify the target carefully before executing.';
-        }
-      } else {
-        if (endpointConfig.riskLevel === 'high') {
-          riskCopy =
-            'This response contains secrets or highly sensitive data (e.g. recovery keys, LAPS passwords, legal-hold material). Do not echo verbatim; confirm with the operator before sharing.';
-        } else if (endpointConfig.riskLevel === 'medium') {
-          riskCopy =
-            'This response contains PII or authentication metadata (sign-ins, MFA factors, mail metadata, risk detections). Handle with care and avoid casual disclosure.';
-        }
-      }
-      toolDescription += `\n\nRISK LEVEL: ${endpointConfig.riskLevel.toUpperCase()}. ${riskCopy}`;
-    }
-
-    const requiresAppOnly =
-      endpointConfig?.appPermissions?.some((p) => APP_ONLY_PERMISSIONS.has(p)) ?? false;
-    const clientForTool = requiresAppOnly && appOnlyGraphClient ? appOnlyGraphClient : graphClient;
+    const entry = catalogEntry(tool, endpointConfig);
+    const clientForTool =
+      entry.requiresAppOnly && appOnlyGraphClient ? appOnlyGraphClient : graphClient;
 
     try {
-      server.tool(
+      const registered = server.tool(
         tool.alias,
-        toolDescription,
-        paramSchema,
-        {
-          title: tool.alias,
-          readOnlyHint: tool.method.toUpperCase() === 'GET',
-          destructiveHint: ['POST', 'PATCH', 'DELETE'].includes(tool.method.toUpperCase()),
-          openWorldHint: true,
-        },
+        entry.description,
+        entry.inputShape,
+        entry.annotations,
         async (params) => executeGraphTool(tool, endpointConfig, clientForTool, params)
       );
+      registeredTools.push([entry, registered]);
       registeredCount++;
     } catch (error) {
       logger.error(`Failed to register tool ${tool.alias}: ${(error as Error).message}`);
       failedCount++;
     }
+  }
+
+  if (registeredTools.length > 0) {
+    // Replaces the SDK's tools/list handler, which re-derives the JSON Schema of
+    // every registered tool on every call: ~210 ms of CPU and a heap spike per
+    // request for the full catalog. The cached listing is the SDK's own output
+    // (see toolListing), so the wire format is unchanged. Like the SDK's handler,
+    // it lists only enabled tools, so RegisteredTool.disable() keeps working.
+    server.server.setRequestHandler(ListToolsRequestSchema, () => ({
+      tools: registeredTools
+        .filter(([, registered]) => registered.enabled)
+        .map(([entry, registered]) => toolListing(entry, registered)),
+    }));
   }
 
   const roleSummary = writeRiskTiers
@@ -608,4 +549,186 @@ export function registerGraphTools(
     `Tool registration complete${groupSummary}: ${registeredCount} registered, ${skippedCount} skipped (read-only/filter), ${skippedByRisk} skipped (risk-level cap: ${maxRiskLevel})${roleSummary}, ${failedCount} failed`
   );
   return registeredCount;
+}
+
+/**
+ * The caller-independent half of a tool: its input schema, description and
+ * annotations, built once per process and shared by every McpServer.
+ *
+ * In HTTP mode a fresh McpServer is created per request. Rebuilding these for
+ * the full catalog retained ~92 MB per server, so a handful of concurrent
+ * tools/list calls exhausted the ~512 MB heap Node derives from a 2 Gi
+ * container and crashed the process. Only the per-caller decisions —
+ * which tools pass the filters, which GraphClient runs them — stay in
+ * registerGraphTools.
+ */
+interface CatalogEntry {
+  name: string;
+  description: string;
+  inputShape: Record<string, z.ZodTypeAny>;
+  annotations: ToolAnnotations;
+  requiresAppOnly: boolean;
+  /** tools/list entry, derived on first listing. */
+  listing?: Tool;
+}
+
+const catalog = new Map<string, CatalogEntry>();
+
+// Same literal as the SDK's EMPTY_OBJECT_JSON_SCHEMA (not exported).
+const EMPTY_OBJECT_JSON_SCHEMA = { type: 'object' as const, properties: {} };
+
+function catalogEntry(
+  tool: (typeof api.endpoints)[0],
+  endpointConfig: EndpointConfig | undefined
+): CatalogEntry {
+  const cached = catalog.get(tool.alias);
+  if (cached) return cached;
+  const entry = buildCatalogEntry(tool, endpointConfig);
+  catalog.set(tool.alias, entry);
+  return entry;
+}
+
+/**
+ * The tools/list entry the SDK would emit for `registered`, computed once per
+ * tool: every field it reads comes from the shared catalog entry, so the result
+ * is the same for every caller. The body mirrors McpServer's own handler
+ * (setToolRequestHandlers); test/graph-tools-catalog.test.ts compares both
+ * outputs, so an SDK upgrade that changes the format fails the build instead
+ * of drifting silently.
+ */
+function toolListing(entry: CatalogEntry, registered: RegisteredTool): Tool {
+  if (!entry.listing) {
+    const input = normalizeObjectSchema(registered.inputSchema);
+    const listing: Tool = {
+      name: entry.name,
+      title: registered.title,
+      description: registered.description,
+      inputSchema: (input
+        ? toJsonSchemaCompat(input, { strictUnions: true, pipeStrategy: 'input' })
+        : EMPTY_OBJECT_JSON_SCHEMA) as Tool['inputSchema'],
+      annotations: registered.annotations,
+      execution: registered.execution,
+      _meta: registered._meta,
+    };
+    const output = normalizeObjectSchema(registered.outputSchema);
+    if (output) {
+      listing.outputSchema = toJsonSchemaCompat(output, {
+        strictUnions: true,
+        pipeStrategy: 'output',
+      }) as Tool['outputSchema'];
+    }
+    // Every caller receives this same object, so it must never change: a mutation
+    // anywhere downstream would leak into other callers' responses. Cloned first
+    // so the freeze does not reach the annotations the SDK still holds.
+    entry.listing = deepFreeze(structuredClone(listing));
+  }
+  return entry.listing;
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
+
+function buildCatalogEntry(
+  tool: (typeof api.endpoints)[0],
+  endpointConfig: EndpointConfig | undefined
+): CatalogEntry {
+  // Build parameter schema from the generated client tool definition
+  const paramSchema: Record<string, z.ZodTypeAny> = {};
+  for (const param of tool.parameters || []) {
+    if (param.type === 'Body') {
+      paramSchema[param.name] = coerceJsonStringBody(
+        param.schema ? shallowBodySchema(param.schema) : z.unknown()
+      ).optional();
+    } else if (param.type === 'Path') {
+      paramSchema[param.name] = z.string().describe(param.description || param.name);
+    } else if (param.type === 'Query') {
+      paramSchema[param.name] = z
+        .string()
+        .describe(param.description || param.name)
+        .optional();
+    } else if (param.type === 'Header') {
+      paramSchema[param.name] = z
+        .string()
+        .describe(param.description || param.name)
+        .optional();
+    }
+  }
+
+  // Improve OData parameter descriptions
+  if (paramSchema['filter'] !== undefined || paramSchema['$filter'] !== undefined) {
+    const key = paramSchema['$filter'] !== undefined ? '$filter' : 'filter';
+    paramSchema[key] = z
+      .string()
+      .describe("OData $filter expression, e.g. status eq 'inProgress'")
+      .optional();
+  }
+  if (paramSchema['select'] !== undefined || paramSchema['$select'] !== undefined) {
+    const key = paramSchema['$select'] !== undefined ? '$select' : 'select';
+    paramSchema[key] = z.string().describe('Comma-separated fields to return').optional();
+  }
+  if (paramSchema['top'] !== undefined || paramSchema['$top'] !== undefined) {
+    const key = paramSchema['$top'] !== undefined ? '$top' : 'top';
+    paramSchema[key] = z
+      .number()
+      .describe(
+        'Page size (Graph $top). Start small (5-15) so responses fit the model context. ' +
+          'Use @odata.nextLink from the response for more rows.'
+      )
+      .optional();
+  }
+
+  paramSchema['excludeResponse'] = z
+    .boolean()
+    .describe('Exclude the full response body and only return success or failure')
+    .optional();
+
+  let toolDescription =
+    tool.description || `Execute ${tool.method.toUpperCase()} request to ${tool.path}`;
+  if (endpointConfig?.llmTip) {
+    toolDescription += `\n\nTIP: ${endpointConfig.llmTip}`;
+  }
+  if (endpointConfig?.riskLevel) {
+    // SEC-G03: read-operation risk copy differs from write-operation copy.
+    const isWrite = tool.method.toUpperCase() !== 'GET';
+    let riskCopy = '';
+    if (isWrite) {
+      if (endpointConfig.riskLevel === 'critical') {
+        riskCopy =
+          'This action is irreversible or has major security impact. Always confirm with the operator before executing.';
+      } else if (endpointConfig.riskLevel === 'high') {
+        riskCopy =
+          'This action has significant impact. Verify the target carefully before executing.';
+      }
+    } else {
+      if (endpointConfig.riskLevel === 'high') {
+        riskCopy =
+          'This response contains secrets or highly sensitive data (e.g. recovery keys, LAPS passwords, legal-hold material). Do not echo verbatim; confirm with the operator before sharing.';
+      } else if (endpointConfig.riskLevel === 'medium') {
+        riskCopy =
+          'This response contains PII or authentication metadata (sign-ins, MFA factors, mail metadata, risk detections). Handle with care and avoid casual disclosure.';
+      }
+    }
+    toolDescription += `\n\nRISK LEVEL: ${endpointConfig.riskLevel.toUpperCase()}. ${riskCopy}`;
+  }
+
+  const requiresAppOnly =
+    endpointConfig?.appPermissions?.some((p) => APP_ONLY_PERMISSIONS.has(p)) ?? false;
+
+  return {
+    name: tool.alias,
+    description: toolDescription,
+    inputShape: paramSchema,
+    annotations: {
+      title: tool.alias,
+      readOnlyHint: tool.method.toUpperCase() === 'GET',
+      destructiveHint: ['POST', 'PATCH', 'DELETE'].includes(tool.method.toUpperCase()),
+      openWorldHint: true,
+    },
+    requiresAppOnly,
+  };
 }

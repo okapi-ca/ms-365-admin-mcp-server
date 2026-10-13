@@ -55,6 +55,8 @@ function harness(): Map<string, (p: Record<string, unknown>) => Promise<unknown>
       const shape = z.object(paramSchema);
       calls.set(alias, (params) => handler(shape.parse(params) as Record<string, unknown>));
     },
+    // registerGraphTools installs its cached tools/list handler here.
+    server: { setRequestHandler: () => {} },
   } as unknown as McpServer;
 
   registerGraphTools(server, graphClient, false, undefined, 'critical', undefined, undefined);

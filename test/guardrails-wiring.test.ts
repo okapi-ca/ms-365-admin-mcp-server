@@ -70,6 +70,8 @@ function harness(responses: Record<string, { body?: unknown; error?: string }>):
     ) => {
       handlers.set(alias, handler);
     },
+    // registerGraphTools installs its cached tools/list handler here.
+    server: { setRequestHandler: () => {} },
   } as unknown as McpServer;
 
   registerGraphTools(server, graphClient, false, undefined, 'critical', undefined, undefined);
