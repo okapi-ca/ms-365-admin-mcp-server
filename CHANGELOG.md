@@ -8,6 +8,20 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Added — Teams telephone number assignment (643 tools)
+
+Three tools closing the read-only gap on Teams telephony: `list-teams-phone-assignments` could show who holds a number, but nothing could move one. Restructuring Auto Attendant and Call Queue numbers no longer requires falling back to `Set-CsPhoneNumberAssignment` / `Remove-CsPhoneNumberAssignment`.
+
+- `assign-teams-phone-number` (medium) — `POST .../numberAssignments/assignNumber`. Assigns a Direct Routing, Calling Plan or Operator Connect number to a user or resource account.
+- `unassign-teams-phone-number` (high) — `POST .../numberAssignments/unassignNumber`. Releases a number from its current holder; inbound callers stop reaching that Auto Attendant or Call Queue once the order completes. The number stays in the tenant, so the change is reversible, which is why it is `high` and not `critical`.
+- `get-teams-phone-number-operation` — `GET .../telephoneNumberManagement/operations/{id}`. Both actions are asynchronous and answer `202 Accepted`: this is the only way to learn whether the order succeeded.
+
+Both write tools need `TeamsTelephoneNumber.ReadWrite.All`. With OBO, that is a delegated scope on the admin consent, plus an active Teams admin role on the caller.
+
+### Changed
+
+- An empty `202 Accepted` response now returns `{ "message": "Accepted", "status": 202, "location": "<Location header>" }` instead of `{ "message": "OK!" }`. The Location header is the only handle on an asynchronous Graph operation, and it was being dropped. Empty `200` / `204` responses still return `{ "message": "OK!" }`.
+
 ### Removed
 
 - `list-copilot-agent-registrations` (640 tools). Microsoft dropped `GET /copilot/agentRegistrations` from the beta OpenAPI spec — the collection now exposes only `POST`, and the Agent Registration API docs list only Create, Get, Update and Delete. Without the operation, `npm run generate` emits no client entry and `endpoints-validation` fails. `get-copilot-agent-registration` still works when the registration id is already known.

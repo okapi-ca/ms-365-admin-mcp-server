@@ -2708,6 +2708,29 @@
     "llmTip": "Lists telephone number assignments for Teams. Shows which phone numbers are assigned to which users or resources. Look up one number with $filter=telephoneNumber eq '+15145551234'; every field except id and city is filterable (e.g. assignmentStatus eq 'unassigned', numberType eq 'directRouting'). Default page is 500, max $top is 1000."
   },
   {
+    "pathPattern": "/admin/teams/telephoneNumberManagement/numberAssignments/microsoft.graph.teamsAdministration.assignNumber",
+    "method": "post",
+    "toolName": "assign-teams-phone-number",
+    "appPermissions": ["TeamsTelephoneNumber.ReadWrite.All"],
+    "riskLevel": "medium",
+    "llmTip": "Assigns a Teams telephone number (DID) to a user or resource account — the Graph equivalent of Set-CsPhoneNumberAssignment. Body: {\"telephoneNumber\":\"+15145551234\",\"assignmentTargetId\":\"<user-or-resource-account-object-id>\",\"numberType\":\"directRouting\"|\"callingPlan\"|\"operatorConnect\",\"assignmentCategory\":\"primary\"|\"private\"|\"alternate\" (optional, default primary),\"locationId\":\"<emergency-location-id>\" (optional)}. Look the number up first with list-teams-phone-assignments: it must be unassigned and its capabilities must include userAssignment (for a user) or voiceApplicationAssignment (for an Auto Attendant / Call Queue resource account), and numberType must match. Asynchronous: Graph answers 202 with a location URL ending in operations('<id>') — pass that id to get-teams-phone-number-operation to confirm the result. A successful 202 only means the order was accepted. Changes where inbound calls to that number land: confirm the number and the target with the operator before calling."
+  },
+  {
+    "pathPattern": "/admin/teams/telephoneNumberManagement/numberAssignments/microsoft.graph.teamsAdministration.unassignNumber",
+    "method": "post",
+    "toolName": "unassign-teams-phone-number",
+    "appPermissions": ["TeamsTelephoneNumber.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Removes a Teams telephone number (DID) from whatever user or resource account holds it — the Graph equivalent of Remove-CsPhoneNumberAssignment. Body: {\"telephoneNumber\":\"+15145551234\",\"numberType\":\"directRouting\"|\"callingPlan\"|\"operatorConnect\"}. No target id: the number is released from its current holder. IMMEDIATE IMPACT: if the number fronts an Auto Attendant or Call Queue, inbound callers stop reaching it as soon as the order completes. The number stays in the tenant and can be reassigned with assign-teams-phone-number. Before calling, read the current assignment with list-teams-phone-assignments ($filter=telephoneNumber eq '+15145551234') and record assignmentTargetId, so the change can be rolled back. Asynchronous: Graph answers 202 with a location URL ending in operations('<id>') — pass that id to get-teams-phone-number-operation. Confirm with the operator before calling."
+  },
+  {
+    "pathPattern": "/admin/teams/telephoneNumberManagement/operations/{telephoneNumberLongRunningOperation-id}",
+    "method": "get",
+    "toolName": "get-teams-phone-number-operation",
+    "appPermissions": ["TeamsTelephoneNumber.Read.All"],
+    "llmTip": "Gets the status of an asynchronous assign-teams-phone-number or unassign-teams-phone-number order. The id is the value inside operations('<id>') in the location URL those tools return. Returns status (notStarted, running, succeeded, failed) and numbers[] with the per-number outcome and any error. Poll sparingly: orders usually complete within a few minutes."
+  },
+  {
     "pathPattern": "/sites",
     "method": "get",
     "toolName": "list-sharepoint-sites",

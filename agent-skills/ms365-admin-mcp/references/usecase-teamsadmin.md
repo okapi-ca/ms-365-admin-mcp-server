@@ -40,6 +40,15 @@
 | `update-teams-app-settings`                                                                                                                             | high         |
 | `get-teams-admin-settings`, `list-teams-user-configurations`, `get-teams-admin-policy`, `list-teams-policy-assignments`, `list-teams-phone-assignments` | read         |
 
+### Telephone numbers
+
+| Tool                               | Usage / Risk                                                     |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| `list-teams-phone-assignments`     | read — look up one number with `$filter=telephoneNumber eq '…'`  |
+| `assign-teams-phone-number`        | medium — asynchronous, answers 202 with an operation location    |
+| `unassign-teams-phone-number`      | high — callers stop reaching the holder once the order completes |
+| `get-teams-phone-number-operation` | read — the only way to confirm an assign / unassign order        |
+
 ## Pattern 1 — Teams inventory
 
 > _"How many active Teams, how many dormant?"_

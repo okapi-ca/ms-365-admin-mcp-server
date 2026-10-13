@@ -111,7 +111,12 @@ class GraphClient {
 
     const text = await response.text();
     if (text === '') {
-      return { message: 'OK!' };
+      // Asynchronous actions (Teams number assign/unassign, sensor activation)
+      // answer 202 with no body: the Location header is the only handle on the
+      // operation, so dropping it would leave the caller unable to confirm the
+      // outcome.
+      const location = response.status === 202 ? response.headers.get('location') : null;
+      return location ? { message: 'Accepted', status: 202, location } : { message: 'OK!' };
     }
 
     try {

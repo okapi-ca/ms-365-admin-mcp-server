@@ -87,3 +87,34 @@ describe('BUG-PIM: Accept-Language on Graph requests', () => {
     expect(received === undefined || received === '*').toBe(true);
   });
 });
+
+describe('empty-body responses', () => {
+  it('keeps the Location header of a 202 with an empty body', async () => {
+    const location =
+      "https://graph.microsoft.com/v1.0/admin/teams/telephoneNumberManagement/operations('op-1')";
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 202, headers: { Location: location } }))
+    );
+    const result = await newClient().graphRequest(
+      '/admin/teams/telephoneNumberManagement/numberAssignments/microsoft.graph.teamsAdministration.unassignNumber',
+      { method: 'POST', body: JSON.stringify({ telephoneNumber: '+15145551234' }) }
+    );
+
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      message: 'Accepted',
+      status: 202,
+      location,
+    });
+  });
+
+  it('still answers OK! to an empty 204, with or without a Location header', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 204, headers: { Location: 'https://x' } }))
+    );
+    const result = await newClient().graphRequest('/groups/g/members/u/$ref', { method: 'DELETE' });
+
+    expect(JSON.parse(result.content[0].text)).toEqual({ message: 'OK!' });
+  });
+});

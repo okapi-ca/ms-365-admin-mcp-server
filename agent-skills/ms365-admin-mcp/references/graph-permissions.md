@@ -131,6 +131,7 @@ Sites.ReadWrite.All
 Team.Create
 Team.ReadWrite.All
 TeamMember.ReadWrite.All
+TeamsTelephoneNumber.ReadWrite.All
 TeamworkAppSettings.ReadWrite.All
 User.ReadWrite.All
 UserAuthenticationMethod.ReadWrite.All

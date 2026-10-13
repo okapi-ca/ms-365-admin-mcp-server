@@ -1,6 +1,6 @@
 # Tools catalogue
 
-Index of the 640 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
+Index of the 643 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
 
 ## Source of truth
 
@@ -84,6 +84,7 @@ The chat operator's confirmation is not enough for these. Prepare the dry-run, d
 - `delete-compliance-policy`, `delete-device-configuration`, `delete-enrollment-configuration`, `delete-autopilot-device`
 - `update-teams-app-settings`
 - `delete-team-admin-channel`
+- `unassign-teams-phone-number` — inbound calls to an Auto Attendant or Call Queue stop as soon as the order completes
 - `delete-site-list`, `delete-site-permission`
 - `apply-access-review-decisions`, `stop-access-review-instance`, `reset-access-review-decisions`, `delete-access-review-definition`
 - `activate-lifecycle-workflow`, `delete-lifecycle-workflow`, `delete-lifecycle-custom-task-extension`
@@ -115,7 +116,7 @@ The chat operator's confirmation is not enough for these. Prepare the dry-run, d
 - `remote-lock-device`, `logout-shared-apple-user`, `update-windows-device-account`
 - `update-sharepoint-site`, `delete-site-list-item`
 - `create-site-permission`, `update-site-permission`
-- `create-team`, `update-team`, `add-team-admin-members`, `remove-team-admin-members`, `archive-team`, `clone-team`
+- `create-team`, `update-team`, `add-team-admin-members`, `remove-team-admin-members`, `archive-team`, `clone-team`, `assign-teams-phone-number`
 - `create-cloud-pc-provisioning-policy`, `update-cloud-pc-provisioning-policy`
 - `create-ediscovery-case`, `update-ediscovery-case`, `close-ediscovery-case`, `reopen-ediscovery-case`, `create-ediscovery-custodian`, `create-ediscovery-search`
 - `create-access-review-definition`, `update-access-review-definition`, `accept-access-review-recommendations`

@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **640 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **643 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -227,7 +227,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (640)
+## Available tools (643)
 
 ### Security (11)
 
@@ -1007,40 +1007,43 @@ Triage reads over a user's chats, on `Chat.Read.All`. For court-admissible produ
 
 Listing or reading `retentionLabels` themselves is **not exposed**: Microsoft Graph does not support it with application permissions. Use delegated access or Security & Compliance PowerShell for that. `list-retention-events` is under [Security advanced](#security-advanced-9).
 
-### Teams administration (30)
+### Teams administration (33)
 
-| Tool                             | Method | Risk     |
-| -------------------------------- | ------ | -------- |
-| `list-teams`                     | GET    |          |
-| `create-team`                    | POST   | medium   |
-| `get-team`                       | GET    |          |
-| `update-team`                    | PATCH  | medium   |
-| `delete-team`                    | DELETE | critical |
-| `list-team-admin-channels`       | GET    |          |
-| `create-team-admin-channel`      | POST   | low      |
-| `get-team-admin-channel`         | GET    |          |
-| `delete-team-admin-channel`      | DELETE | high     |
-| `list-team-admin-members`        | GET    |          |
-| `add-team-admin-members`         | POST   | medium   |
-| `remove-team-admin-members`      | POST   | medium   |
-| `get-team-admin-member`          | GET    |          |
-| `list-team-installed-apps`       | GET    |          |
-| `archive-team`                   | POST   | medium   |
-| `unarchive-team`                 | POST   | low      |
-| `clone-team`                     | POST   | medium   |
-| `list-team-operations`           | GET    |          |
-| `list-team-permission-grants`    | GET    |          |
-| `get-teams-app-settings`         | GET    |          |
-| `update-teams-app-settings`      | PATCH  | high     |
-| `list-deleted-teams`             | GET    |          |
-| `list-teams-catalog-apps`        | GET    |          |
-| `get-teams-catalog-app`          | GET    |          |
-| `list-teams-app-definitions`     | GET    |          |
-| `get-teams-admin-settings`       | GET    |          |
-| `list-teams-user-configurations` | GET    |          |
-| `get-teams-admin-policy`         | GET    |          |
-| `list-teams-policy-assignments`  | GET    |          |
-| `list-teams-phone-assignments`   | GET    |          |
+| Tool                               | Method | Risk     |
+| ---------------------------------- | ------ | -------- |
+| `list-teams`                       | GET    |          |
+| `create-team`                      | POST   | medium   |
+| `get-team`                         | GET    |          |
+| `update-team`                      | PATCH  | medium   |
+| `delete-team`                      | DELETE | critical |
+| `list-team-admin-channels`         | GET    |          |
+| `create-team-admin-channel`        | POST   | low      |
+| `get-team-admin-channel`           | GET    |          |
+| `delete-team-admin-channel`        | DELETE | high     |
+| `list-team-admin-members`          | GET    |          |
+| `add-team-admin-members`           | POST   | medium   |
+| `remove-team-admin-members`        | POST   | medium   |
+| `get-team-admin-member`            | GET    |          |
+| `list-team-installed-apps`         | GET    |          |
+| `archive-team`                     | POST   | medium   |
+| `unarchive-team`                   | POST   | low      |
+| `clone-team`                       | POST   | medium   |
+| `list-team-operations`             | GET    |          |
+| `list-team-permission-grants`      | GET    |          |
+| `get-teams-app-settings`           | GET    |          |
+| `update-teams-app-settings`        | PATCH  | high     |
+| `list-deleted-teams`               | GET    |          |
+| `list-teams-catalog-apps`          | GET    |          |
+| `get-teams-catalog-app`            | GET    |          |
+| `list-teams-app-definitions`       | GET    |          |
+| `get-teams-admin-settings`         | GET    |          |
+| `list-teams-user-configurations`   | GET    |          |
+| `get-teams-admin-policy`           | GET    |          |
+| `list-teams-policy-assignments`    | GET    |          |
+| `list-teams-phone-assignments`     | GET    |          |
+| `assign-teams-phone-number`        | POST   | medium   |
+| `unassign-teams-phone-number`      | POST   | high     |
+| `get-teams-phone-number-operation` | GET    |          |
 
 ### Intune reports (18) -- requires `--allow-writes` (POST endpoints)
 
@@ -1571,6 +1574,7 @@ Sites.ReadWrite.All
 Team.Create
 Team.ReadWrite.All
 TeamMember.ReadWrite.All
+TeamsTelephoneNumber.ReadWrite.All
 TeamworkAppSettings.ReadWrite.All
 User.ReadWrite.All
 UserAuthenticationMethod.ReadWrite.All
