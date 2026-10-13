@@ -1515,6 +1515,8 @@ SubjectRightsRequest.Read.All
 Team.ReadBasic.All
 TeamMember.Read.All
 TeamsAppInstallation.ReadForTeam.All
+TeamsTelephoneNumber.Read.All
+TeamsUserConfiguration.Read.All
 TeamworkAppSettings.Read.All
 TeamworkDevice.Read.All
 ThreatAssessment.Read.All

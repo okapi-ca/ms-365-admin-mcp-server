@@ -2683,7 +2683,7 @@
     "pathPattern": "/admin/teams/userConfigurations",
     "method": "get",
     "toolName": "list-teams-user-configurations",
-    "appPermissions": ["TeamworkDevice.Read.All"],
+    "appPermissions": ["TeamsUserConfiguration.Read.All"],
     "llmTip": "Lists Teams user configurations in the tenant."
   },
   {
@@ -2704,8 +2704,8 @@
     "pathPattern": "/admin/teams/telephoneNumberManagement/numberAssignments",
     "method": "get",
     "toolName": "list-teams-phone-assignments",
-    "appPermissions": ["TeamworkDevice.Read.All"],
-    "llmTip": "Lists telephone number assignments for Teams. Shows which phone numbers are assigned to which users or resources."
+    "appPermissions": ["TeamsTelephoneNumber.Read.All"],
+    "llmTip": "Lists telephone number assignments for Teams. Shows which phone numbers are assigned to which users or resources. Look up one number with $filter=telephoneNumber eq '+15145551234'; every field except id and city is filterable (e.g. assignmentStatus eq 'unassigned', numberType eq 'directRouting'). Default page is 500, max $top is 1000."
   },
   {
     "pathPattern": "/sites",
