@@ -304,3 +304,70 @@ describe('SEC-F08 (SEC-004) — UPN redaction in authorizeUserClaims rejection p
     expect(claims?.upn).toBe('alice@contoso.com');
   });
 });
+
+describe('authorizeUserClaimsExplain — --authorize-by-app-role', () => {
+  it('accepts a user holding any one of the server App Roles, with no oid allowlist', () => {
+    for (const role of [
+      'Tools.Read.All',
+      'Tools.Write.LowMedium',
+      'Tools.Write.High',
+      'Tools.Write.Critical',
+    ]) {
+      const result = authorizeUserClaimsExplain(
+        basePayload({ roles: [role] }),
+        baseOptions({ requireAppRole: true })
+      );
+      expect(result.ok, role).toBe(true);
+    }
+  });
+
+  it('rejects with 403 a user with no roles claim (not assigned to the app)', () => {
+    const result = authorizeUserClaimsExplain(basePayload(), baseOptions({ requireAppRole: true }));
+    expect(result).toEqual({ ok: false, reason: 'insufficient_scope' });
+  });
+
+  it('ignores roles that are not this server App Roles', () => {
+    const result = authorizeUserClaimsExplain(
+      basePayload({ roles: ['Directory.Read.All', 'Tools.Write.Everything'] }),
+      baseOptions({ requireAppRole: true })
+    );
+    expect(result).toEqual({ ok: false, reason: 'insufficient_scope' });
+  });
+
+  it('rejects a Graph-audience token even when the scp check is disabled', () => {
+    // A token another client obtained for Graph passes the audience check
+    // (Graph is an expected audience for OBO) but never carries Tools.* roles.
+    const result = authorizeUserClaimsExplain(
+      basePayload({ aud: '00000003-0000-0000-c000-000000000000', scp: 'User.Read' }),
+      baseOptions({
+        expectedAudiences: [CLIENT_ID, '00000003-0000-0000-c000-000000000000'],
+        requireAppRole: true,
+        requiredScopes: [],
+      })
+    );
+    expect(result).toEqual({ ok: false, reason: 'insufficient_scope' });
+  });
+
+  it('ANDs with a non-empty oid allowlist', () => {
+    const opts = baseOptions({ authorizedUserOids: [OID_BOB], requireAppRole: true });
+    expect(authorizeUserClaimsExplain(basePayload({ roles: ['Tools.Read.All'] }), opts)).toEqual({
+      ok: false,
+      reason: 'invalid_token',
+    });
+    expect(authorizeUserClaimsExplain(basePayload({ oid: OID_BOB, roles: [] }), opts)).toEqual({
+      ok: false,
+      reason: 'insufficient_scope',
+    });
+    expect(
+      authorizeUserClaimsExplain(basePayload({ oid: OID_BOB, roles: ['Tools.Read.All'] }), opts).ok
+    ).toBe(true);
+  });
+
+  it('still enforces SEC-F03 for an assigned user', () => {
+    const result = authorizeUserClaimsExplain(
+      basePayload({ roles: ['Tools.Read.All'], scp: 'profile' }),
+      baseOptions({ requireAppRole: true, requiredScopes: ['access_as_user'] })
+    );
+    expect(result).toEqual({ ok: false, reason: 'insufficient_scope' });
+  });
+});

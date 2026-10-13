@@ -8,6 +8,12 @@ export interface UserTokenValidatorOptions {
   // SEC-F01: explicit opt-in required when authorizedUserOids is empty.
   // Without this flag and an empty allowlist, all user tokens are rejected.
   allowAnyTenantUser: boolean;
+  // SEC-F01 alternative to the oid allowlist: accept a user only if the token
+  // carries one of this server's App Roles (SERVER_APP_ROLES). Entra emits the
+  // claim only for principals assigned to the app, directly or through a
+  // group, so the Enterprise App assignment becomes the access list. Composes
+  // in AND with a non-empty `authorizedUserOids`.
+  requireAppRole?: boolean;
   // SEC-F03: user tokens must contain every scope listed here in their `scp` claim.
   // Default is enforced at the caller (server.ts); an empty list disables the check.
   requiredScopes: string[];
@@ -20,6 +26,17 @@ export interface UserTokenValidatorOptions {
   // to a user via the directory.
   redactUpn?: boolean;
 }
+
+/**
+ * App Roles defined on the server's app registration (docs/APP_ROLES.md).
+ * Holding any one of them proves an Enterprise App assignment.
+ */
+export const SERVER_APP_ROLES: readonly string[] = [
+  'Tools.Read.All',
+  'Tools.Write.LowMedium',
+  'Tools.Write.High',
+  'Tools.Write.Critical',
+];
 
 /**
  * SEC-F08 (SEC-004): format a UPN-like value for emission to logs.
@@ -127,15 +144,24 @@ export function authorizeUserClaimsExplain(
   // audience would gain the server's full app-permission capability.
   const upnForLog = formatUpnForLog(payload.upn || payload.preferred_username, options.redactUpn);
   if (options.authorizedUserOids.length === 0) {
-    if (!options.allowAnyTenantUser) {
+    if (!options.allowAnyTenantUser && !options.requireAppRole) {
       logger.warn(
-        `User ${upnForLog} (oid ${oid}) rejected: no --authorized-users allowlist configured and --allow-any-tenant-user not set`
+        `User ${upnForLog} (oid ${oid}) rejected: no --authorized-users allowlist configured and neither --authorize-by-app-role nor --allow-any-tenant-user set`
       );
       return { ok: false, reason: 'invalid_token' };
     }
   } else if (!options.authorizedUserOids.includes(oid)) {
     logger.warn(`User oid ${oid} (${upnForLog}) not in authorized-users allowlist`);
     return { ok: false, reason: 'invalid_token' };
+  }
+
+  // A token for another audience (e.g. Graph) carries none of this server's
+  // roles, so this check holds even if SEC-F03 below is disabled. The user is
+  // authenticated but not assigned: 403, since refreshing would not help.
+  const roles = Array.isArray(payload.roles) ? payload.roles : [];
+  if (options.requireAppRole && !roles.some((r) => SERVER_APP_ROLES.includes(r))) {
+    logger.warn(`User oid ${oid} (${upnForLog}) rejected: no App Role assigned on this server`);
+    return { ok: false, reason: 'insufficient_scope' };
   }
 
   // SEC-F03: enforce required scopes (e.g. access_as_user) on the `scp` claim.
@@ -160,7 +186,7 @@ export function authorizeUserClaimsExplain(
       upn: payload.upn || payload.preferred_username,
       name: payload.name,
       appid: payload.appid || payload.azp,
-      roles: Array.isArray(payload.roles) ? payload.roles : [],
+      roles,
     },
   };
 }

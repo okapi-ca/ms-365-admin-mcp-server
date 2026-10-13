@@ -108,11 +108,18 @@ class AdminGraphServer {
         .filter(Boolean);
 
       const allowAnyTenantUser = Boolean(this.options.allowAnyTenantUser);
+      const requireAppRole = Boolean(this.options.authorizeByAppRole);
 
       // SEC-F01: refuse to start if OAuth mode is enabled without any authorization surface.
-      if (this.options.oauthMode && authorizedUserOids.length === 0 && !allowAnyTenantUser) {
+      if (
+        this.options.oauthMode &&
+        authorizedUserOids.length === 0 &&
+        !allowAnyTenantUser &&
+        !requireAppRole
+      ) {
         throw new Error(
-          'OAuth mode requires either --authorized-users <oids> (per-user allowlist) ' +
+          'OAuth mode requires --authorized-users <oids> (per-user allowlist), ' +
+            '--authorize-by-app-role (users assigned to the Enterprise App) ' +
             'or --allow-any-tenant-user (accept any tenant user). ' +
             'Starting without one of these would leave the /mcp endpoint open to every authenticated tenant user.'
         );
@@ -158,6 +165,7 @@ class AdminGraphServer {
             ],
             authorizedUserOids,
             allowAnyTenantUser,
+            requireAppRole,
             requiredScopes,
             // SEC-F08 (SEC-004): plumb the CLI flag through so logger sees redaction.
             redactUpn: Boolean(this.options.logRedactUpn),
@@ -190,7 +198,11 @@ class AdminGraphServer {
       await startHttpServer({
         port,
         host: this.options.host || '127.0.0.1',
-        createServer: (userToken?: string) => this.createServer(userToken),
+        // SEC-G05: forward the caller's App Roles. Every HTTP caller is
+        // authenticated, so a missing claim falls back to `[]` (read-only),
+        // never to `undefined`, which would mean "no per-caller filter".
+        createServer: (userToken?: string, roles?: string[]) =>
+          this.createServer(userToken, roles ?? []),
         tokenValidatorOptions,
         userTokenValidatorOptions,
         oauthProxyOptions,

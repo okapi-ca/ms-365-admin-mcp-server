@@ -60,6 +60,10 @@ program
     'Accept any authenticated user in the configured tenant (SEC-F01 opt-in). Required when --oauth-mode is set without --authorized-users.'
   )
   .option(
+    '--authorize-by-app-role',
+    "Accept a user only if their token carries one of this server's App Roles (Tools.*), i.e. they are assigned to the Enterprise App directly or through a group. Satisfies SEC-F01 without --authorized-users; ANDs with it when both are set."
+  )
+  .option(
     '--required-user-scopes <scopes>',
     'Comma-separated scopes user tokens must contain in their scp claim (SEC-F03). Default: access_as_user. Empty string disables the check.'
   )
@@ -92,6 +96,7 @@ export interface CommandOptions {
   publicUrl?: string;
   authorizedUsers?: string;
   allowAnyTenantUser?: boolean;
+  authorizeByAppRole?: boolean;
   requiredUserScopes?: string;
   dynamicRegistration?: boolean;
   logRedactUpn?: boolean;

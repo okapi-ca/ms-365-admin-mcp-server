@@ -31,6 +31,20 @@ Stdio transport has no caller identity, so the App Role filter is bypassed there
 
 A caller authenticated to HTTP transport **without** any `Tools.Write.*` role is effectively read-only: write tools are not registered in their `tools/list` response (silent — not a 403).
 
+The filter goes by HTTP method, not by intent. A few `POST` endpoints only read — `run-hunting-query` and the Intune `intune-*-report` tools — and they are classified `low`, so they require `Tools.Write.LowMedium`. A caller with `Tools.Read.All` alone, or `Tools.Write.Critical` alone, does not get them.
+
+A token with no `roles` claim at all counts as no role. Every HTTP caller is authenticated, so the filter never falls back to the unfiltered stdio behavior.
+
+## Who can connect — `--authorize-by-app-role`
+
+By default the HTTP server admits only the user object IDs listed in `--authorized-users`. With `--authorize-by-app-role`, it admits instead any user whose token carries one of the four roles above, so the Enterprise App assignment (**Users and groups**) becomes the access list and groups can be used. Requirements and guarantees:
+
+- `appRoleAssignmentRequired` must be `true` on the Enterprise App, so Entra refuses to issue a token to anyone not assigned.
+- The server checks the claim itself, so a token for another audience (Graph, which the OBO flow requires the server to accept) is rejected even if the `scp` check (SEC-F03) is disabled.
+- A user with no role in the token gets `403`. With `--authorized-users` also set, a user must pass both checks.
+- Entra puts group-assigned roles in the token only for **direct** members of the assigned group. Nested groups are not expanded: assign each sub-group.
+- Assignment changes apply at the user's next token (60–90 min at most), or right away after a new sign-in.
+
 ## Setup — one-shot
 
 Create the four roles on the app registration via the included script:
@@ -97,14 +111,14 @@ This is the canonical "who has write access" report. Keep an exported snapshot i
 
 These are starting points — refine by team practice. Always grant the _narrowest_ combination that does the job.
 
-| Persona                        | Roles                                            | Rationale                                                                                                                                                              |
-| ------------------------------ | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SOC analyst (L1 triage)**    | `Tools.Write.LowMedium`                          | Comment on alerts, sync devices, run hunting queries. No state-changing ops.                                                                                           |
-| **SOC responder (L2/L3)**      | `Tools.Write.LowMedium` + `Tools.Write.Critical` | Triage + incident response (revoke sessions, disable accounts). Skip `High` if not needed for the playbook.                                                            |
-| **Identity / IT Ops**          | `Tools.Write.LowMedium` + `Tools.Write.High`     | Provisioning, group changes, conditional access updates. No destructive ops.                                                                                           |
-| **Tenant admin (break-glass)** | All three                                        | Emergency-only. Pair with PIM activation and short token TTL.                                                                                                          |
-| **Read-only analyst**          | `Tools.Read.All`                                 | Reports, hunting, audit logs. No `Tools.Write.*` assigned ⇒ read-only session. Tag is declarative — used only so the user shows up in Users and groups for governance. |
-| **Automation SP (low-risk)**   | `Tools.Write.LowMedium`                          | Scripted hygiene tasks. Pair with `--max-risk-level=medium` on the server they call.                                                                                   |
+| Persona                        | Roles                                            | Rationale                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SOC analyst (L1 triage)**    | `Tools.Write.LowMedium`                          | Comment on alerts, sync devices, run hunting queries. No state-changing ops.                                                                                  |
+| **SOC responder (L2/L3)**      | `Tools.Write.LowMedium` + `Tools.Write.Critical` | Triage + incident response (revoke sessions, disable accounts). Skip `High` if not needed for the playbook.                                                   |
+| **Identity / IT Ops**          | `Tools.Write.LowMedium` + `Tools.Write.High`     | Provisioning, group changes, conditional access updates. No destructive ops.                                                                                  |
+| **Tenant admin (break-glass)** | All three                                        | Emergency-only. Pair with PIM activation and short token TTL.                                                                                                 |
+| **Read-only analyst**          | `Tools.Read.All`                                 | Reports, audit logs. No `Tools.Write.*` assigned ⇒ read-only session. Tag is declarative — used only so the user shows up in Users and groups for governance. |
+| **Automation SP (low-risk)**   | `Tools.Write.LowMedium`                          | Scripted hygiene tasks. Pair with `--max-risk-level=medium` on the server they call.                                                                          |
 
 ## Operational considerations
 
@@ -118,5 +132,5 @@ These are starting points — refine by team practice. Always grant the _narrowe
 - Filter logic: [`src/graph-tools.ts`](../src/graph-tools.ts) — see the `writeRiskTiers` parameter
 - Role → tier mapping: [`src/risk-level.ts`](../src/risk-level.ts) `computeWriteRiskTiers()`
 - JWT claim extraction: [`src/token-validator.ts`](../src/token-validator.ts), [`src/user-token-authorization.ts`](../src/user-token-authorization.ts)
-- Tests: [`test/risk-level.test.ts`](../test/risk-level.test.ts) (mapping), [`test/graph-tools-role-filter.test.ts`](../test/graph-tools-role-filter.test.ts) (integration)
+- Tests: [`test/risk-level.test.ts`](../test/risk-level.test.ts) (mapping), [`test/graph-tools-role-filter.test.ts`](../test/graph-tools-role-filter.test.ts) (registration filter), [`test/http-approle-e2e.test.ts`](../test/http-approle-e2e.test.ts) (end to end: the `roles` claim reaching `tools/list` over HTTP, and stdio unchanged)
 - Tier classification rubric: [`docs/RISK_MODEL.md`](RISK_MODEL.md)

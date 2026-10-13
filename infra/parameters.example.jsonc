@@ -32,6 +32,9 @@
     "authorizedUsers": {
       "value": "<comma-separated Entra user OIDs authorized to authenticate>"
     },
+    // Alternative to authorizedUsers: admit every user assigned to the Enterprise App
+    // (directly or through a group). See docs/APP_ROLES.md.
+    "authorizeByAppRole": { "value": false },
     "allowedClients": {
       "value": "<comma-separated Entra app IDs for machine-to-machine access, or empty>"
     },

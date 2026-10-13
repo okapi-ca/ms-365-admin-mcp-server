@@ -62,6 +62,9 @@ param oauthMode bool = false
 @description('Comma-separated Entra user object IDs (oid) authorized to authenticate via OAuth. Required when oauthMode=true.')
 param authorizedUsers string = ''
 
+@description('Admit a user only if their token carries one of the server App Roles (Tools.*), i.e. they are assigned to the Enterprise App directly or through a group (--authorize-by-app-role). Satisfies SEC-F01 without authorizedUsers; with both set, a user must pass both. Requires appRoleAssignmentRequired=true on the Enterprise App.')
+param authorizeByAppRole bool = false
+
 @description('Enable write/mutation tools by passing --allow-writes. Default false (read-only). Set true for admin deployments that perform mutations.')
 param allowWrites bool = false
 
@@ -178,10 +181,13 @@ var authorizedUserArgs = (oauthMode && !empty(authorizedUsers)) ? [
   '--authorized-users'
   authorizedUsers
 ] : []
+var appRoleAuthArgs = (oauthMode && authorizeByAppRole) ? [
+  '--authorize-by-app-role'
+] : []
 var allowWritesArgs = allowWrites ? [
   '--allow-writes'
 ] : []
-var containerArgs = concat(baseArgs, serviceAuthArgs, oauthArgs, publicUrlArgs, authorizedUserArgs, allowWritesArgs)
+var containerArgs = concat(baseArgs, serviceAuthArgs, oauthArgs, publicUrlArgs, authorizedUserArgs, appRoleAuthArgs, allowWritesArgs)
 
 // --- User-Assigned Managed Identity ---
 

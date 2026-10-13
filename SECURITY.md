@@ -96,3 +96,4 @@ The following defenses are already implemented (see inline `SEC-*` comments in `
 - Tenant `common` rejected (single-tenant required for client credentials)
 - Non-root Docker user
 - Sanitized query strings in error messages (no secret leakage)
+- Per-caller write filtering in HTTP mode: the caller's `Tools.Write.*` App Roles select which write tiers its session lists and can invoke; a token with no `roles` claim is read-only (SEC-G05, `src/server.ts`, `test/http-approle-e2e.test.ts`)
