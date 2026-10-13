@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { wrapUntrustedContent } from './untrusted-envelope.js';
+import { shallowBodySchema } from './advertised-schema.js';
 import { effectiveRiskLevel, isToolAllowed, type RiskLevel } from './risk-level.js';
 import {
   hasGuardrails,
@@ -478,7 +479,9 @@ export function registerGraphTools(
     const paramSchema: Record<string, z.ZodTypeAny> = {};
     for (const param of tool.parameters || []) {
       if (param.type === 'Body') {
-        paramSchema[param.name] = coerceJsonStringBody(param.schema || z.unknown()).optional();
+        paramSchema[param.name] = coerceJsonStringBody(
+          param.schema ? shallowBodySchema(param.schema) : z.unknown()
+        ).optional();
       } else if (param.type === 'Path') {
         paramSchema[param.name] = z.string().describe(param.description || param.name);
       } else if (param.type === 'Query') {

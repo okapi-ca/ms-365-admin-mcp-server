@@ -153,6 +153,30 @@ Tools surface in **Agent mode** (GitHub Copilot Chat). VS Code asks for
 per-tool approval; the `--preset` flag above keeps the catalog manageable.
 Use `Cmd/Ctrl+Shift+P` → `MCP: List Servers` → `Show Output` to see logs.
 
+### Catalog size limit on Claude.ai surfaces
+
+Claude.ai, Claude Desktop and cloud sessions serve each connector's tools under a
+fixed budget of **1 MiB of input schema** (compact JSON; tool names and
+descriptions are not counted). Tools are admitted in alphabetical order and a
+tool that no longer fits is dropped silently. Claude Code CLI is not affected.
+The limit is not documented publicly.
+
+In a cloud session linked to a Mac, the `claude-device` bridge relays every
+local MCP server under **one** connector (`lcl-<server>-<tool>`), so all local
+servers share that budget, and this server's tools sort after most of them.
+
+Request bodies are therefore advertised shallow (`src/advertised-schema.ts`):
+the entity's own fields with their descriptions, nested objects as free-form
+objects, and no `Read-only.` fields. Graph validates the body; the server
+forwards it as sent. With writes enabled the catalog advertises about 595 KB of
+input schema, and `test/advertised-schema.test.ts` fails the build above
+768 KiB.
+
+If tools still go missing in a cloud session, shrink what this server
+advertises (read-only mode, `--preset`, `--enabled-tools`), disable unused
+local servers, or register this server as its own connector so it gets a
+budget of its own.
+
 ### Remote HTTP server: device_code authentication (RFC 8628)
 
 If the server runs in HTTP / OAuth mode on a remote host (e.g. Azure Container Apps) and the client connects via [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), the standard flow requires a browser to reach `localhost:14543/oauth/callback`. When that isn't possible — macOS Platform SSO hijacks the WebKit flow, Claude Code runs in a headless Docker container, the user is on a remote SSH dev env — use the `ms-365-admin-mcp-auth` bootstrap to pre-seed `mcp-remote`'s token cache instead.
