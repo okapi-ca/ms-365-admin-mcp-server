@@ -16,7 +16,14 @@ import rateLimit from 'express-rate-limit';
 export interface HttpServerOptions {
   port: number;
   host?: string;
-  createServer: (userToken?: string, roles?: string[]) => McpServer;
+  /**
+   * Builds the per-request McpServer. `group` is set for `/mcp/<group>` and
+   * narrows the catalog to that group of the active partition; it is
+   * `undefined` for `/mcp`.
+   */
+  createServer: (userToken?: string, roles?: string[], group?: string) => McpServer;
+  /** Groups of the active tool partition, each served on `/mcp/<group>`. */
+  toolGroups?: readonly string[];
   tokenValidatorOptions?: TokenValidatorOptions;
   userTokenValidatorOptions?: UserTokenValidatorOptions;
   oauthProxyOptions?: OAuthProxyOptions;
@@ -221,10 +228,50 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     })
   );
 
+  registerMcpRoutes(app, options.createServer, options.toolGroups ?? []);
+
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    logger.error(`Unhandled Express error: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  const host = options.host || '127.0.0.1';
+  app.listen(options.port, host, () => {
+    logger.info(`HTTP MCP server listening on ${host}:${options.port}`);
+  });
+}
+
+/**
+ * Mounts the MCP transport on `/mcp` (full catalog) and `/mcp/:group` (one
+ * group of the active partition in tool-partitions.ts). Must be called after
+ * the `/mcp` rate limiter and auth middleware, which prefix-match and therefore
+ * guard the group routes too: an unauthenticated probe gets 401 before it can
+ * learn which groups exist.
+ *
+ * Each group is meant to be registered as its own Claude.ai connector, so it
+ * draws on its own input-schema budget and its own per-tool permission settings
+ * — see "Per-domain endpoints" in docs/HTTP_DEPLOYMENT.md. The routes never name a
+ * group: they serve whatever the partition table defines.
+ */
+export function registerMcpRoutes(
+  app: express.Express,
+  createServer: HttpServerOptions['createServer'],
+  toolGroups: readonly string[]
+): void {
+  const known = new Set(toolGroups);
+
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
-    const server = options.createServer(
+    const group = req.params.group as string | undefined;
+    if (group !== undefined && !known.has(group)) {
+      res.status(404).json({ error: 'Unknown tool group' });
+      return;
+    }
+    const server = createServer(
       res.locals.userToken as string | undefined,
-      res.locals.roles as string[] | undefined
+      res.locals.roles as string[] | undefined,
+      group
     );
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on('close', () => {
@@ -242,19 +289,9 @@ export async function startHttpServer(options: HttpServerOptions): Promise<void>
     }
   }
 
-  app.post('/mcp', handleMcpRequest);
-  app.delete('/mcp', handleMcpRequest);
-  app.get('/mcp', handleMcpRequest);
-
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    logger.error(`Unhandled Express error: ${err.message}`);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-  const host = options.host || '127.0.0.1';
-  app.listen(options.port, host, () => {
-    logger.info(`HTTP MCP server listening on ${host}:${options.port}`);
-  });
+  for (const route of ['/mcp', '/mcp/:group']) {
+    app.post(route, handleMcpRequest);
+    app.delete(route, handleMcpRequest);
+    app.get(route, handleMcpRequest);
+  }
 }

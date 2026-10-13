@@ -23,6 +23,8 @@ interface EndpointConfig {
   pathPattern: string;
   method: string;
   toolName: string;
+  /** README inventory section; tool-partitions.ts groups tools by it. */
+  section: string;
   appPermissions?: string[];
   llmTip?: string;
   riskLevel?: 'low' | 'medium' | 'high' | 'critical';
@@ -108,6 +110,17 @@ export function coerceJsonStringBody(schema: z.ZodTypeAny): z.ZodTypeAny {
 const endpointsData = JSON.parse(
   readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
 ) as EndpointConfig[];
+
+/** Each tool with its README section — the input to `resolvePartition`. */
+export function endpointSections(): { toolName: string; section: string }[] {
+  return endpointsData.map(({ toolName, section }) => ({ toolName, section }));
+}
+
+/** One group of a tool partition, as served on `/mcp/<group>`. */
+export interface ToolGroupFilter {
+  name: string;
+  tools: ReadonlySet<string>;
+}
 
 // Permissions that have no delegated equivalent in Microsoft Graph.
 // Tools requiring any of these permissions must use an app-only token even in
@@ -425,7 +438,8 @@ export function registerGraphTools(
   enabledToolsPattern?: string,
   maxRiskLevel: RiskLevel = 'critical',
   appOnlyGraphClient?: GraphClient,
-  writeRiskTiers?: Set<RiskLevel>
+  writeRiskTiers?: Set<RiskLevel>,
+  group?: ToolGroupFilter
 ): number {
   let registeredCount = 0;
   let skippedCount = 0;
@@ -471,6 +485,14 @@ export function registerGraphTools(
     }
 
     if (enabledToolsRegex && !enabledToolsRegex.test(tool.alias)) {
+      skippedCount++;
+      continue;
+    }
+
+    // Per-group endpoint (`/mcp/<group>`): narrows the catalog, never widens
+    // it — every control above has already run. `undefined` serves the full
+    // catalog, as `/mcp` and stdio always have.
+    if (group !== undefined && !group.tools.has(tool.alias)) {
       skippedCount++;
       continue;
     }
@@ -581,8 +603,9 @@ export function registerGraphTools(
   const roleSummary = writeRiskTiers
     ? `, ${skippedByRole} skipped (role tiers: ${[...writeRiskTiers].join('|') || 'none'})`
     : '';
+  const groupSummary = group ? ` [group: ${group.name}]` : '';
   logger.info(
-    `Tool registration complete: ${registeredCount} registered, ${skippedCount} skipped (read-only/filter), ${skippedByRisk} skipped (risk-level cap: ${maxRiskLevel})${roleSummary}, ${failedCount} failed`
+    `Tool registration complete${groupSummary}: ${registeredCount} registered, ${skippedCount} skipped (read-only/filter), ${skippedByRisk} skipped (risk-level cap: ${maxRiskLevel})${roleSummary}, ${failedCount} failed`
   );
   return registeredCount;
 }

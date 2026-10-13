@@ -140,6 +140,7 @@ Express app with:
 - 100 KB body limit
 - 100 req/min rate limit on `/mcp`
 - JWT validation middleware on `/mcp` (see `token-validator.ts`)
+- `/mcp` serves the full catalog; `/mcp/:group` serves one group of the active partition (`--partition`, tables in `tool-partitions.ts`: group → README sections, resolved through the `section` each endpoint carries in `endpoints.json`). The rate limiter and auth middleware prefix-match, so they guard the group routes too; the group filter runs last in `registerGraphTools`, after every write and risk control, and only narrows the catalog. See [Per-domain endpoints](HTTP_DEPLOYMENT.md#per-domain-endpoints)
 - `GET /health` unauthenticated
 - Stateless MCP transport (`StreamableHTTPServerTransport`) — one fresh transport per request
 

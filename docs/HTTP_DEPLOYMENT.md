@@ -54,7 +54,8 @@ At least one of `--allowed-clients` or `--oauth-mode` is **mandatory** in HTTP m
 Endpoints:
 
 - `GET /health` — unauthenticated liveness probe. Returns `{ status: "ok", transport: "http", timestamp: "..." }`.
-- `POST /mcp`, `DELETE /mcp`, `GET /mcp` — MCP protocol endpoints. Require `Authorization: Bearer <token>`.
+- `POST /mcp`, `DELETE /mcp`, `GET /mcp` — MCP protocol endpoints, full tool catalog. Require `Authorization: Bearer <token>`.
+- `POST /mcp/<group>`, `DELETE /mcp/<group>`, `GET /mcp/<group>` — same protocol, same authentication and same per-caller App Role write filter, catalog narrowed to one group of the active partition. With the default `--partition domains`: `identity`, `intune`, `security`, `purview`, `exchange`, `sharepoint`, `teams`. With `--partition groups`: `identity`, `devices`, `security`, `collaboration`. An unknown group returns 404. See [Per-domain endpoints](#per-domain-endpoints).
 
 When `--oauth-mode` is enabled, the following are added:
 
@@ -63,6 +64,62 @@ When `--oauth-mode` is enabled, the following are added:
 - `POST /register` — Dynamic Client Registration. Returns a `client_id` + `client_secret` per MCP client; the plaintext secret is shown once and stored as a SHA-256 hash in the `oauthstate` table. Every `/token` call must authenticate with these credentials (SEC-F04b). All OAuth traffic flows through the server's single Entra app for upstream authentication.
 - `GET /authorize` — 302-redirects to Entra `/oauth2/v2.0/authorize` using a server-side PKCE verifier that bridges to the client's code_challenge.
 - `POST /token` — exchanges authorization codes / refresh tokens against Entra, substituting the server's PKCE verifier.
+
+## Per-domain endpoints
+
+`/mcp` serves the whole catalog. That suits clients that load tools directly, such as Claude Code CLI, but not surfaces that cap what a connector may advertise. Claude.ai, Claude Desktop and cloud sessions serve each connector's tools under an input-schema budget of 1 MiB, admitted in alphabetical order, and drop silently whatever no longer fits (see "Catalog size limit on Claude.ai surfaces" in the README). With writes enabled the full catalog advertises about 595 KB, so the margin is thin, it shrinks with every new Graph area, and when several local servers are relayed as one connector they share it.
+
+`/mcp/<group>` serves one group of a **partition** of the catalog: every tool belongs to exactly one group, so the groups together advertise the full catalog, each tool once. A client then declares only the groups its operator's role needs — a Teams administrator's profile need not carry the Intune wipe tools nor pay their schema cost — and each group registered as its own connector gets a budget of its own.
+
+### The partition is data
+
+Every entry of `src/endpoints.json` carries its README inventory `section`. A partition in `src/tool-partitions.ts` is a table: group → README sections, plus the few tools moved out of their section by name. Changing the grouping means editing that table; the routing (`registerMcpRoutes`) and the registration filter (`registerGraphTools`) never name a group.
+
+The tables start from the README sections, which `test/readme-inventory.test.ts` already keeps duplicate-free, rather than from the `--preset` regexes in `src/tool-categories.ts`, which overlap and leave tools out. `resolvePartition` refuses at startup a table that leaves a section unplaced, places a section or tool twice, or names one that does not exist. `test/tool-partitions.test.ts` runs the same checks against every table, measures each group through the MCP transport against a 512 KiB ceiling (half a connector's budget), and checks that each group's `section` matches the README.
+
+### Placement rule: by Entra role, not by scenario
+
+A tool goes to the group of the Entra built-in role an administrator needs to use it, not to the group of the scenario it serves. Disabling an account during an incident is still a User Administrator action, so `disable-user-account` is in `identity` even though its README section is "Incident response". Most sections move as a whole; the exceptions are listed by name in the table:
+
+| Tools                                                                                 | From section               | To                                | Role that places them                         |
+| ------------------------------------------------------------------------------------- | -------------------------- | --------------------------------- | --------------------------------------------- |
+| `disable-user-account`, `revoke-user-sessions`                                        | Incident response          | `identity`                        | User Administrator                            |
+| `update-device` (Entra device object)                                                 | Incident response          | `identity`                        | Cloud Device Administrator                    |
+| the seven `delete-user-*-auth-method` tools                                           | Incident response          | `identity`                        | Authentication Administrator                  |
+| `list-deleted-users`, `list-deleted-groups`                                           | Audit logs & deleted items | `identity`                        | User / Groups Administrator                   |
+| `list-user-registration-details` (MFA registration)                                   | Reports+                   | `identity`                        | Reports Reader / Authentication Administrator |
+| `list-bitlocker-recovery-keys`                                                        | Information Protection     | `intune`                          | Intune Administrator (device recovery)        |
+| `list-device-local-credentials` (Windows LAPS)                                        | Directory+                 | `intune`                          | Intune Administrator (device recovery)        |
+| `list-threat-assessment-requests`                                                     | Information Protection     | `security`                        | Security Operator                             |
+| `list-retention-events`, `list-retention-event-types`, `list-subject-rights-requests` | Security advanced          | `purview`                         | Compliance Administrator                      |
+| per-workload usage reports (email, mailbox, SharePoint, OneDrive, Teams activity)     | Usage reports              | `exchange`, `sharepoint`, `teams` | the workload's administrator                  |
+
+Tenant-wide administration that belongs to no service (organization and domains, licences, service health, Copilot, tenant-wide usage aggregates) goes to `identity`.
+
+### The two partitions
+
+**`domains` (default)** — one group per Microsoft 365 service, aligned with the Entra built-in admin roles. Measured through the MCP transport, writes enabled at `--max-risk-level critical`:
+
+| Group        |   Tools | Input-schema bytes | Share of 512 KiB |
+| ------------ | ------: | -----------------: | ---------------: |
+| `identity`   |     250 |  262,103 (256 KiB) |             50 % |
+| `intune`     |     156 |  141,524 (138 KiB) |             27 % |
+| `security`   |      86 |    67,603 (66 KiB) |             13 % |
+| `teams`      |      57 |    46,368 (45 KiB) |              9 % |
+| `purview`    |      52 |    43,575 (43 KiB) |              8 % |
+| `sharepoint` |      31 |    28,363 (28 KiB) |              5 % |
+| `exchange`   |      11 |      5,975 (6 KiB) |              1 % |
+| **Total**    | **643** |        **595,511** |                  |
+
+**`groups`** — four groups, each a union of `domains` groups: `identity`; `devices` = `intune`; `security` = `security` + `purview`; `collaboration` = `exchange` + `sharepoint` + `teams`. Fewer endpoints to configure, at the cost of groups that straddle admin roles. The test keeps it a strict union of `domains`, so switching never moves a tool across a role boundary.
+
+`domains` is the default because its groups coincide with the Entra roles that already bound what an administrator may do, so a client profile, a connector and an operator's role can be reasoned about with the same cut. The budget does not decide between them: the largest group, `identity`, is the same in both.
+
+### What a group endpoint does and does not change
+
+The group filter runs last in `registerGraphTools`, after `--read-only` / `--allow-writes`, `--max-risk-level`, the App Role write-tier filter and `--enabled-tools` / `--preset`. It can only narrow what the same caller sees on `/mcp`, never widen it. JWT validation, the OBO exchange and app-only fallback, the pre-flight guardrails, rate limiting and the response envelope are unchanged. The group route sits behind the same rate limiter and auth middleware as `/mcp`, so an unauthenticated probe gets 401 and learns nothing about which groups exist.
+
+**A group endpoint is a catalog boundary, not an authorization boundary.** A token valid on `/mcp` is valid on every `/mcp/<group>`, and every group calls Graph with the same app registration. Restrict who may call which tools with App Roles ([APP_ROLES.md](APP_ROLES.md)), `--max-risk-level` and the Graph permissions you grant.
 
 ## Authentication model
 

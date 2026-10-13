@@ -68,11 +68,14 @@ test/                 Vitest specs
      "toolName": "list-something",
      "pathPattern": "/something",
      "method": "GET",
+     "section": "Users", // README inventory section the tool's row goes under
      "appPermissions": ["Something.Read.All"],
      "llmTip": "Optional hint shown to the LLM in the tool description",
      "riskLevel": "low", // only for non-GET
    }
    ```
+
+   `section` also places the tool in a `/mcp/<group>` endpoint. If the section is new, add it to every table in `src/tool-partitions.ts`; `test/tool-partitions.test.ts` fails otherwise.
 
 3. **Regenerate the client**:
 

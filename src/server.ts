@@ -7,6 +7,14 @@ import AuthManager from './auth.js';
 import type { CommandOptions } from './cli.ts';
 import { getSecrets, type AppSecrets } from './secrets.js';
 import { computeWriteRiskTiers } from './risk-level.js';
+import { endpointSections } from './graph-tools.js';
+import {
+  DEFAULT_PARTITION,
+  PARTITIONS,
+  groupToolSets,
+  isPartitionName,
+  resolvePartition,
+} from './tool-partitions.js';
 
 class AdminGraphServer {
   private authManager: AuthManager;
@@ -14,6 +22,7 @@ class AdminGraphServer {
   private server: McpServer | null;
   private secrets: AppSecrets | null;
   private version: string = '0.1.0';
+  private toolGroups: Map<string, ReadonlySet<string>> = new Map();
 
   constructor(authManager: AuthManager, options: CommandOptions = {}) {
     this.authManager = authManager;
@@ -25,11 +34,22 @@ class AdminGraphServer {
   async initialize(version: string): Promise<void> {
     this.secrets = await getSecrets();
     this.version = version;
+    // Resolved once: a table that is not a partition stops the server here.
+    const partitionName = isPartitionName(this.options.partition)
+      ? this.options.partition
+      : DEFAULT_PARTITION;
+    this.toolGroups = groupToolSets(
+      resolvePartition(PARTITIONS[partitionName], endpointSections())
+    );
     // stdio transport uses app-only (no user token available)
     this.server = this.createServer();
   }
 
-  createServer(userToken?: string, roles?: string[]): McpServer {
+  createServer(userToken?: string, roles?: string[], group?: string): McpServer {
+    const groupTools = group === undefined ? undefined : this.toolGroups.get(group);
+    if (group !== undefined && groupTools === undefined) {
+      throw new Error(`Unknown tool group: ${group}`);
+    }
     const server = new McpServer({
       name: 'Microsoft365AdminMCP',
       version: this.version,
@@ -58,7 +78,8 @@ class AdminGraphServer {
       this.options.enabledTools,
       this.options.maxRiskLevel,
       appOnlyGraphClient,
-      writeRiskTiers
+      writeRiskTiers,
+      group === undefined ? undefined : { name: group, tools: groupTools! }
     );
     return server;
   }
@@ -201,8 +222,11 @@ class AdminGraphServer {
         // SEC-G05: forward the caller's App Roles. Every HTTP caller is
         // authenticated, so a missing claim falls back to `[]` (read-only),
         // never to `undefined`, which would mean "no per-caller filter".
-        createServer: (userToken?: string, roles?: string[]) =>
-          this.createServer(userToken, roles ?? []),
+        // The domain of a /mcp/<domain> route is applied after that filter
+        // and only narrows it (see "Per-domain endpoints" in HTTP_DEPLOYMENT.md).
+        createServer: (userToken?: string, roles?: string[], group?: string) =>
+          this.createServer(userToken, roles ?? [], group),
+        toolGroups: [...this.toolGroups.keys()],
         tokenValidatorOptions,
         userTokenValidatorOptions,
         oauthProxyOptions,

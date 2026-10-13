@@ -199,6 +199,7 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#oauth--browser-authenticat
 --allow-writes           Enable write operations
 --enabled-tools <regex>  Filter tools by regex pattern
 --preset <names>         Use preset categories (comma-separated)
+--partition <name>       Tool partition served on /mcp/<group> in HTTP mode (default: domains)
 --list-presets           List available presets and exit
 --list-tools             List available tools and exit
 --list-permissions       List required Graph API permissions and exit
@@ -1666,7 +1667,7 @@ npm run inspector        # MCP Inspector for interactive testing
 
 ### Adding a new tool
 
-1. Add the endpoint entry in `src/endpoints.json`
+1. Add the endpoint entry in `src/endpoints.json`, with its `section` (the README inventory section its row goes under) and, for a write, its `riskLevel`. If that section is new, place it in every table of `src/tool-partitions.ts`
 2. Run `npm run generate` to regenerate the client
 3. The tool is automatically registered at startup by `registerGraphTools()`
 4. Run `npm run verify` to validate

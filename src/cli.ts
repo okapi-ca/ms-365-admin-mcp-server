@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getCombinedPresetPattern, listPresets } from './tool-categories.js';
 import { parseMaxRiskLevel, type RiskLevel } from './risk-level.js';
+import { DEFAULT_PARTITION, PARTITIONS, isPartitionName } from './tool-partitions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -33,6 +34,10 @@ program
     'Use preset tool categories (comma-separated). Available: security, audit, health, reports, all'
   )
   .option('--list-presets', 'List all available presets and exit')
+  .option(
+    '--partition <name>',
+    `Tool partition served on /mcp/<group> in HTTP mode: ${Object.keys(PARTITIONS).join(', ')} (default: ${DEFAULT_PARTITION}). /mcp always serves the full catalog.`
+  )
   .option('--list-permissions', 'List all required Graph API application permissions and exit')
   .option('--list-tools', 'List all available tools and exit')
   .option('--cloud <type>', 'Microsoft cloud environment: global (default) or china (21Vianet)')
@@ -84,6 +89,7 @@ export interface CommandOptions {
   maxRiskLevel?: RiskLevel;
   enabledTools?: string;
   preset?: string;
+  partition?: string;
   listPresets?: boolean;
   listPermissions?: boolean;
   listTools?: boolean;
@@ -163,6 +169,14 @@ export function parseArgs(): CommandOptions {
 
   if (options.cloud) {
     process.env.MS365_ADMIN_MCP_CLOUD_TYPE = options.cloud;
+  }
+
+  options.partition ??= process.env.MS365_ADMIN_MCP_PARTITION || DEFAULT_PARTITION;
+  if (!isPartitionName(options.partition)) {
+    console.error(
+      `Error: unknown --partition ${options.partition}. Available: ${Object.keys(PARTITIONS).join(', ')}`
+    );
+    process.exit(1);
   }
 
   return options;
