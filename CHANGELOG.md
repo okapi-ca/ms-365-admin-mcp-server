@@ -8,6 +8,15 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Removed
+
+- `list-copilot-agent-registrations` (640 tools). Microsoft dropped `GET /copilot/agentRegistrations` from the beta OpenAPI spec — the collection now exposes only `POST`, and the Agent Registration API docs list only Create, Get, Update and Delete. Without the operation, `npm run generate` emits no client entry and `endpoints-validation` fails. `get-copilot-agent-registration` still works when the registration id is already known.
+
+### Fixed
+
+- `npm run generate` failed against the live Microsoft Graph specs with `Path "/copilot/reports/getMicrosoft365CopilotUsageUserDetail(period='{period}')" not found`, so `npm run verify` failed on a fresh clone and in CI. Microsoft renamed the three Copilot report functions in both the v1.0 and beta specs and added an optional `version` argument, as `(period='{period}',version='@version')`. `get-copilot-usage-user-detail`, `get-copilot-user-count-summary` and `get-copilot-user-count-trend` now use the new paths. Their tips list the periods of the default report version, v2: `D7`, `D28`, `D90`, `D180` and `ALL`. `D30` exists only in v1. Local runs that still held a cached spec under `openapi/` kept passing, which hid the break.
+- The generator's function-path post-processing turned `range(param=':value')` into a template literal only when the quoted argument came last. The renamed Copilot paths were left single-quoted, which broke the `tsup` build. The pattern now matches a quoted argument in any position.
+
 ## [0.15.1] — 2026-07-31
 
 ### Security

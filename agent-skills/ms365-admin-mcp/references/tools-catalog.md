@@ -1,6 +1,6 @@
 # Tools catalogue
 
-Index of the 641 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
+Index of the 640 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
 
 ## Source of truth
 

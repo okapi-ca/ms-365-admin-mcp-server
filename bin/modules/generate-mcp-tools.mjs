@@ -49,7 +49,15 @@ export function generateMcpTools(openApiSpec, outputDir) {
     // to backticks (template literal) so single quotes can remain inside.
     // Match: path: '/...range(param=':value')...',
     // Replace with: path: `/...range(param=':value')...`,
-    clientCode = clientCode.replace(/(path:\s*)'(\/[^']*\([^)]*=':[\w]+'\)[^']*)'/g, '$1`$2`');
+    // The quoted argument need not be the last one: Microsoft's 2026-10 specs added an
+    // OData alias argument to the Copilot report functions, giving
+    // getMicrosoft365CopilotUsageUserDetail(period=':period',version='@version'). The
+    // previous pattern required `=':name')` and left that path single-quoted, which
+    // broke the build.
+    clientCode = clientCode.replace(
+      /^(\s*path:\s*)'(\/[^\n`]*\([^)\n]*='[^)\n]*\)[^'\n`]*)',$/gm,
+      '$1`$2`,'
+    );
 
     fs.writeFileSync(clientFilePath, clientCode);
 

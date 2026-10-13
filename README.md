@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **641 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **640 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -227,7 +227,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (641)
+## Available tools (640)
 
 ### Security (11)
 
@@ -1231,7 +1231,7 @@ New Graph permissions required since v0.10.0 / 0.11.1 (must be consented on the 
 | `list-monthly-print-usage-by-printer` | GET    |      |
 | `list-monthly-print-usage-by-user`    | GET    |      |
 
-### Copilot admin (16)
+### Copilot admin (15)
 
 Settings and policy:
 
@@ -1264,10 +1264,9 @@ Interaction history audit, AI users and meeting insights:
 
 Agent registrations:
 
-| Tool                               | Method | Risk |
-| ---------------------------------- | ------ | ---- |
-| `list-copilot-agent-registrations` | GET    |      |
-| `get-copilot-agent-registration`   | GET    |      |
+| Tool                             | Method | Risk |
+| -------------------------------- | ------ | ---- |
+| `get-copilot-agent-registration` | GET    |      |
 
 `get-all-copilot-interactions` returns every enterprise Copilot interaction in the tenant — prompts and responses. Treat the output as regulated personal data.
 
