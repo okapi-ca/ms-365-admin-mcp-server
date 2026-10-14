@@ -56,7 +56,7 @@ Every modern Endpoint security policy (Disk encryption / BitLocker, Antivirus, F
 | `create-configuration-policy`, `update-configuration-policy` (metadata only), `update-intent`, `update-intent-settings`                | medium |
 | `delete-configuration-policy`, `assign-configuration-policy`, `delete-intent`, `assign-intent`                                         | high   |
 
-Filter `list-configuration-policies` on `templateReference/templateFamily` (for example `endpointSecurityDiskEncryption`) to find every Endpoint security policy of one kind. **Every `assign-*` action replaces the whole assignment list**: read the current assignments first and send them back with the change, or the groups left out are silently unassigned.
+Filter `list-configuration-policies` on `templateReference/templateFamily` (for example `endpointSecurityDiskEncryption`) to find every Endpoint security policy of one kind. In `$expand=assignments`, the target's `@odata.type` tells an inclusion (`groupAssignmentTarget`) from an exclusion (`exclusionGroupAssignmentTarget`). **Every `assign-*` action replaces the whole assignment list**: read the current assignments first and send them back with the change, or the groups left out are silently unassigned.
 
 ## Section D — Enrollment and Autopilot
 
@@ -185,7 +185,7 @@ File the ticket in your tracker (helpdesk for lost device, security incident for
 1. `list-managed-device-encryption-states` → encryption state, readiness and TPM version per device.
 2. `list-configuration-policies($filter="templateReference/templateFamily eq 'endpointSecurityDiskEncryption'", $expand=assignments)` → the BitLocker policies and the groups each targets; `list-intents` for template-based ones.
 3. `get-configuration-policy(…, $expand=settings)` → what each policy actually enforces (encryption method, startup authentication).
-4. `get-configuration-policy-device-status(allPages: true)` → per-device result of each policy.
+4. `get-configuration-policy-device-status(allPages: true)` with filter `(PolicyId eq '<id>') and (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy')` → per-device result of each policy. Without the `PolicyBaseTypeName` clause Graph answers 400.
 5. Present: unencrypted devices with no policy, devices targeted but failing (with the error), devices not capable (no TPM).
 
 ## Guardrails

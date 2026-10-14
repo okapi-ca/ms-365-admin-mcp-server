@@ -1077,7 +1077,7 @@
     "apiVersion": "beta",
     "riskLevel": "low",
     "reportPagination": true,
-    "llmTip": "Per-device deployment status of one Settings catalog / Endpoint security policy (a POST that only reads). Body: {\"filter\":\"(PolicyId eq '<policy id>')\",\"select\":[\"DeviceName\",\"UPN\",\"PolicyStatus\",\"PspdpuLastModifiedTimeUtc\",\"IntuneDeviceId\"],\"top\":50,\"skip\":0,\"orderBy\":[]}. The filter can add PolicyBaseTypeName or PolicyStatus clauses, e.g. \"(PolicyId eq 'xxx') and (PolicyStatus eq '6')\". PolicyStatus: 1 not applicable, 2 succeeded, 3 pending, 5 error, 6 conflict. The response is tabular: Schema lists the columns and each row in Values is an array in the same order; TotalRowCount is the full row count. Graph returns at most 50 rows per call — pass allPages: true to fetch every page."
+    "llmTip": "Per-device deployment status of one Settings catalog / Endpoint security policy (a POST that only reads). Body: {\"filter\":\"(PolicyId eq '<policy id>') and (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy')\",\"select\":[\"DeviceName\",\"UPN\",\"PolicyStatus\",\"PspdpuLastModifiedTimeUtc\",\"IntuneDeviceId\"],\"top\":50,\"skip\":0,\"orderBy\":[]}. The PolicyBaseTypeName clause is REQUIRED: without it Graph answers 400 BadRequest with no explanation. Add a status clause to narrow it, e.g. and (PolicyStatus eq '5'). PolicyStatus: 1 not applicable, 2 succeeded, 3 pending, 5 error, 6 conflict. The response is tabular: Schema lists the columns and each row in Values is an array in the same order; TotalRowCount is the full row count. Graph returns at most 50 rows per call — pass allPages: true to fetch every page. Classic device configuration profiles and compliance policies are not covered: use list-device-configuration-device-statuses or intune-compliance-policy-noncompliance-report."
   },
   {
     "pathPattern": "/deviceManagement/reports/getConfigurationPolicyDeviceSummaryReport",
@@ -1088,7 +1088,7 @@
     "apiVersion": "beta",
     "riskLevel": "low",
     "reportPagination": true,
-    "llmTip": "Device status counts for one Settings catalog / Endpoint security policy (a POST that only reads). Body: {\"filter\":\"(PolicyId eq '<policy id>')\",\"select\":[]}. Returns the number of devices per state (succeeded, error, conflict, pending, not applicable) in the tabular Schema/Values format. Start here to size a problem, then drill down with get-configuration-policy-device-status."
+    "llmTip": "Device counts for one Settings catalog / Endpoint security policy (a POST that only reads). Body: {\"filter\":\"(PolicyId eq '<policy id>') and (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy')\",\"select\":[]}. The PolicyBaseTypeName clause is REQUIRED: without it Graph answers 400 BadRequest with no explanation. Returns one row with PolicyName, NumberOfCompliantDevices (succeeded), NumberOfErrorDevices, NumberOfConflictDevices, NumberOfNonCompliantDevices, NumberOfInProgressDevices, NumberOfNotApplicableDevices, NumberOfRemovedDevices, in the tabular Schema/Values format. Start here to size a problem, then drill down with get-configuration-policy-device-status."
   },
   {
     "pathPattern": "/deviceManagement/intents",

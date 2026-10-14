@@ -118,3 +118,58 @@ describe('empty-body responses', () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ message: 'OK!' });
   });
 });
+
+describe('OData annotations in tool responses', () => {
+  it('keeps type, count and nextLink, drops context and etag, at any depth', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              '@odata.context': 'https://graph.microsoft.com/beta/$metadata#x',
+              '@odata.count': 2,
+              '@odata.nextLink': 'https://graph.microsoft.com/beta/next',
+              value: [
+                {
+                  '@odata.etag': 'W/"1"',
+                  id: 'p1',
+                  assignments: [
+                    {
+                      target: {
+                        '@odata.type': '#microsoft.graph.groupAssignmentTarget',
+                        groupId: 'g1',
+                      },
+                    },
+                    {
+                      target: {
+                        '@odata.type': '#microsoft.graph.exclusionGroupAssignmentTarget',
+                        groupId: 'g2',
+                      },
+                    },
+                  ],
+                },
+              ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+      )
+    );
+
+    const result = await newClient().graphRequest('/deviceManagement/configurationPolicies');
+    const body = JSON.parse(result.content[0].text);
+
+    expect(body['@odata.count']).toBe(2);
+    expect(body['@odata.nextLink']).toBe('https://graph.microsoft.com/beta/next');
+    expect(body).not.toHaveProperty('@odata.context');
+    expect(body.value[0]).not.toHaveProperty('@odata.etag');
+    expect(
+      body.value[0].assignments.map(
+        (a: { target: Record<string, string> }) => a.target['@odata.type']
+      )
+    ).toEqual([
+      '#microsoft.graph.groupAssignmentTarget',
+      '#microsoft.graph.exclusionGroupAssignmentTarget',
+    ]);
+  });
+});
