@@ -8,6 +8,8 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-10-14
+
 ### Added — Teams telephone number assignment (643 tools)
 
 Three tools closing the read-only gap on Teams telephony: `list-teams-phone-assignments` could show who holds a number, but nothing could move one. Restructuring Auto Attendant and Call Queue numbers no longer requires falling back to `Set-CsPhoneNumberAssignment` / `Remove-CsPhoneNumberAssignment`.
@@ -28,8 +30,9 @@ Both write tools need `TeamsTelephoneNumber.ReadWrite.All`. With OBO, that is a 
 
 ### Changed
 
-- `@modelcontextprotocol/sdk` is pinned to an exact version (`1.31.0` since #207) instead of `^1.29.0`. The cached `tools/list` handler imports two SDK-internal modules (`server/zod-compat.js`, `server/zod-json-schema-compat.js`) that a minor release could move or reshape; bumping the SDK should now be a deliberate change checked by `graph-tools-catalog`.
+- `@modelcontextprotocol/sdk` is pinned to an exact version (`1.32.1` since #209) instead of `^1.29.0`. The cached `tools/list` handler imports two SDK-internal modules (`server/zod-compat.js`, `server/zod-json-schema-compat.js`) that a minor release could move or reshape; bumping the SDK should now be a deliberate change checked by `graph-tools-catalog`.
 - An empty `202 Accepted` response now returns `{ "message": "Accepted", "status": 202, "location": "<Location header>" }` instead of `{ "message": "OK!" }`. The Location header is the only handle on an asynchronous Graph operation, and it was being dropped. Empty `200` / `204` responses still return `{ "message": "OK!" }`.
+- Runtime dependencies: `@azure/msal-node` 5.2.3 → 7.0.1 (two majors; the server uses only `ConfidentialClientApplication`, `acquireTokenByClientCredential` and `acquireTokenOnBehalfOf`, and the Node floor stays at 20), `@azure/identity` 4.13.3, `express` 5.3.0, `express-rate-limit` 8.7.1, `zod` 4.6.5. Dev: `vitest` and `@vitest/coverage-v8` 5.0.4, moved together because the coverage provider pins `vitest` exactly.
 
 ### Removed
 
