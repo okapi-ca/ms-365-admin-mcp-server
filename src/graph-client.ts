@@ -9,6 +9,13 @@ import { getCloudEndpoints } from './cloud-config.js';
  */
 export const DEFAULT_ACCEPT_LANGUAGE = 'en-US';
 
+/** OData annotations kept in tool responses; every other `@odata.*` key is dropped. */
+export const KEPT_ODATA_ANNOTATIONS: ReadonlySet<string> = new Set([
+  '@odata.nextLink',
+  '@odata.count',
+  '@odata.type',
+]);
+
 interface GraphRequestOptions {
   headers?: Record<string, string>;
   method?: string;
@@ -145,11 +152,15 @@ class GraphClient {
       };
     }
 
-    // Remove OData properties
+    // Remove OData annotations the model has no use for (@odata.context,
+    // @odata.etag, ...) to save tokens, but keep the ones that carry meaning:
+    // nextLink for paging, count for $count=true, and type, which is the only
+    // field telling an inclusion assignment target from an exclusion one, or a
+    // Windows Update ring from any other device configuration.
     const removeODataProps = (obj: Record<string, unknown>): void => {
       if (typeof obj === 'object' && obj !== null) {
         Object.keys(obj).forEach((key) => {
-          if (key.startsWith('@odata.') && key !== '@odata.nextLink') {
+          if (key.startsWith('@odata.') && !KEPT_ODATA_ANNOTATIONS.has(key)) {
             delete obj[key];
           } else if (typeof obj[key] === 'object') {
             removeODataProps(obj[key] as Record<string, unknown>);

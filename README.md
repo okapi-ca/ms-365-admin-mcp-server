@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **643 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **673 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **Settings catalog & Endpoint security (BitLocker, Antivirus, Firewall, ASR)**, **encryption report**, **Windows Update profiles**, **BitLocker and LAPS rotation**, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -252,7 +252,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (643)
+## Available tools (673)
 
 ### Security (11)
 
@@ -556,12 +556,13 @@ There is no general-purpose `update-user`. The only PATCH on `/users/{id}` this 
 | `list-threat-intel-host-components` | GET    |
 | `list-threat-intel-ssl-certs`       | GET    |
 
-### Managed devices (6)
+### Managed devices (7)
 
 | Tool                               | Method | Risk     |
 | ---------------------------------- | ------ | -------- |
 | `list-managed-devices`             | GET    |          |
 | `get-managed-device`               | GET    |          |
+| `get-windows-protection-state`     | GET    |          |
 | `list-device-compliance-states`    | GET    |          |
 | `list-device-configuration-states` | GET    |          |
 | `get-managed-device-overview`      | GET    |          |
@@ -577,13 +578,56 @@ There is no general-purpose `update-user`. The only PATCH on `/users/{id}` this 
 | `get-compliance-policy-status-overview`  | GET    |
 | `get-compliance-state-summary`           | GET    |
 
-### Device configurations (3)
+### Device configurations (4)
 
-| Tool                                       | Method |
-| ------------------------------------------ | ------ |
-| `list-device-configurations`               | GET    |
-| `get-device-configuration`                 | GET    |
-| `get-device-configuration-status-overview` | GET    |
+| Tool                                        | Method |
+| ------------------------------------------- | ------ |
+| `list-device-configurations`                | GET    |
+| `get-device-configuration`                  | GET    |
+| `get-device-configuration-status-overview`  | GET    |
+| `list-device-configuration-device-statuses` | GET    |
+
+### Settings catalog & Endpoint security (6)
+
+Settings catalog policies, including every modern Endpoint security policy (Disk encryption / BitLocker, Antivirus, Firewall, Attack surface reduction, EDR, Account protection). **Targets Graph beta** — `configurationPolicies` has no v1.0 equivalent. The two report actions are POSTs that only read; they need `--allow-writes` like the other Intune reports.
+
+| Tool                                      | Method | Risk |
+| ----------------------------------------- | ------ | ---- |
+| `list-configuration-policies`             | GET    |      |
+| `get-configuration-policy`                | GET    |      |
+| `list-configuration-policy-settings`      | GET    |      |
+| `list-configuration-policy-templates`     | GET    |      |
+| `get-configuration-policy-device-status`  | POST   | low  |
+| `get-configuration-policy-device-summary` | POST   | low  |
+
+### Endpoint security intents (legacy templates) (4)
+
+Template-based Endpoint security policies created before the move to the Settings catalog. **Targets Graph beta.** An Endpoint security audit must cover these and the Settings catalog both.
+
+| Tool                        | Method |
+| --------------------------- | ------ |
+| `list-intents`              | GET    |
+| `get-intent`                | GET    |
+| `list-intent-device-states` | GET    |
+| `list-intent-templates`     | GET    |
+
+### Device encryption (1)
+
+Intune encryption report: readiness, state, TPM version and the BitLocker / FileVault policies that reached each device. **Targets Graph beta.**
+
+| Tool                                    | Method |
+| --------------------------------------- | ------ |
+| `list-managed-device-encryption-states` | GET    |
+
+### Windows Update profiles (3)
+
+Feature and quality update profiles, which override the deferrals of a device's Windows Update for Business ring (rings themselves are device configurations). **Targets Graph beta.**
+
+| Tool                                   | Method |
+| -------------------------------------- | ------ |
+| `list-windows-feature-update-profiles` | GET    |
+| `list-windows-quality-update-profiles` | GET    |
+| `list-windows-quality-update-policies` | GET    |
 
 ### macOS Platform Scripts (6)
 
@@ -605,18 +649,20 @@ Notes:
 - `assign-device-shell-script` **REPLACES** all existing assignments — it is not additive. To add a group without removing others, first GET the current assignments, append the new target, then POST the full merged list.
 - By default `get-device-shell-script` does **not** return `scriptContent`; pass `$select=id,displayName,scriptContent,...` to fetch the base64 body.
 
-### Intune Remediations / Proactive Remediations (6)
+### Intune Remediations / Proactive Remediations (8)
 
 Paired detection + remediation PowerShell scripts for Windows 10/11 Azure AD joined devices. **Targets Graph beta** (`/beta/deviceManagement/deviceHealthScripts`). Requires `DeviceManagementScripts.ReadWrite.All`.
 
-| Tool                          | Method | Risk   |
-| ----------------------------- | ------ | ------ |
-| `list-device-health-scripts`  | GET    |        |
-| `get-device-health-script`    | GET    |        |
-| `create-device-health-script` | POST   | medium |
-| `update-device-health-script` | PATCH  | medium |
-| `delete-device-health-script` | DELETE | high   |
-| `assign-device-health-script` | POST   | medium |
+| Tool                                   | Method | Risk   |
+| -------------------------------------- | ------ | ------ |
+| `list-device-health-scripts`           | GET    |        |
+| `get-device-health-script`             | GET    |        |
+| `list-device-health-script-run-states` | GET    |        |
+| `get-device-health-script-run-summary` | GET    |        |
+| `create-device-health-script`          | POST   | medium |
+| `update-device-health-script`          | PATCH  | medium |
+| `delete-device-health-script`          | DELETE | high   |
+| `assign-device-health-script`          | POST   | medium |
 
 Notes:
 
@@ -835,7 +881,7 @@ Notes:
 
 One deletion tool per authentication-method collection, since the ids are collection-scoped and not interchangeable. Run `list-user-auth-methods` first and match on `@odata.type` to pick the right tool and id. Graph refuses the deletion when the method is the user's only remaining MFA factor and MFA is required.
 
-### Intune device remote actions (16) -- requires `--allow-writes`
+### Intune device remote actions (18) -- requires `--allow-writes`
 
 | Tool                            | Method | Risk     |
 | ------------------------------- | ------ | -------- |
@@ -851,6 +897,8 @@ One deletion tool per authentication-method collection, since the ids are collec
 | `bypass-activation-lock`        | POST   | high     |
 | `trigger-defender-scan`         | POST   | low      |
 | `update-defender-signatures`    | POST   | low      |
+| `rotate-bitlocker-keys`         | POST   | medium   |
+| `rotate-local-admin-password`   | POST   | medium   |
 | `clean-windows-device`          | POST   | critical |
 | `logout-shared-apple-user`      | POST   | medium   |
 | `delete-shared-apple-user`      | POST   | high     |
@@ -868,16 +916,40 @@ One deletion tool per authentication-method collection, since the ids are collec
 | `update-named-location`             | PATCH  | medium   |
 | `delete-named-location`             | DELETE | high     |
 
-### Intune policies CRUD (6) -- requires `--allow-writes`
+### Intune policies CRUD (8) -- requires `--allow-writes`
 
 | Tool                          | Method | Risk   |
 | ----------------------------- | ------ | ------ |
 | `create-compliance-policy`    | POST   | medium |
 | `update-compliance-policy`    | PATCH  | medium |
+| `assign-compliance-policy`    | POST   | high   |
 | `delete-compliance-policy`    | DELETE | high   |
 | `create-device-configuration` | POST   | medium |
 | `update-device-configuration` | PATCH  | medium |
+| `assign-device-configuration` | POST   | high   |
 | `delete-device-configuration` | DELETE | high   |
+
+### Settings catalog & Endpoint security CRUD (4) -- requires `--allow-writes`
+
+**Targets Graph beta.** Requires `DeviceManagementConfiguration.ReadWrite.All`. `assign-configuration-policy` replaces the whole assignment list.
+
+| Tool                          | Method | Risk   |
+| ----------------------------- | ------ | ------ |
+| `create-configuration-policy` | POST   | medium |
+| `update-configuration-policy` | PATCH  | medium |
+| `delete-configuration-policy` | DELETE | high   |
+| `assign-configuration-policy` | POST   | high   |
+
+### Endpoint security intents CRUD (4) -- requires `--allow-writes`
+
+**Targets Graph beta.** Requires `DeviceManagementConfiguration.ReadWrite.All`. `assign-intent` replaces the whole assignment list.
+
+| Tool                     | Method | Risk   |
+| ------------------------ | ------ | ------ |
+| `update-intent`          | PATCH  | medium |
+| `update-intent-settings` | POST   | medium |
+| `delete-intent`          | DELETE | high   |
+| `assign-intent`          | POST   | high   |
 
 ### OneDrive / user drive (DSAR enumeration) (4)
 

@@ -18,19 +18,21 @@ Identify → Dry-run (account info) → Confirm → Disable → Revoke → Confi
 
 ## Tools in scope
 
-| Tool                                     | Risk         | Effect                                                                    |
-| ---------------------------------------- | ------------ | ------------------------------------------------------------------------- |
-| `disable-user-account`                   | **critical** | Blocks all auth for the account. Immediate.                               |
-| `revoke-user-sessions`                   | **high**     | Invalidates all refresh tokens — user must re-auth everywhere.            |
-| `confirm-compromised-users`              | **high**     | Marks the user `compromised` in Identity Protection, elevates risk level. |
-| `confirm-safe-users`                     | **high**     | Inverse: marks `safe` (false positive).                                   |
-| `dismiss-risky-users`                    | **high**     | Closes the `risky` status without further investigation.                  |
-| `delete-user-phone-auth-method`          | **high**     | Removes a compromised phone auth method (SIM-swap response).              |
-| `confirm-compromised-service-principals` | **high**     | Same for an SP.                                                           |
-| `dismiss-risky-service-principals`       | **high**     | Closes the SP risky status.                                               |
-| `update-device`                          | **high**     | Disable a device in Entra.                                                |
-| `add-security-alert-comment`             | low          | Document the action in the originating alert.                             |
-| `run-hunting-query`                      | low          | KQL investigation — read-only in practice; see `usecase-threatintel.md`.  |
+| Tool                                     | Risk         | Effect                                                                     |
+| ---------------------------------------- | ------------ | -------------------------------------------------------------------------- |
+| `disable-user-account`                   | **critical** | Blocks all auth for the account. Immediate.                                |
+| `revoke-user-sessions`                   | **high**     | Invalidates all refresh tokens — user must re-auth everywhere.             |
+| `confirm-compromised-users`              | **high**     | Marks the user `compromised` in Identity Protection, elevates risk level.  |
+| `confirm-safe-users`                     | **high**     | Inverse: marks `safe` (false positive).                                    |
+| `dismiss-risky-users`                    | **high**     | Closes the `risky` status without further investigation.                   |
+| `delete-user-phone-auth-method`          | **high**     | Removes a compromised phone auth method (SIM-swap response).               |
+| `confirm-compromised-service-principals` | **high**     | Same for an SP.                                                            |
+| `dismiss-risky-service-principals`       | **high**     | Closes the SP risky status.                                                |
+| `update-device`                          | **high**     | Disable a device in Entra.                                                 |
+| `rotate-bitlocker-keys`                  | medium       | Rotates a disclosed BitLocker recovery password (Windows, Intune-managed). |
+| `rotate-local-admin-password`            | medium       | Rotates a disclosed Windows LAPS password.                                 |
+| `add-security-alert-comment`             | low          | Document the action in the originating alert.                              |
+| `run-hunting-query`                      | low          | KQL investigation — read-only in practice; see `usecase-threatintel.md`.   |
 
 All writes above require `--allow-writes`.
 

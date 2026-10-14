@@ -1,6 +1,6 @@
 # usecase-intune — Devices, compliance, Autopilot, MAM, remote actions
 
-**When to load:** managed fleet audit, lost / compromised device, MAM / MDM, Autopilot, compliance reports.
+**When to load:** managed fleet audit, lost / compromised device, MAM / MDM, Autopilot, compliance reports, Endpoint security (BitLocker, Antivirus, Firewall, ASR) and Settings catalog policies.
 
 **Upstream references:** [USE_CASES.md §7 Intune compliance review](../../../docs/USE_CASES.md), [§8 Lost or compromised device](../../../docs/USE_CASES.md).
 
@@ -8,14 +8,16 @@
 
 ### Read
 
-| Tool                                                                  | Usage                                                                                                                         |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `list-managed-devices`                                                | Intune device inventory. Filters: `complianceState`, `operatingSystem`, `osVersion`, `userPrincipalName`, `lastSyncDateTime`. |
-| `get-managed-device`                                                  | Device detail.                                                                                                                |
-| `list-device-compliance-states`                                       | Compliance state per device.                                                                                                  |
-| `list-device-configuration-states`                                    | Config state per device.                                                                                                      |
-| `get-managed-device-overview`                                         | Aggregated fleet view.                                                                                                        |
-| `list-detected-apps`, `get-detected-app`, `list-detected-app-devices` | Detected apps and the devices that have them.                                                                                 |
+| Tool                                                                  | Usage                                                                                                                                              |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list-managed-devices`                                                | Intune device inventory. Filters: `complianceState`, `operatingSystem`, `osVersion`, `userPrincipalName`, `lastSyncDateTime`.                      |
+| `get-managed-device`                                                  | Device detail (Graph beta). `hardwareInformation` (TPM, BIOS, VBS) and `deviceHealthAttestationState` (Secure Boot) come back only with `$select`. |
+| `list-device-compliance-states`                                       | Compliance state per device.                                                                                                                       |
+| `list-device-configuration-states`                                    | Config state per device.                                                                                                                           |
+| `get-managed-device-overview`                                         | Aggregated fleet view.                                                                                                                             |
+| `list-managed-device-encryption-states`                               | Intune encryption report: readiness, encryption state, TPM version, `advancedBitLockerStates`, policies that reached each device.                  |
+| `get-windows-protection-state`                                        | Defender Antivirus health of one device: real-time and tamper protection, signature and scan age, detected malware.                                |
+| `list-detected-apps`, `get-detected-app`, `list-detected-app-devices` | Detected apps and the devices that have them.                                                                                                      |
 
 ### Write
 
@@ -29,15 +31,32 @@
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | `list-compliance-policies`, `get-compliance-policy`, `list-compliance-policy-device-statuses`, `get-compliance-policy-status-overview`, `get-compliance-state-summary` | read   |
 | `create-compliance-policy`, `update-compliance-policy`                                                                                                                 | medium |
-| `delete-compliance-policy`                                                                                                                                             | high   |
+| `delete-compliance-policy`, `assign-compliance-policy`                                                                                                                 | high   |
 
 ## Section C — Device configurations
 
-| Tool                                                                                                 | Risk   |
-| ---------------------------------------------------------------------------------------------------- | ------ |
-| `list-device-configurations`, `get-device-configuration`, `get-device-configuration-status-overview` | read   |
-| `create-device-configuration`, `update-device-configuration`                                         | medium |
-| `delete-device-configuration`                                                                        | high   |
+| Tool                                                                                                                                              | Risk   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `list-device-configurations`, `get-device-configuration`, `get-device-configuration-status-overview`, `list-device-configuration-device-statuses` | read   |
+| `list-windows-feature-update-profiles`, `list-windows-quality-update-profiles`, `list-windows-quality-update-policies`                            | read   |
+| `create-device-configuration`, `update-device-configuration`                                                                                      | medium |
+| `delete-device-configuration`, `assign-device-configuration`                                                                                      | high   |
+
+Classic profiles include the Windows Update for Business rings. Call `get-device-configuration` **without** `$select` to read a ring: `$select` only resolves the base `deviceConfiguration` type and fails with 400 on a ring property such as `qualityUpdatesDeferralPeriodInDays`. Feature and quality update profiles override a ring's deferrals, so read them too before explaining a device's update behaviour.
+
+## Section C2 — Settings catalog and Endpoint security (Graph beta)
+
+Every modern Endpoint security policy (Disk encryption / BitLocker, Antivirus, Firewall, Attack surface reduction, Account protection, EDR) is a Settings catalog policy. Older template-based profiles are **intents**. A tenant usually has both: check both before concluding a policy does not exist.
+
+| Tool                                                                                                                                   | Risk   |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `list-configuration-policies`, `get-configuration-policy`, `list-configuration-policy-settings`, `list-configuration-policy-templates` | read   |
+| `get-configuration-policy-device-status`, `get-configuration-policy-device-summary` (POST reports)                                     | low    |
+| `list-intents`, `get-intent`, `list-intent-device-states`, `list-intent-templates`                                                     | read   |
+| `create-configuration-policy`, `update-configuration-policy` (metadata only), `update-intent`, `update-intent-settings`                | medium |
+| `delete-configuration-policy`, `assign-configuration-policy`, `delete-intent`, `assign-intent`                                         | high   |
+
+Filter `list-configuration-policies` on `templateReference/templateFamily` (for example `endpointSecurityDiskEncryption`) to find every Endpoint security policy of one kind. In `$expand=assignments`, the target's `@odata.type` tells an inclusion (`groupAssignmentTarget`) from an exclusion (`exclusionGroupAssignmentTarget`). **Every `assign-*` action replaces the whole assignment list**: read the current assignments first and send them back with the change, or the groups left out are silently unassigned.
 
 ## Section D — Enrollment and Autopilot
 
@@ -66,6 +85,8 @@
 | `update-windows-device-account` | medium       | Modifies the account on a Windows shared device.          |
 | `reboot-managed-device`         | high         | Forced reboot — unsaved work lost.                        |
 | `reset-device-passcode`         | high         | Reset passcode.                                           |
+| `rotate-bitlocker-keys`         | medium       | Rotates the BitLocker recovery password after disclosure. |
+| `rotate-local-admin-password`   | medium       | Rotates the Windows LAPS password after disclosure.       |
 | `shutdown-managed-device`       | high         | Forced shutdown.                                          |
 | `bypass-activation-lock`        | high         | Bypass iCloud activation lock.                            |
 | `delete-shared-apple-user`      | high         | Remove a Shared iPad user.                                |
@@ -78,6 +99,7 @@
 | Tool                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Usage |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
 | `list-intune-audit-events`, `get-software-update-summary`, `get-apple-push-certificate`, `list-intune-role-definitions`, `list-intune-role-assignments`, `list-intune-terms-and-conditions`, `list-intune-terms-acceptances`, `get-intune-conditional-access-settings`, `list-mtd-connectors`, `list-ios-update-statuses`, `list-device-categories`, `list-compliance-management-partners`, `list-device-management-partners`, `list-exchange-connectors`, `list-remote-assistance-partners`, `list-notification-message-templates`, `list-intune-resource-operations`, `list-windows-malware-info` | read  |
+| `list-device-health-script-run-states`, `get-device-health-script-run-summary` — Remediation results per device and in aggregate                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | read  |
 
 ## Section G — App management (MDM / MAM)
 
@@ -90,6 +112,8 @@
 ⚠ **Intune reports use POST endpoints even when read-only.** The server exposes them, classified `low` (read-only in practice).
 
 `intune-device-noncompliance-report`, `intune-compliance-policy-noncompliance-report`, `intune-compliance-policy-noncompliance-summary`, `intune-compliance-setting-noncompliance-report`, `intune-config-policy-noncompliance-report` / `*-summary`, `intune-config-setting-noncompliance-report`, `intune-devices-without-compliance-report`, `intune-noncompliant-devices-settings-report`, `intune-policy-noncompliance-report` / `*-summary` / `*-metadata`, `intune-setting-noncompliance-report`, `intune-report-filters`, `intune-historical-report`, `intune-cached-report`, `list-intune-report-export-jobs`, `intune-device-app-install-status-report`.
+
+Graph returns at most 50 rows per call from these actions, whatever `top` says. Pass `allPages: true` and the server walks `skip` until `TotalRowCount`, returning one table with a `pagination` block; `dedupeBy` (e.g. `DeviceName`) drops repeated rows. The walk stops at `MS365_ADMIN_MCP_REPORT_MAX_ROWS` (default 5000) and reports `truncated: true`; a failed page fails the whole call. The two Settings catalog reports in Section C2 accept the same arguments.
 
 ## Pattern 1 — Fleet non-compliance audit
 
@@ -154,12 +178,23 @@ File the ticket in your tracker (helpdesk for lost device, security incident for
 1. `get-apple-push-certificate` → expiration date.
 2. If `< 60d`, file a renewal task with the platform owner.
 
+## Pattern 4 — Where does disk encryption fail?
+
+> _"Which devices are not encrypted, and is a BitLocker policy even targeting them?"_
+
+1. `list-managed-device-encryption-states` → encryption state, readiness and TPM version per device.
+2. `list-configuration-policies($filter="templateReference/templateFamily eq 'endpointSecurityDiskEncryption'", $expand=assignments)` → the BitLocker policies and the groups each targets; `list-intents` for template-based ones.
+3. `get-configuration-policy(…, $expand=settings)` → what each policy actually enforces (encryption method, startup authentication).
+4. `get-configuration-policy-device-status(allPages: true)` with filter `(PolicyId eq '<id>') and (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy')` → per-device result of each policy. Without the `PolicyBaseTypeName` clause Graph answers 400.
+5. Present: unencrypted devices with no policy, devices targeted but failing (with the error), devices not capable (no TPM).
+
 ## Guardrails
 
 - **`wipe-managed-device` and `clean-windows-device`** — out-of-band escalation, never autonomous.
 - **`retire-managed-device`** — explicit confirmation. Validate with the operator that `retire` (corp data only) is sufficient vs. `wipe`.
 - **Mass compliance / config policy modifications** — never tighten policy via `update-compliance-policy` without prior communication. Risk of blocking hundreds of devices.
-- **Large reports** — paginate and filter aggressively. The server may time out on large tenants.
+- **Large reports** — filter first, then use `allPages: true` rather than paging by hand. Raise `MS365_ADMIN_MCP_REPORT_MAX_ROWS` only for a deliberate full export.
+- **`assign-*` on any policy** — Graph replaces the whole assignment list. Read the current assignments and send the full list back.
 
 ## Crosswalk
 

@@ -1,6 +1,6 @@
 # Tools catalogue
 
-Index of the 643 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
+Index of the 673 tools exposed by `ms-365-admin-mcp-server`, organized by preset and by risk level. **Do not preload this file** — prefer the per-domain `usecase-*.md` files. This is a reference for cross-cutting questions ("what's critical across the server?", "which preset contains tool X?").
 
 ## Source of truth
 
@@ -21,7 +21,7 @@ node dist/index.js --list-permissions  # show required Graph permissions
 | `reports`         | Usage reports (Teams, Email, SP, OD, M365 Apps)                           | `usecase-reports.md`                            |
 | `identity`        | Users, groups, roles, devices, PIM, guests, external identities           | `usecase-identity.md`                           |
 | `exchange`        | Message traces, mailboxes                                                 | `usecase-exchange.md`                           |
-| `intune`          | Devices, compliance, configurations, Autopilot, apps, RBAC                | `usecase-intune.md`                             |
+| `intune`          | Devices, compliance, configurations, Settings catalog, Autopilot, apps    | `usecase-intune.md`                             |
 | `governance`      | Access reviews, entitlement, lifecycle workflows, terms of use            | `usecase-governance.md`                         |
 | `compliance`      | Licenses, Secure Score, Identity Protection, risk detections, CA policies | `usecase-compliance.md`                         |
 | `response`        | Incident response writes (disable, revoke, confirm, dismiss)              | `usecase-response.md`                           |
@@ -81,7 +81,8 @@ The chat operator's confirmation is not enough for these. Prepare the dry-run, d
 - `apply-hold-ediscovery-custodian`, `remove-hold-ediscovery-custodian`
 - `delete-cloud-pc-provisioning-policy`
 - `retire-managed-device`, `reset-device-passcode`, `reboot-managed-device`, `shutdown-managed-device`, `bypass-activation-lock`, `delete-shared-apple-user`
-- `delete-compliance-policy`, `delete-device-configuration`, `delete-enrollment-configuration`, `delete-autopilot-device`
+- `delete-compliance-policy`, `delete-device-configuration`, `delete-enrollment-configuration`, `delete-autopilot-device`, `delete-configuration-policy`, `delete-intent`
+- `assign-compliance-policy`, `assign-device-configuration`, `assign-configuration-policy`, `assign-intent` — Graph replaces the whole assignment list: a group left out of the body is silently unassigned
 - `update-teams-app-settings`
 - `delete-team-admin-channel`
 - `unassign-teams-phone-number` — inbound calls to an Auto Attendant or Call Queue stop as soon as the order completes
@@ -112,6 +113,8 @@ The chat operator's confirmation is not enough for these. Prepare the dry-run, d
 - `update-exchange-mailbox`, `export-exchange-mailbox-items`
 - `create-compliance-policy`, `update-compliance-policy`
 - `create-device-configuration`, `update-device-configuration`
+- `create-configuration-policy`, `update-configuration-policy`, `update-intent`, `update-intent-settings`
+- `rotate-bitlocker-keys`, `rotate-local-admin-password`
 - `create-enrollment-configuration`, `update-enrollment-configuration`, `update-autopilot-device`, `import-autopilot-device`
 - `remote-lock-device`, `logout-shared-apple-user`, `update-windows-device-account`
 - `update-sharepoint-site`, `delete-site-list-item`

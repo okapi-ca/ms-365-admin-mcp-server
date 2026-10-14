@@ -861,7 +861,7 @@
     "toolName": "list-pim-group-assignment-schedules",
     "section": "PIM for Groups",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
+    "llmTip": "Lists PIM for Groups assignment schedules. Shows active role assignments on privileged groups (member or owner). Each has principalId, groupId, accessId (member, owner), status, scheduleInfo (startDateTime, expiration). Use to audit who has permanent access to privileged groups. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters — you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilitySchedules",
@@ -869,7 +869,7 @@
     "toolName": "list-pim-group-eligibility-schedules",
     "section": "PIM for Groups",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
+    "llmTip": "Lists PIM for Groups eligibility schedules. Shows who is eligible (but not yet activated) for membership or ownership on privileged groups. Each has principalId, groupId, accessId (member, owner), status, scheduleInfo. Compare with assignment schedules to see eligible vs active. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters — you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/termsOfUse/agreements",
@@ -933,7 +933,16 @@
     "toolName": "get-managed-device",
     "section": "Managed devices",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
-    "llmTip": "Gets a specific Intune-managed device by ID. Returns full details: deviceName, operatingSystem, osVersion, complianceState, isEncrypted, jailBroken, managementAgent, enrolledDateTime, lastSyncDateTime, userPrincipalName, azureADDeviceId, model, manufacturer, serialNumber, wiFiMacAddress."
+    "llmTip": "Gets a specific Intune-managed device by ID (Graph beta). Returns full details: deviceName, operatingSystem, osVersion, complianceState, isEncrypted, jailBroken, managementAgent, enrolledDateTime, lastSyncDateTime, userPrincipalName, azureADDeviceId, model, manufacturer, serialNumber, wiFiMacAddress. hardwareInformation (TPM version and manufacturer, BIOS/system management version, encryption and Device Guard / virtualization-based security state, free storage, battery) is only returned on request: pass $select=deviceName,hardwareInformation. Secure Boot and other health-attestation results are in deviceHealthAttestationState (also $select only; null until the device reports health attestation).",
+    "apiVersion": "beta"
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/windowsProtectionState",
+    "method": "get",
+    "toolName": "get-windows-protection-state",
+    "section": "Managed devices",
+    "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
+    "llmTip": "Microsoft Defender Antivirus health of one Windows device, as Intune last received it. Returns malwareProtectionEnabled, realTimeProtectionEnabled, networkInspectionSystemEnabled, tamperProtectionEnabled, isVirtualMachine, quickScanOverdue, fullScanOverdue, fullScanRequired, rebootRequired, signatureUpdateOverdue, signatureVersion, antiMalwareVersion, engineVersion, lastQuickScanDateTime, lastFullScanDateTime, lastQuickScanSignatureVersion, lastReportedDateTime, deviceState (clean, fullScanPending, rebootPending, manualStepsPending, offlineScanPending, critical) and productStatus. Pass $expand=detectedMalwareState for the threats currently detected on the device. Supports $select and $expand."
   },
   {
     "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/deviceCompliancePolicyStates",
@@ -997,7 +1006,7 @@
     "toolName": "list-device-configurations",
     "section": "Device configurations",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
-    "llmTip": "Lists all Intune device configuration profiles. Each has displayName, description, @odata.type (platform-specific), createdDateTime, lastModifiedDateTime, and version. Covers Wi-Fi, VPN, email, certificates, device restrictions, endpoint protection, etc."
+    "llmTip": "Lists all Intune device configuration profiles. Each has displayName, description, @odata.type (platform-specific), createdDateTime, lastModifiedDateTime, and version. Covers Wi-Fi, VPN, email, certificates, device restrictions, endpoint protection, etc. List only Windows Update for Business rings with $filter=isof('microsoft.graph.windowsUpdateForBusinessConfiguration'), then read each ring with get-device-configuration (no $select). Settings catalog and Endpoint security policies are not device configurations — see list-configuration-policies."
   },
   {
     "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
@@ -1005,7 +1014,7 @@
     "toolName": "get-device-configuration",
     "section": "Device configurations",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
-    "llmTip": "Gets a specific device configuration profile. Returns full details including platform-specific settings (Wi-Fi SSID, VPN config, device restrictions, etc.)."
+    "llmTip": "Gets a specific device configuration profile. Returns full details including platform-specific settings (Wi-Fi SSID, VPN config, device restrictions, etc.). Do NOT $select platform-specific properties (e.g. qualityUpdatesDeferralPeriodInDays): $select only resolves properties of the base deviceConfiguration type and Graph answers 400. Call without $select — the response already contains every property of the concrete type. For a Windows Update for Business ring (@odata.type windowsUpdateForBusinessConfiguration) that includes qualityUpdatesDeferralPeriodInDays, featureUpdatesDeferralPeriodInDays, qualityUpdatesPaused, featureUpdatesPaused, deadlineForQualityUpdatesInDays, deadlineForFeatureUpdatesInDays, deadlineGracePeriodInDays, automaticUpdateMode, installationSchedule and allowWindows11Upgrade."
   },
   {
     "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/deviceStatusOverview",
@@ -1014,6 +1023,144 @@
     "section": "Device configurations",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "llmTip": "Gets device status overview for a configuration profile. Returns aggregate counts: pendingCount, notApplicableCount, successCount, errorCount, failedCount, conflictCount, lastUpdateDateTime."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/deviceStatuses",
+    "method": "get",
+    "toolName": "list-device-configuration-device-statuses",
+    "section": "Device configurations",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "llmTip": "Per-device status of one device configuration profile (classic profiles and Windows Update for Business rings; Settings catalog policies use get-configuration-policy-device-status instead). Each has deviceDisplayName, userPrincipalName, userName, deviceModel, platform, status (unknown, notApplicable, compliant, remediated, nonCompliant, error, conflict, notAssigned), complianceGracePeriodExpirationDateTime and lastReportedDateTime. Filter with $filter=status eq 'error'. Supports $filter, $top, $skip, $select, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies",
+    "method": "get",
+    "toolName": "list-configuration-policies",
+    "section": "Settings catalog & Endpoint security",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Intune Settings catalog policies, which is also where every modern Endpoint security policy lives (Disk encryption/BitLocker, Antivirus, Firewall, Attack surface reduction, EDR, Account protection). Each has name, description, platforms (windows10, macOS, ...), technologies (mdm, microsoftSense, ...), templateReference {templateId, templateFamily, templateDisplayName}, settingCount, isAssigned, roleScopeTagIds, createdDateTime, lastModifiedDateTime. Endpoint security policies carry a templateFamily: endpointSecurityDiskEncryption (BitLocker / FileVault), endpointSecurityAntivirus, endpointSecurityFirewall, endpointSecurityAttackSurfaceReduction, endpointSecurityEndpointDetectionAndResponse, endpointSecurityAccountProtection; plain Settings catalog policies have templateFamily none. Filter with $filter=templateReference/templateFamily eq 'endpointSecurityDiskEncryption'. Use $expand=assignments to see target groups (assignment target @odata.type: groupAssignmentTarget, exclusionGroupAssignmentTarget, allDevicesAssignmentTarget, allLicensedUsersAssignmentTarget). Settings are NOT returned in the list — use get-configuration-policy or list-configuration-policy-settings. Legacy template-based Endpoint security policies are intents, not configurationPolicies — see list-intents. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}",
+    "method": "get",
+    "toolName": "get-configuration-policy",
+    "section": "Settings catalog & Endpoint security",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a Settings catalog / Endpoint security policy by ID. Pass $expand=settings,assignments to get the configured values (settings[].settingInstance: settingDefinitionId plus choiceSettingValue / simpleSettingValue / groupSettingCollectionValue, nested children) and the target groups in one call. Setting definition IDs are self-describing, e.g. device_vendor_msft_bitlocker_requiredeviceencryption, device_vendor_msft_bitlocker_systemdrivesrequirestartupauthentication. For policies with hundreds of settings, page them with list-configuration-policy-settings instead. Supports $select and $expand."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/settings",
+    "method": "get",
+    "toolName": "list-configuration-policy-settings",
+    "section": "Settings catalog & Endpoint security",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists the configured settings of a Settings catalog / Endpoint security policy, paged. Each item has settingInstance {settingDefinitionId, choiceSettingValue | simpleSettingValue | groupSettingCollectionValue, children}. Pass $expand=settingDefinitions to get each setting's displayName, description and allowed options alongside the value. Supports $filter, $top, $skip, $select, $expand, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicyTemplates",
+    "method": "get",
+    "toolName": "list-configuration-policy-templates",
+    "section": "Settings catalog & Endpoint security",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists the templates Endpoint security policies are created from. Each has id (templateId), baseId, version, displayName, description, displayVersion, lifecycleState (active, superseded, deprecated, retired), platforms, technologies and templateFamily. Use it to find the templateReference.templateId to pass to create-configuration-policy, and to spot policies built on a superseded template. Filter with $filter=templateFamily eq 'endpointSecurityDiskEncryption' and lifecycleState eq 'active'. Supports $filter, $top, $skip, $select, $expand, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getConfigurationPolicyDevicesReport",
+    "method": "post",
+    "toolName": "get-configuration-policy-device-status",
+    "section": "Settings catalog & Endpoint security",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "riskLevel": "low",
+    "reportPagination": true,
+    "llmTip": "Per-device deployment status of one Settings catalog / Endpoint security policy (a POST that only reads). Body: {\"filter\":\"(PolicyId eq '<policy id>') and (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy')\",\"select\":[\"DeviceName\",\"UPN\",\"PolicyStatus\",\"PspdpuLastModifiedTimeUtc\",\"IntuneDeviceId\"],\"top\":50,\"skip\":0,\"orderBy\":[]}. The PolicyBaseTypeName clause is REQUIRED: without it Graph answers 400 BadRequest with no explanation. Add a status clause to narrow it, e.g. and (PolicyStatus eq '5'). PolicyStatus: 1 not applicable, 2 succeeded, 3 pending, 5 error, 6 conflict. The response is tabular: Schema lists the columns and each row in Values is an array in the same order; TotalRowCount is the full row count. Graph returns at most 50 rows per call — pass allPages: true to fetch every page. Classic device configuration profiles and compliance policies are not covered: use list-device-configuration-device-statuses or intune-compliance-policy-noncompliance-report."
+  },
+  {
+    "pathPattern": "/deviceManagement/reports/getConfigurationPolicyDeviceSummaryReport",
+    "method": "post",
+    "toolName": "get-configuration-policy-device-summary",
+    "section": "Settings catalog & Endpoint security",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "riskLevel": "low",
+    "reportPagination": true,
+    "llmTip": "Device counts for one Settings catalog / Endpoint security policy (a POST that only reads). Body: {\"filter\":\"(PolicyId eq '<policy id>') and (PolicyBaseTypeName eq 'DeviceManagementConfigurationPolicy')\",\"select\":[]}. The PolicyBaseTypeName clause is REQUIRED: without it Graph answers 400 BadRequest with no explanation. Returns one row with PolicyName, NumberOfCompliantDevices (succeeded), NumberOfErrorDevices, NumberOfConflictDevices, NumberOfNonCompliantDevices, NumberOfInProgressDevices, NumberOfNotApplicableDevices, NumberOfRemovedDevices, in the tabular Schema/Values format. Start here to size a problem, then drill down with get-configuration-policy-device-status."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents",
+    "method": "get",
+    "toolName": "list-intents",
+    "section": "Endpoint security intents (legacy templates)",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists legacy template-based Endpoint security policies (intents): the Disk encryption, Antivirus, Firewall and Security baseline profiles created before Microsoft moved Endpoint security onto the Settings catalog. Each has displayName, description, templateId, isAssigned, isMigratingToConfigurationPolicy, roleScopeTagIds, lastModifiedDateTime. Use $expand=assignments to see target groups. An audit of Endpoint security must check both list-intents and list-configuration-policies. Supports $filter, $top, $skip, $select, $expand, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents/{deviceManagementIntent-id}",
+    "method": "get",
+    "toolName": "get-intent",
+    "section": "Endpoint security intents (legacy templates)",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Gets a legacy Endpoint security intent by ID. Pass $expand=settings,assignments,deviceStateSummary to get its configured values (settings[]: definitionId, valueJson), target groups and device counts (successCount, errorCount, conflictCount, notApplicableCount, inGracePeriodCount) in one call. Supports $select and $expand."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents/{deviceManagementIntent-id}/deviceStates",
+    "method": "get",
+    "toolName": "list-intent-device-states",
+    "section": "Endpoint security intents (legacy templates)",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Per-device state of a legacy Endpoint security intent. Each has deviceDisplayName, deviceId, userPrincipalName, userName, state (unknown, notApplicable, compliant, remediated, nonCompliant, error, conflict, notAssigned) and lastReportedDateTime. Filter with $filter=state eq 'error'. Supports $filter, $top, $skip, $select, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/templates",
+    "method": "get",
+    "toolName": "list-intent-templates",
+    "section": "Endpoint security intents (legacy templates)",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists the legacy templates intents are built from (security baselines and template-based Endpoint security profiles). Each has displayName, description, templateType (securityBaseline, diskEncryptionConfiguration, firewall, ...), templateSubtype, platformType, versionInfo, isDeprecated, intentCount. Resolve an intent's templateId here. Supports $filter, $top, $skip, $select, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDeviceEncryptionStates",
+    "method": "get",
+    "toolName": "list-managed-device-encryption-states",
+    "section": "Device encryption",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Per-device encryption report (Intune > Devices > Monitor > Encryption report) — the first stop to diagnose BitLocker or FileVault. Each row has id (the Intune managed device ID), deviceName, userPrincipalName, deviceType, osVersion, tpmSpecificationVersion, encryptionReadinessState (notReady, ready), encryptionState (notEncrypted, encrypted), fileVaultStates, advancedBitLockerStates (bitmask of reasons BitLocker is not enforced: osVolumeEncryptionMethodMismatch, osVolumeTpmRequired, osVolumeTpmOnlyRequired, recoveryKeyBackupFailed, ...) and policyDetails [{policyId, policyName}] — the encryption policies that reached the device. Filter with $filter=encryptionState eq 'notEncrypted', or $filter=deviceName eq 'PC-001' for one device. Supports $filter, $top, $skip, $select, $orderby, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsFeatureUpdateProfiles",
+    "method": "get",
+    "toolName": "list-windows-feature-update-profiles",
+    "section": "Windows Update profiles",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Windows feature update profiles (Intune > Devices > Windows updates > Feature updates): the Windows version a group is held on or moved to. Each has displayName, featureUpdateVersion (e.g. 'Windows 11, version 24H2'), rolloutSettings {offerStartDateTimeInUTC, offerEndDateTimeInUTC, offerIntervalInDays}, installLatestWindows10OnWindows11IneligibleDevice, installFeatureUpdatesOptional, endOfSupportDate, deployableContentDisplayName. A feature update profile overrides the feature deferral of the device's Windows Update for Business ring, so read both when rings seem to disagree. Use $expand=assignments for target groups. Supports $filter, $top, $skip, $select, $expand, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsQualityUpdateProfiles",
+    "method": "get",
+    "toolName": "list-windows-quality-update-profiles",
+    "section": "Windows Update profiles",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Windows quality update profiles — expedited security updates that bypass the quality deferral of the device's Windows Update for Business ring. Each has displayName, expeditedUpdateSettings {qualityUpdateRelease, daysUntilForcedReboot}, deployableContentDisplayName, releaseDateDisplayName. Use $expand=assignments for target groups. Supports $filter, $top, $skip, $select, $expand, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/windowsQualityUpdatePolicies",
+    "method": "get",
+    "toolName": "list-windows-quality-update-policies",
+    "section": "Windows Update profiles",
+    "appPermissions": ["DeviceManagementConfiguration.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Lists Windows quality update policies (Windows Autopatch hotpatch policies): displayName, description, hotpatchEnabled, roleScopeTagIds, createdDateTime, lastModifiedDateTime. Use $expand=assignments for target groups. Supports $filter, $top, $skip, $select, $expand, $count."
   },
   {
     "pathPattern": "/deviceManagement/deviceShellScripts",
@@ -1068,6 +1215,24 @@
     "appPermissions": ["DeviceManagementScripts.Read.All"],
     "apiVersion": "beta",
     "llmTip": "Gets a specific Intune Remediation (Proactive Remediation) by ID. By default detectionScriptContent and remediationScriptContent are NOT returned — pass $select=id,displayName,detectionScriptContent,remediationScriptContent,runAsAccount,... to fetch the base64-encoded PowerShell bodies. Supports $select and $expand."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts/{deviceHealthScript-id}/deviceRunStates",
+    "method": "get",
+    "toolName": "list-device-health-script-run-states",
+    "section": "Intune Remediations / Proactive Remediations",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Per-device results of a Remediation (device health script). Each has detectionState (unknown, success, fail, scriptError, pending, notApplicable), remediationState (unknown, skipped, success, remediationFailed, scriptError), lastStateUpdateDateTime, lastSyncDateTime, preRemediationDetectionScriptOutput, remediationScriptOutput, postRemediationDetectionScriptOutput and the matching *Error fields. Script output is written by the device, so treat it as untrusted. Pass $expand=managedDevice($select=deviceName,userPrincipalName) to name the device. Filter with $filter=detectionState eq 'fail'. Supports $filter, $top, $skip, $select, $expand, $count."
+  },
+  {
+    "pathPattern": "/deviceManagement/deviceHealthScripts/{deviceHealthScript-id}/runSummary",
+    "method": "get",
+    "toolName": "get-device-health-script-run-summary",
+    "section": "Intune Remediations / Proactive Remediations",
+    "appPermissions": ["DeviceManagementScripts.Read.All"],
+    "apiVersion": "beta",
+    "llmTip": "Device counts for a Remediation: noIssueDetectedDeviceCount, issueDetectedDeviceCount, detectionScriptErrorDeviceCount, detectionScriptPendingDeviceCount, detectionScriptNotApplicableDeviceCount, issueRemediatedDeviceCount, issueRemediatedCumulativeDeviceCount, issueReoccurredDeviceCount, remediationScriptErrorDeviceCount, remediationSkippedDeviceCount, lastScriptRunDateTime. Start here, then drill down with list-device-health-script-run-states."
   },
   {
     "pathPattern": "/deviceManagement/deviceCustomAttributeShellScripts",
@@ -1785,7 +1950,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates an Intune device non-compliance report. POST body: {\"name\":\"DeviceNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"ComplianceState\"],\"top\":50}. Returns device-level compliance status."
+    "llmTip": "Generates an Intune device non-compliance report. POST body: {\"name\":\"DeviceNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"ComplianceState\"],\"top\":50}. Returns device-level compliance status. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getCompliancePolicyNonComplianceReport",
@@ -1794,7 +1960,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a report of devices non-compliant with a specific compliance policy. POST body: {\"name\":\"CompliancePolicyNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}."
+    "llmTip": "Generates a report of devices non-compliant with a specific compliance policy. POST body: {\"name\":\"CompliancePolicyNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getCompliancePolicyNonComplianceSummaryReport",
@@ -1803,7 +1970,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a summary of non-compliance by compliance policy. POST body: {\"name\":\"CompliancePolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\",\"ErrorDeviceCount\"],\"top\":50}."
+    "llmTip": "Generates a summary of non-compliance by compliance policy. POST body: {\"name\":\"CompliancePolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\",\"ErrorDeviceCount\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getComplianceSettingNonComplianceReport",
@@ -1812,7 +1980,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a report of devices non-compliant for a specific compliance setting. POST body: {\"name\":\"ComplianceSettingNonCompliance\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"CurrentValue\"],\"top\":50}."
+    "llmTip": "Generates a report of devices non-compliant for a specific compliance setting. POST body: {\"name\":\"ComplianceSettingNonCompliance\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"CurrentValue\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getConfigurationPolicyNonComplianceReport",
@@ -1821,7 +1990,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a report of devices non-compliant with a device configuration policy. POST body: {\"name\":\"ConfigurationPolicyNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}."
+    "llmTip": "Generates a report of devices non-compliant with a device configuration policy. POST body: {\"name\":\"ConfigurationPolicyNonCompliance\",\"filter\":\"(PolicyId eq 'xxx')\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getConfigurationPolicyNonComplianceSummaryReport",
@@ -1830,7 +2000,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a summary of non-compliance by device configuration policy. POST body: {\"name\":\"ConfigurationPolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\"],\"top\":50}."
+    "llmTip": "Generates a summary of non-compliance by device configuration policy. POST body: {\"name\":\"ConfigurationPolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getConfigurationSettingNonComplianceReport",
@@ -1839,7 +2010,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementConfiguration.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a report of devices non-compliant for a specific configuration setting. POST body: {\"name\":\"ConfigurationSettingNonCompliance\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\"],\"top\":50}."
+    "llmTip": "Generates a report of devices non-compliant for a specific configuration setting. POST body: {\"name\":\"ConfigurationSettingNonCompliance\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getDevicesWithoutCompliancePolicyReport",
@@ -1848,7 +2020,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a report of managed devices that have no compliance policy assigned. POST body: {\"name\":\"DevicesWithoutCompliancePolicy\",\"select\":[\"DeviceName\",\"UPN\",\"OS\"],\"top\":50}. Useful for identifying compliance coverage gaps."
+    "llmTip": "Generates a report of managed devices that have no compliance policy assigned. POST body: {\"name\":\"DevicesWithoutCompliancePolicy\",\"select\":[\"DeviceName\",\"UPN\",\"OS\"],\"top\":50}. Useful for identifying compliance coverage gaps. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getNoncompliantDevicesAndSettingsReport",
@@ -1857,7 +2030,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a combined report of non-compliant devices and the settings they violate. POST body: {\"name\":\"NoncompliantDevicesAndSettings\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}."
+    "llmTip": "Generates a combined report of non-compliant devices and the settings they violate. POST body: {\"name\":\"NoncompliantDevicesAndSettings\",\"select\":[\"DeviceName\",\"UPN\",\"Setting\",\"State\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getPolicyNonComplianceReport",
@@ -1866,7 +2040,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a general policy non-compliance report. POST body: {\"name\":\"PolicyNonCompliance\",\"select\":[\"PolicyName\",\"DeviceName\",\"UPN\",\"ComplianceState\"],\"top\":50}."
+    "llmTip": "Generates a general policy non-compliance report. POST body: {\"name\":\"PolicyNonCompliance\",\"select\":[\"PolicyName\",\"DeviceName\",\"UPN\",\"ComplianceState\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getPolicyNonComplianceSummaryReport",
@@ -1875,7 +2050,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a summary of non-compliance across all policies. POST body: {\"name\":\"PolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\",\"ErrorDeviceCount\"],\"top\":50}."
+    "llmTip": "Generates a summary of non-compliance across all policies. POST body: {\"name\":\"PolicyNonComplianceSummary\",\"select\":[\"PolicyName\",\"NonCompliantDeviceCount\",\"ErrorDeviceCount\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getPolicyNonComplianceMetadata",
@@ -1884,7 +2060,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Gets metadata about policy non-compliance (available columns and filters). POST body: {\"name\":\"PolicyNonComplianceMetadata\"}. Useful before generating other reports to discover available fields."
+    "llmTip": "Gets metadata about policy non-compliance (available columns and filters). POST body: {\"name\":\"PolicyNonComplianceMetadata\"}. Useful before generating other reports to discover available fields. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getSettingNonComplianceReport",
@@ -1893,7 +2070,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a report of non-compliance grouped by setting. POST body: {\"name\":\"SettingNonCompliance\",\"select\":[\"SettingName\",\"NonCompliantDeviceCount\"],\"top\":50}."
+    "llmTip": "Generates a report of non-compliance grouped by setting. POST body: {\"name\":\"SettingNonCompliance\",\"select\":[\"SettingName\",\"NonCompliantDeviceCount\"],\"top\":50}. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getReportFilters",
@@ -1902,7 +2080,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Gets available report filters for Intune reports. POST body: {\"name\":\"ReportName\"}. Returns available filter values. Use before other report endpoints to discover filter options."
+    "llmTip": "Gets available report filters for Intune reports. POST body: {\"name\":\"ReportName\"}. Returns available filter values. Use before other report endpoints to discover filter options. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getHistoricalReport",
@@ -1911,7 +2090,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Generates a historical Intune report. POST body: {\"name\":\"ReportName\",\"filter\":\"...\",\"select\":[...],\"top\":50}. Provides point-in-time data for trend analysis."
+    "llmTip": "Generates a historical Intune report. POST body: {\"name\":\"ReportName\",\"filter\":\"...\",\"select\":[...],\"top\":50}. Provides point-in-time data for trend analysis. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/getCachedReport",
@@ -1920,7 +2100,8 @@
     "section": "Intune reports",
     "appPermissions": ["DeviceManagementManagedDevices.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Retrieves a previously generated cached Intune report by ID. POST body: {\"id\":\"report-id\",\"select\":[...],\"top\":50}. Faster than regenerating reports."
+    "llmTip": "Retrieves a previously generated cached Intune report by ID. POST body: {\"id\":\"report-id\",\"select\":[...],\"top\":50}. Faster than regenerating reports. Graph returns at most 50 rows per call: pass allPages: true to fetch every page (dedupeBy: \"DeviceName\" to drop duplicate devices).",
+    "reportPagination": true
   },
   {
     "pathPattern": "/deviceManagement/reports/exportJobs",
@@ -2297,7 +2478,7 @@
     "toolName": "list-pim-group-assignment-instances",
     "section": "Identity Governance+",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
+    "llmTip": "Lists active PIM for Groups assignment instances. Shows who currently has active (not just eligible) group membership/ownership via PIM. Has principalId, groupId, accessId, assignmentType (assigned, activated), startDateTime, endDateTime. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters — you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests",
@@ -2313,7 +2494,7 @@
     "toolName": "list-pim-group-eligibility-instances",
     "section": "Identity Governance+",
     "appPermissions": ["PrivilegedAccess.Read.AzureADGroup"],
-    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters \u2014 you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
+    "llmTip": "Lists active PIM for Groups eligibility instances. Shows who is currently eligible to activate group membership/ownership. Has principalId, groupId, accessId, startDateTime, endDateTime, and memberType. REQUIRED: this route rejects an unfiltered call with HTTP 400 MissingParameters — you must pass $filter on principalId or groupId (a filter on accessId alone is not enough). Verified against the live service 2026-07-31."
   },
   {
     "pathPattern": "/identityGovernance/accessReviews/historyDefinitions",
@@ -3519,6 +3700,26 @@
     "llmTip": "Forces a Windows Defender signature update on the device. Ensures the latest antivirus definitions are installed."
   },
   {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/rotateBitLockerKeys",
+    "method": "post",
+    "toolName": "rotate-bitlocker-keys",
+    "section": "Intune device remote actions",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "apiVersion": "beta",
+    "riskLevel": "medium",
+    "llmTip": "Asks a Windows device to generate new BitLocker recovery passwords and escrow them to Entra ID — the step after a recovery key was disclosed (helpdesk read-out, recovery screen) or after list-bitlocker-recovery-keys shows the key never reached Entra. No body. The old recovery passwords stop working once the device applies the action at its next check-in. Requires Windows 10 1909+ with BitLocker already on, Entra joined or hybrid joined, and recovery-password rotation enabled by the device's BitLocker policy (ConfigureRecoveryPasswordRotation); otherwise the action is accepted but the device does nothing. Confirm the new key with list-bitlocker-recovery-keys afterwards."
+  },
+  {
+    "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/rotateLocalAdminPassword",
+    "method": "post",
+    "toolName": "rotate-local-admin-password",
+    "section": "Intune device remote actions",
+    "appPermissions": ["DeviceManagementManagedDevices.PrivilegedOperations.All"],
+    "apiVersion": "beta",
+    "riskLevel": "medium",
+    "llmTip": "Asks a Windows device to rotate its Windows LAPS local administrator password now instead of at the scheduled expiry — after the password was used or disclosed. No body. The device must be under a Windows LAPS policy that backs the password up to Entra ID; the previous password stops working once the device applies the action. Read the new password afterwards with list-device-local-credentials."
+  },
+  {
     "pathPattern": "/deviceManagement/managedDevices/{managedDevice-id}/cleanWindowsDevice",
     "method": "post",
     "toolName": "clean-windows-device",
@@ -3635,6 +3836,15 @@
     "llmTip": "Updates an existing device compliance policy. Body can include any compliance settings for the platform type."
   },
   {
+    "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}/assign",
+    "method": "post",
+    "toolName": "assign-compliance-policy",
+    "section": "Intune policies CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Sets the assignments of a device compliance policy. REPLACES the whole assignment list: an empty array unassigns the policy everywhere, and any existing group left out is removed — and with Conditional Access requiring a compliant device, a change of compliance targeting changes who can sign in. Read the current list first (get-compliance-policy with $expand=assignments) and resend it with the change. Body: {\"assignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<group id>\"}}]}. Other targets: #microsoft.graph.exclusionGroupAssignmentTarget, #microsoft.graph.allDevicesAssignmentTarget, #microsoft.graph.allLicensedUsersAssignmentTarget."
+  },
+  {
     "pathPattern": "/deviceManagement/deviceCompliancePolicies/{deviceCompliancePolicy-id}",
     "method": "delete",
     "toolName": "delete-compliance-policy",
@@ -3662,6 +3872,15 @@
     "llmTip": "Updates an existing device configuration profile. Body can include any configuration settings for the profile type."
   },
   {
+    "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}/assign",
+    "method": "post",
+    "toolName": "assign-device-configuration",
+    "section": "Intune policies CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "riskLevel": "high",
+    "llmTip": "Sets the assignments of a device configuration profile (including Windows Update for Business rings). REPLACES the whole assignment list: an empty array unassigns the profile everywhere, and any existing group left out is removed. Read the current list first (get-device-configuration with $expand=assignments) and resend it with the change. Body: {\"assignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<group id>\"}},{\"target\":{\"@odata.type\":\"#microsoft.graph.exclusionGroupAssignmentTarget\",\"groupId\":\"<group id>\"}}]}. Other targets: #microsoft.graph.allDevicesAssignmentTarget, #microsoft.graph.allLicensedUsersAssignmentTarget. A target can add deviceAndAppManagementAssignmentFilterId and deviceAndAppManagementAssignmentFilterType (include | exclude)."
+  },
+  {
     "pathPattern": "/deviceManagement/deviceConfigurations/{deviceConfiguration-id}",
     "method": "delete",
     "toolName": "delete-device-configuration",
@@ -3669,6 +3888,86 @@
     "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
     "riskLevel": "high",
     "llmTip": "Deletes a device configuration profile. Devices assigned to this profile will no longer receive these settings."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies",
+    "method": "post",
+    "toolName": "create-configuration-policy",
+    "section": "Settings catalog & Endpoint security CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "medium",
+    "llmTip": "Creates a Settings catalog or Endpoint security policy, unassigned (assign it with assign-configuration-policy). Body: {\"name\":\"...\",\"description\":\"...\",\"platforms\":\"windows10\",\"technologies\":\"mdm\",\"roleScopeTagIds\":[\"0\"],\"templateReference\":{\"templateId\":\"<id from list-configuration-policy-templates>\"},\"settings\":[{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationSetting\",\"settingInstance\":{...}}]}. Omit templateReference (or use templateId \"\") for a plain Settings catalog policy. The simplest correct settings payload is copied from an existing policy via get-configuration-policy with $expand=settings."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}",
+    "method": "patch",
+    "toolName": "update-configuration-policy",
+    "section": "Settings catalog & Endpoint security CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "medium",
+    "llmTip": "Updates a Settings catalog / Endpoint security policy's metadata: name, description, roleScopeTagIds. PATCH does NOT change the settings themselves — Graph replaces settings only through a full PUT, which this server does not expose. To change settings, create a new policy with create-configuration-policy, assign it, then retire the old one."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}",
+    "method": "delete",
+    "toolName": "delete-configuration-policy",
+    "section": "Settings catalog & Endpoint security CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "high",
+    "llmTip": "Deletes a Settings catalog / Endpoint security policy. Every assigned device stops receiving it at the next check-in; for security policies (BitLocker, Firewall, Antivirus, ASR) that removes a control from the fleet. Check isAssigned and the assignments first, and confirm with the operator."
+  },
+  {
+    "pathPattern": "/deviceManagement/configurationPolicies/{deviceManagementConfigurationPolicy-id}/assign",
+    "method": "post",
+    "toolName": "assign-configuration-policy",
+    "section": "Settings catalog & Endpoint security CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "high",
+    "llmTip": "Sets the assignments of a Settings catalog / Endpoint security policy. REPLACES the whole assignment list: an empty array unassigns the policy everywhere, and any existing group left out is removed. Read the current list first (get-configuration-policy with $expand=assignments) and resend it with the change. Body: {\"assignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<group id>\"}},{\"target\":{\"@odata.type\":\"#microsoft.graph.exclusionGroupAssignmentTarget\",\"groupId\":\"<group id>\"}}]}. Other targets: #microsoft.graph.allDevicesAssignmentTarget, #microsoft.graph.allLicensedUsersAssignmentTarget. A target can add deviceAndAppManagementAssignmentFilterId and deviceAndAppManagementAssignmentFilterType (include | exclude)."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents/{deviceManagementIntent-id}",
+    "method": "patch",
+    "toolName": "update-intent",
+    "section": "Endpoint security intents CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "medium",
+    "llmTip": "Updates a legacy Endpoint security intent's metadata: displayName, description, roleScopeTagIds. To change its settings use update-intent-settings."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents/{deviceManagementIntent-id}/updateSettings",
+    "method": "post",
+    "toolName": "update-intent-settings",
+    "section": "Endpoint security intents CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "medium",
+    "llmTip": "Changes setting values of a legacy Endpoint security intent; settings not listed keep their value. Body: {\"settings\":[{\"@odata.type\":\"#microsoft.graph.deviceManagementBooleanSettingInstance\",\"definitionId\":\"<definitionId from get-intent $expand=settings>\",\"valueJson\":\"true\"}]}. The @odata.type must match the existing setting's type (Boolean, String, Integer, Collection, Complex, AbstractComplex)."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents/{deviceManagementIntent-id}",
+    "method": "delete",
+    "toolName": "delete-intent",
+    "section": "Endpoint security intents CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "high",
+    "llmTip": "Deletes a legacy Endpoint security intent. Assigned devices stop receiving it at the next check-in. Check isAssigned and the assignments first, make sure a replacement Settings catalog policy covers the same devices, and confirm with the operator."
+  },
+  {
+    "pathPattern": "/deviceManagement/intents/{deviceManagementIntent-id}/assign",
+    "method": "post",
+    "toolName": "assign-intent",
+    "section": "Endpoint security intents CRUD",
+    "appPermissions": ["DeviceManagementConfiguration.ReadWrite.All"],
+    "apiVersion": "beta",
+    "riskLevel": "high",
+    "llmTip": "Sets the assignments of a legacy Endpoint security intent. REPLACES the whole assignment list: an empty array unassigns it everywhere. Read the current list first (get-intent with $expand=assignments). Body: {\"assignments\":[{\"target\":{\"@odata.type\":\"#microsoft.graph.groupAssignmentTarget\",\"groupId\":\"<group id>\"}}]}."
   },
   {
     "pathPattern": "/deviceManagement/deviceShellScripts",
