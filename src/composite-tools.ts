@@ -15,6 +15,7 @@
  */
 import { z } from 'zod';
 import logger from './logger.js';
+import { KEPT_ODATA_ANNOTATIONS } from './graph-client.js';
 import type GraphClient from './graph-client.js';
 
 export interface CompositeEndpoint {
@@ -118,8 +119,13 @@ export interface DevicesByNamesResult {
   batches: number;
 }
 
+/** Same annotations as GraphClient keeps on list-managed-devices: @odata.type survives. */
 function stripODataAnnotations(device: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(device).filter(([k]) => !k.startsWith('@odata.')));
+  return Object.fromEntries(
+    Object.entries(device).filter(
+      ([k]) => !k.startsWith('@odata.') || KEPT_ODATA_ANNOTATIONS.has(k)
+    )
+  );
 }
 
 function retryAfterMs(response: BatchResponse): number {

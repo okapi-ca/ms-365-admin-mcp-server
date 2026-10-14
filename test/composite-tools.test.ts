@@ -60,6 +60,7 @@ function nameIn(req: SubRequest): string {
 
 const device = (name: string, id = `id-${name}`) => ({
   '@odata.type': '#microsoft.graph.managedDevice',
+  '@odata.etag': 'W/"1"',
   id,
   deviceName: name,
   isEncrypted: false,
@@ -169,8 +170,11 @@ describe('getManagedDevicesByNames', () => {
     expect(result.notFound).toEqual(['GHOST']);
     expect(result.multipleMatches).toEqual({ TWIN: 2 });
     expect(result.devices.map((d) => d.id)).toEqual(['id-A', 't1', 't2']);
-    // Same shape as list-managed-devices, which strips OData annotations.
-    expect(result.devices.every((d) => !('@odata.type' in d))).toBe(true);
+    // Same annotations as list-managed-devices: GraphClient keeps @odata.type.
+    expect(result.devices.every((d) => d['@odata.type'] === '#microsoft.graph.managedDevice')).toBe(
+      true
+    );
+    expect(result.devices.every((d) => !('@odata.etag' in d))).toBe(true);
   });
 
   it('retries throttled lookups after Retry-After, then reports what still fails', async () => {
