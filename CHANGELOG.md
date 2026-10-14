@@ -8,6 +8,12 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Added — device lookup by name list (674 tools)
+
+A workstation audit had a few hundred device names to resolve, and `list-managed-devices` could not do it in one call: Graph answers `deviceName eq 'A' or deviceName eq 'B'` with an empty list and `deviceName in ('A','B')` with a 500. `get-managed-devices-by-names` takes up to 500 names and sends one `$filter=deviceName eq '<name>'` request per name through Graph `$batch`, 20 per call. Single quotes in names are escaped. The result merges the devices and lists `notFound` names, names matching several devices (`multipleMatches`) and per-name errors; throttled lookups (429, 503, 504) are retried twice after `Retry-After`. `select` limits the fields returned and always keeps `deviceName`. Read-only, `DeviceManagementManagedDevices.Read.All`, like `list-managed-devices`.
+
+It is the first composite tool, declared in `src/composite-tools.ts` rather than `endpoints.json` because it is not one Graph endpoint. It goes through the same read-only, risk, App Role, tool-filter and group controls and the same untrusted-content envelope as every other tool, and appears in `--list-tools`, `--list-permissions` and the `intune` group.
+
 ### Added — Intune Settings catalog, Endpoint security and encryption report (662 tools)
 
 A workstation encryption audit could not tell whether a BitLocker policy existed, whom it targeted or where it failed. Nothing was denied: the server simply had no tool for the Settings catalog, where every modern Endpoint security policy lives, nor for the legacy template-based ones. All 19 tools target Graph beta — none of these resources exists in v1.0 — and need no new permission: `DeviceManagementConfiguration.Read.All` / `.ReadWrite.All` are already declared by the existing Intune configuration tools.

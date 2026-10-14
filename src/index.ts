@@ -30,16 +30,18 @@ async function main(): Promise<void> {
       const { fileURLToPath } = await import('url');
       const path = await import('path');
       const { isToolAllowed } = await import('./risk-level.js');
+      const { compositeEndpoints } = await import('./composite-tools.js');
       const __dirname = path.dirname(fileURLToPath(import.meta.url));
-      const endpoints = JSON.parse(
-        readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')
-      ) as Array<{
-        toolName: string;
-        method: string;
-        pathPattern: string;
-        appPermissions?: string[];
-        riskLevel?: 'low' | 'medium' | 'high' | 'critical';
-      }>;
+      const endpoints = [
+        ...(JSON.parse(readFileSync(path.join(__dirname, 'endpoints.json'), 'utf8')) as Array<{
+          toolName: string;
+          method: string;
+          pathPattern: string;
+          appPermissions?: string[];
+          riskLevel?: 'low' | 'medium' | 'high' | 'critical';
+        }>),
+        ...compositeEndpoints,
+      ];
 
       let enabledToolsRegex: RegExp | undefined;
       if (args.enabledTools) {

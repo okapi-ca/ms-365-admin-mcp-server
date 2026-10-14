@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { compositeEndpoints } from '../src/composite-tools.js';
 
 /**
  * `readme-inventory` pins the README's catalogue to `endpoints.json`, but every
@@ -33,7 +34,7 @@ const root = path.join(__dirname, '..');
 const endpoints: { toolName: string }[] = JSON.parse(
   readFileSync(path.join(root, 'src', 'endpoints.json'), 'utf8')
 );
-const actual = endpoints.length;
+const actual = endpoints.length + compositeEndpoints.length;
 
 /** Dated snapshots record what was true when written. */
 const isDatedSnapshot = (rel: string) => /SECURITY_REVIEW_\d{4}-\d{2}-\d{2}\.md$/.test(rel);
@@ -97,7 +98,7 @@ describe('documentation tool counts', () => {
     const wrong = claims.filter((c) => !c.hedged && c.count !== actual);
     expect(
       wrong.map((c) => `${c.file}:${c.line} claims ${c.count}, actual ${actual} — ${c.text}`),
-      `A document states an exact tool total that no longer matches src/endpoints.json ` +
+      `A document states an exact tool total that no longer matches the catalogue ` +
         `(${actual} entries). Either update it, or drop the number and point at ` +
         `\`--list-permissions\` so it cannot rot again.`
     ).toEqual([]);

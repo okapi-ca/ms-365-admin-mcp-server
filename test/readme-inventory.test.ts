@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { compositeEndpoints } from '../src/composite-tools.js';
 
 /**
  * The README's "Available tools" inventory is the only operator-facing catalogue
@@ -26,9 +27,12 @@ interface Endpoint {
   riskLevel?: string;
 }
 
-const endpoints: Endpoint[] = JSON.parse(
-  readFileSync(path.join(root, 'src', 'endpoints.json'), 'utf8')
-);
+// Composite tools (composite-tools.ts) are registered like any other and need
+// their row too.
+const endpoints: Endpoint[] = [
+  ...(JSON.parse(readFileSync(path.join(root, 'src', 'endpoints.json'), 'utf8')) as Endpoint[]),
+  ...compositeEndpoints,
+];
 const readme = readFileSync(path.join(root, 'README.md'), 'utf8').split('\n');
 
 interface Section {
@@ -123,7 +127,7 @@ describe('README tool inventory', () => {
         .map((tool) => `  ${tool} (listed under ${listed.get(tool)!.join(', ')})`)
         .join('\n');
       expect.fail(
-        `${phantom.length} tool(s) appear in the README but are not in endpoints.json. ` +
+        `${phantom.length} tool(s) appear in the README but are not in endpoints.json or composite-tools.ts. ` +
           `An operator would plan around a tool that does not answer — remove the row, or ` +
           `explain the absence in prose rather than in the table.\n${details}`
       );

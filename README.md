@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **673 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **Settings catalog & Endpoint security (BitLocker, Antivirus, Firewall, ASR)**, **encryption report**, **Windows Update profiles**, **BitLocker and LAPS rotation**, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **674 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **Settings catalog & Endpoint security (BitLocker, Antivirus, Firewall, ASR)**, **encryption report**, **Windows Update profiles**, **BitLocker and LAPS rotation**, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -252,7 +252,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (673)
+## Available tools (674)
 
 ### Security (11)
 
@@ -556,11 +556,12 @@ There is no general-purpose `update-user`. The only PATCH on `/users/{id}` this 
 | `list-threat-intel-host-components` | GET    |
 | `list-threat-intel-ssl-certs`       | GET    |
 
-### Managed devices (7)
+### Managed devices (8)
 
 | Tool                               | Method | Risk     |
 | ---------------------------------- | ------ | -------- |
 | `list-managed-devices`             | GET    |          |
+| `get-managed-devices-by-names`     | GET    |          |
 | `get-managed-device`               | GET    |          |
 | `get-windows-protection-state`     | GET    |          |
 | `list-device-compliance-states`    | GET    |          |

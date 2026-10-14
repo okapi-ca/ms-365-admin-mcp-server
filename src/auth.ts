@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import type { AppSecrets } from './secrets.js';
 import { getCloudEndpoints } from './cloud-config.js';
+import { compositeEndpoints } from './composite-tools.js';
 
 interface EndpointConfig {
   pathPattern: string;
@@ -22,7 +23,7 @@ const endpointsData = JSON.parse(
 ) as EndpointConfig[];
 
 const endpoints = {
-  default: endpointsData,
+  default: [...endpointsData, ...compositeEndpoints] as EndpointConfig[],
 };
 
 function createMsalConfig(secrets: AppSecrets): Configuration {

@@ -91,6 +91,8 @@ Skipping logic:
 - `readOnly` mode skips any non-GET.
 - `enabledToolsRegex` (from `--preset` / `--enabled-tools` / `ENABLED_TOOLS`) filters by tool name.
 
+Composite tools (`src/composite-tools.ts`) go through the same filters, in the same order, after the generated ones. Their handler (`executeCompositeTool`) logs parameter names only and wraps a successful result in the untrusted-content envelope, as `executeGraphTool` does.
+
 Security hardening inside the handler (grep for `SEC-` comments):
 
 - `SEC-A` — path-param skip-encoding validated against traversal
@@ -186,7 +188,11 @@ Single source of truth for tool definitions. Each entry:
 }
 ```
 
-`endpoints.json` is **hand-curated** (~515 entries). It is the thing a contributor edits.
+`endpoints.json` is **hand-curated** (600+ entries). It is the thing a contributor edits.
+
+### `src/composite-tools.ts`
+
+Tools that are not one Graph endpoint, so the generator cannot map them onto the OpenAPI spec: today only `get-managed-devices-by-names`, which resolves a list of device names with one `deviceName eq` request per name sent through `$batch`. Each composite declares the same metadata as an `endpoints.json` entry (`toolName`, `section`, `appPermissions`, `llmTip`, `riskLevel`) plus a handler. `method` is the tool's effect, not the HTTP verb: a read carried by `POST /$batch` is declared `get`, so `--read-only` and the write tiers treat it as a read. Every consumer of the catalog (`registerGraphTools`, `endpointSections` and the partitions, `--list-tools`, `buildPermissionsFromEndpoints`, the README inventory tests) reads `compositeEndpoints` next to `endpoints.json`.
 
 ### `src/generated/`
 
@@ -222,7 +228,7 @@ Three layers:
 
 ## Extensibility points
 
-- **New tools** — add entries to `endpoints.json`, regenerate, done (see [CONTRIBUTING.md](../CONTRIBUTING.md#adding-a-new-tool)).
+- **New tools** — add entries to `endpoints.json`, regenerate, done (see [CONTRIBUTING.md](../CONTRIBUTING.md#adding-a-new-tool)). A tool that needs several Graph calls goes in `composite-tools.ts` instead.
 - **New presets** — add regex to `tool-categories.ts`.
 - **New secret backend** — implement `SecretsProvider` in `secrets.ts`.
 - **New transport** — follow the `http-server.ts` pattern and wire it in `server.ts`.
