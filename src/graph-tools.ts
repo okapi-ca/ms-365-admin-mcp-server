@@ -17,6 +17,12 @@ import { wrapUntrustedContent } from './untrusted-envelope.js';
 import { shallowBodySchema } from './advertised-schema.js';
 import { effectiveRiskLevel, isToolAllowed, type RiskLevel } from './risk-level.js';
 import {
+  collectReportPages,
+  initialSkip,
+  reportMaxRowsFromEnv,
+  type ReportPage,
+} from './report-pagination.js';
+import {
   hasGuardrails,
   runGuardrails,
   type GraphReader,
@@ -40,6 +46,8 @@ interface EndpointConfig {
   acceptType?: string;
   returnDownloadUrl?: boolean;
   apiVersion?: 'v1.0' | 'beta';
+  /** Tabular Intune report action: accepts allPages / dedupeBy (report-pagination.ts). */
+  reportPagination?: boolean;
 }
 
 // SEC-A (SEC-001): allowlist for skip-encoded path parameters. The previous
@@ -241,6 +249,43 @@ function appendErrorHints(result: CallToolResult, hints: string[]): CallToolResu
   };
 }
 
+function parseReportPage(result: CallToolResult): ReportPage {
+  const text = result.content?.[0]?.text ?? '';
+  if (result.isError) throw new Error(text);
+  return JSON.parse(text) as ReportPage;
+}
+
+/**
+ * Walks the remaining pages of a tabular Intune report — see
+ * report-pagination.ts. The merged table replaces the first page before the
+ * untrusted-content envelope is applied, so every row is still wrapped.
+ */
+async function paginateReport(
+  first: CallToolResult,
+  body: Record<string, unknown>,
+  fullPath: string,
+  requestOptions: Record<string, unknown>,
+  graphClient: GraphClient,
+  dedupeBy: string | undefined
+): Promise<CallToolResult> {
+  const merged = await collectReportPages(
+    parseReportPage(first),
+    initialSkip(body),
+    async (skip) =>
+      parseReportPage(
+        (await graphClient.graphRequest(fullPath, {
+          ...requestOptions,
+          body: JSON.stringify({ ...body, skip }),
+        })) as CallToolResult
+      ),
+    { dedupeBy, maxRows: reportMaxRowsFromEnv() }
+  );
+  logger.info(
+    `Report paginated: ${merged.pagination.pagesFetched} page(s), ${merged.pagination.rowsReturned} row(s)`
+  );
+  return { content: [{ type: 'text', text: JSON.stringify(merged) }] };
+}
+
 async function executeGraphTool(
   tool: (typeof api.endpoints)[0],
   config: EndpointConfig | undefined,
@@ -278,7 +323,10 @@ async function executeGraphTool(
     let body: unknown = null;
 
     for (const [paramName, paramValue] of Object.entries(params)) {
-      if (paramName === 'excludeResponse') {
+      if (
+        paramName === 'excludeResponse' ||
+        (config?.reportPagination && (paramName === 'allPages' || paramName === 'dedupeBy'))
+      ) {
         continue;
       }
 
@@ -411,6 +459,25 @@ async function executeGraphTool(
     // SEC-G02: wrap Graph response in an untrusted-content envelope before it
     // becomes part of the LLM context. Errors pass through unchanged.
     let graphResult = (await graphClient.graphRequest(fullPath, requestOptions)) as CallToolResult;
+
+    if (
+      config?.reportPagination &&
+      params.allPages === true &&
+      !params.excludeResponse &&
+      !graphResult.isError &&
+      body !== null &&
+      typeof body === 'object' &&
+      !Array.isArray(body)
+    ) {
+      graphResult = await paginateReport(
+        graphResult,
+        body as Record<string, unknown>,
+        fullPath,
+        requestOptions,
+        graphClient,
+        typeof params.dedupeBy === 'string' && params.dedupeBy !== '' ? params.dedupeBy : undefined
+      );
+    }
 
     if (graphResult.isError && guardrail && guardrail.errorHints.length > 0) {
       graphResult = appendErrorHints(graphResult, guardrail.errorHints);
@@ -686,6 +753,24 @@ function buildCatalogEntry(
     .boolean()
     .describe('Exclude the full response body and only return success or failure')
     .optional();
+
+  if (endpointConfig?.reportPagination) {
+    paramSchema['allPages'] = z
+      .boolean()
+      .describe(
+        'Fetch every page server-side (Graph returns at most 50 rows per call) until TotalRowCount, ' +
+          'starting from body.skip. Capped by MS365_ADMIN_MCP_REPORT_MAX_ROWS (default 5000); ' +
+          'the response carries a pagination block saying whether it was truncated.'
+      )
+      .optional();
+    paramSchema['dedupeBy'] = z
+      .string()
+      .describe(
+        'With allPages: report column whose value identifies a row (e.g. DeviceName); ' +
+          'later rows with the same value are dropped.'
+      )
+      .optional();
+  }
 
   let toolDescription =
     tool.description || `Execute ${tool.method.toUpperCase()} request to ${tool.path}`;

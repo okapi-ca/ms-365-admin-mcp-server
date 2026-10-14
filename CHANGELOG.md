@@ -8,6 +8,36 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Added — Intune Settings catalog, Endpoint security and encryption report (662 tools)
+
+A workstation encryption audit could not tell whether a BitLocker policy existed, whom it targeted or where it failed. Nothing was denied: the server simply had no tool for the Settings catalog, where every modern Endpoint security policy lives, nor for the legacy template-based ones. All 19 tools target Graph beta — none of these resources exists in v1.0 — and need no new permission: `DeviceManagementConfiguration.Read.All` / `.ReadWrite.All` are already declared by the existing Intune configuration tools.
+
+- Reads: `list-configuration-policies` (filter on `templateReference/templateFamily`, e.g. `endpointSecurityDiskEncryption`), `get-configuration-policy`, `list-configuration-policy-settings`, `list-configuration-policy-templates`; `list-intents`, `get-intent`, `list-intent-device-states`, `list-intent-templates` for the legacy profiles; `list-managed-device-encryption-states`, the Intune encryption report (readiness, state, TPM version, `advancedBitLockerStates`, policies that reached each device).
+- Report actions (POST, `low`): `get-configuration-policy-device-status` and `get-configuration-policy-device-summary`, per-device and per-state deployment status of one policy.
+- Writes: `create-configuration-policy` and `update-configuration-policy` (medium), `delete-configuration-policy` and `assign-configuration-policy` (high); `update-intent` and `update-intent-settings` (medium), `delete-intent` and `assign-intent` (high). Both assign tools are `high` because Graph replaces the whole assignment list: one omitted group silently unassigns it. `update-configuration-policy` changes metadata only — Graph replaces settings only through a full PUT, which is not exposed.
+
+### Added — Intune assignment, status and rotation gaps (673 tools)
+
+Eleven tools that close gaps found during the same audit. All but `assign-*`, `list-device-configuration-device-statuses` and `get-windows-protection-state` target Graph beta.
+
+- `assign-device-configuration` and `assign-compliance-policy` (high): the CRUD could create these profiles but not assign them. Like every Intune assign action, Graph replaces the whole assignment list. A compliance retarget also changes who passes a "require compliant device" Conditional Access policy.
+- `list-device-configuration-device-statuses`: per-device status of a classic profile or update ring, the counterpart of `list-compliance-policy-device-statuses`.
+- `get-windows-protection-state`: Defender Antivirus health of one device (real-time protection, tamper protection, signature and scan age, detected malware).
+- `rotate-bitlocker-keys` and `rotate-local-admin-password` (medium, `DeviceManagementManagedDevices.PrivilegedOperations.All`): rotate a disclosed BitLocker recovery password or Windows LAPS password. Both also join the `response` preset.
+- `list-device-health-script-run-states` and `get-device-health-script-run-summary`: Remediation results per device and in aggregate. Remediations could be created and assigned, not read back.
+- `list-windows-feature-update-profiles`, `list-windows-quality-update-profiles` and `list-windows-quality-update-policies`: the profiles that override a Windows Update for Business ring's deferrals. The rings alone cannot explain the update behaviour of a device.
+
+The `intune` preset now also matches the Remediation tools, which its pattern had missed.
+
+### Added — server-side paging for Intune reports
+
+Graph returns at most 50 rows per call from the `POST /deviceManagement/reports/get*Report` actions, whatever `top` the caller sends, so a report over a thousand devices took more than twenty tool calls. The 16 `intune-*` report tools and the two new policy reports accept `allPages: true`: the server walks `skip` until `TotalRowCount` and returns one table, with a `pagination` block (`pagesFetched`, `rowsReturned`, `totalRowCount`, `truncated`). `dedupeBy` (e.g. `DeviceName`) drops repeated rows. The walk stops at `MS365_ADMIN_MCP_REPORT_MAX_ROWS` (default 5000), and a failed page fails the call instead of returning a partial table. Without `allPages` a call behaves as before.
+
+### Changed
+
+- `get-managed-device` now calls Graph beta, so `$select=hardwareInformation` (TPM version and manufacturer, BIOS version, Device Guard / VBS state) no longer fails with 400. Secure Boot is in `deviceHealthAttestationState`, not in `hardwareInformation`; the tip says so.
+- `get-device-configuration` and `list-device-configurations` tips explain how to read a Windows Update for Business ring: `$select` on a ring-specific property such as `qualityUpdatesDeferralPeriodInDays` fails with 400, because `$select` only resolves the base `deviceConfiguration` type, while a call without `$select` already returns every deferral, deadline and pause field.
+
 ## [0.16.0] — 2026-10-14
 
 ### Added — Teams telephone number assignment (643 tools)
