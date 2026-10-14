@@ -51,7 +51,7 @@
   "license": "MIT",
   "dependencies": {
     "@azure/msal-node": "^7.0.1",
-    "@modelcontextprotocol/sdk": "1.31.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "commander": "^15.0.0",
     "dotenv": "^17.0.1",
     "express": "^5.2.1",
