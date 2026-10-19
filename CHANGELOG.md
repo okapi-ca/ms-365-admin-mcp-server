@@ -8,6 +8,8 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-10-19
+
 ### Added — device lookup by name list (674 tools)
 
 A workstation audit had a few hundred device names to resolve, and `list-managed-devices` could not do it in one call: Graph answers `deviceName eq 'A' or deviceName eq 'B'` with an empty list and `deviceName in ('A','B')` with a 500. `get-managed-devices-by-names` takes up to 500 names and sends one `$filter=deviceName eq '<name>'` request per name through Graph `$batch`, 20 per call. Single quotes in names are escaped. The result merges the devices and lists `notFound` names, names matching several devices (`multipleMatches`) and per-name errors; throttled lookups (429, 503, 504) are retried twice after `Retry-After`. `select` limits the fields returned and always keeps `deviceName`. Read-only, `DeviceManagementManagedDevices.Read.All`, like `list-managed-devices`.
