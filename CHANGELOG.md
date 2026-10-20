@@ -8,6 +8,31 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Added — Intune assignments, statuses, audit trail and write actions (727 tools)
+
+The catalogue could assign compliance, configuration and Settings catalog policies but not list who they target, so the first audit question — which groups receive this policy? — had no answer. 53 tools:
+
+- **Assignment reads** for compliance policies, device configurations, Settings catalog policies (beta), enrollment configurations, apps, app configurations (device and MAM), iOS and Android app protections, and terms and conditions. The target's `@odata.type` tells an inclusion from an exclusion.
+- **Compliance and configuration results**: actions for noncompliance (`list-compliance-policy-scheduled-actions`), per-user statuses and overviews, per-setting summaries per policy and tenant-wide, and the tenant-wide configuration state summary.
+- **Per device** (beta except users): users, detected apps, Remediations results, device cleanup rules.
+- **Governance**: remote action audit trail, Multi Admin Approval policies and requests (beta), Intune role definition and assignment by id, assignments of a role, audit categories, terms assignments.
+- **Other reads**: `get-intune-mobile-app`, Autopilot deployment profiles and Windows driver update profiles (beta), enrollment and app troubleshooting events, diagnostic log collections.
+- **Report exports**: `create-intune-report-export-job` and `get-intune-report-export-job`, the documented way to pull a full report beyond the paged `intune-*` tools. Graph grants the POST only to `ReadWrite` scopes, so it is `riskLevel: low` and needs `--allow-writes` like the other report POSTs.
+- **Autopilot writes** (`medium`): `assign-autopilot-device-user`, `unassign-autopilot-device-user`, and `update-autopilot-device-properties`, the supported way to change a device's group tag, display name or assigned user.
+- **Assignment writes** (`high`, each replaces the whole list like the existing `assign-*` tools): `assign-enrollment-configuration`, `assign-intune-mobile-app` (an `uninstall` intent to a broad group removes the app fleet-wide), `assign-intune-app-configuration`, `assign-targeted-app-configuration`.
+- **Device actions**: `run-managed-device-remediation`, `collect-managed-device-logs`, `rotate-filevault-key`, `set-managed-device-name`, `enable-lost-mode`, `request-remote-assistance` (`medium`); `play-lost-mode-sound` (`low`); `create-managed-device-log-download-url` (`high`: the URL is pre-authenticated device data).
+
+**New permission: `DeviceManagementApps.ReadWrite.All`**, used by the three app assignment tools only. Every other tool reuses a declared scope. The `intune` preset now matches `filevault`; the `response` preset gains `rotate-filevault-key` and `enable-lost-mode`. `securityBaselineStates` was left out: Graph marks it deprecated and it has returned no data since 2026-07-07.
+
+### Removed — `update-autopilot-device`, which never worked (726 tools)
+
+The tool sent a PATCH on `/deviceManagement/windowsAutopilotDeviceIdentities/{id}`. The OpenAPI spec lists that verb because it is generated from the schema, but Microsoft documents no Update method for the entity, in v1.0 or beta, and an empty PATCH on a real Autopilot device answers `400 No method match route template … with http verb PATCH`. Use `update-autopilot-device-properties`.
+
+### Fixed — Autopilot and remote action audit tips
+
+- `list-autopilot-devices` answers 500 whenever `$select` is passed, whatever the fields; the tip says to leave it out. Both Autopilot read tips no longer advertise `deploymentProfileAssignmentStatus` or `assignedDeploymentProfile`, which v1.0 does not return.
+- `list-intune-remote-action-audits`: `initiatedByUserPrincipalName` and `userName` hold the administrator's Entra object id, not a UPN. The tip says to resolve it with `get-user`.
+
 ## [0.17.0] — 2026-10-19
 
 ### Added — device lookup by name list (674 tools)

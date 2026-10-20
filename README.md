@@ -10,7 +10,7 @@ Built on the architecture and endpoint-driven design pioneered by [Softeria/ms-3
 
 ## Features
 
-- **674 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **Settings catalog & Endpoint security (BitLocker, Antivirus, Firewall, ASR)**, **encryption report**, **Windows Update profiles**, **BitLocker and LAPS rotation**, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
+- **726 tools** covering security, audit, identity, app credentials, guest users, Exchange, Intune (devices, apps, MAM, reports, **Settings catalog & Endpoint security (BitLocker, Antivirus, Firewall, ASR)**, **encryption report**, **Windows Update profiles**, **BitLocker and LAPS rotation**, **macOS Platform Scripts**, **macOS custom attribute scripts**, **assignment filters**, **Remediations**, **Windows PowerShell scripts**, **custom compliance scripts**), governance (PIM, access reviews, entitlement, lifecycle), compliance, threat intelligence, advanced hunting, **Defender for Identity (sensors, candidates, migration, identity accounts, audit policy)**, **Microsoft 365 Copilot admin (usage reports, interaction history audit, AI users, meeting insights, agent registrations, policy settings)**, custom security attributes, LAPS, policies, reports, incident response, **eDiscovery v3 (cases, custodians, noncustodial data sources, review sets, queries, exports, operations)**, **Purview DSPM (protection scopes)**, **event-based retention triggers**, **Teams online meeting attendance reports (app-only with Application Access Policy)**, **deleted chats restore (admin recovery flow)**, **Teams chat investigation reads (Chat.Read.All for triage; eDiscovery v3 for court-admissible production)**, Cloud PC, call records, Universal Print, information protection, SharePoint admin, and records management
 - **Application permissions** (client credentials) — no user interaction required
 - **Read-only by default** — write operations require explicit `--allow-writes`
 - **Risk classification** on write tools (low/medium/high/critical)
@@ -252,7 +252,7 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
-## Available tools (674)
+## Available tools (726)
 
 ### Security (11)
 
@@ -556,39 +556,54 @@ There is no general-purpose `update-user`. The only PATCH on `/users/{id}` this 
 | `list-threat-intel-host-components` | GET    |
 | `list-threat-intel-ssl-certs`       | GET    |
 
-### Managed devices (8)
+### Managed devices (12)
 
-| Tool                               | Method | Risk     |
-| ---------------------------------- | ------ | -------- |
-| `list-managed-devices`             | GET    |          |
-| `get-managed-devices-by-names`     | GET    |          |
-| `get-managed-device`               | GET    |          |
-| `get-windows-protection-state`     | GET    |          |
-| `list-device-compliance-states`    | GET    |          |
-| `list-device-configuration-states` | GET    |          |
-| `get-managed-device-overview`      | GET    |          |
-| `delete-managed-device`            | DELETE | critical |
+| Tool                                       | Method | Risk     |
+| ------------------------------------------ | ------ | -------- |
+| `list-managed-devices`                     | GET    |          |
+| `get-managed-devices-by-names`             | GET    |          |
+| `get-managed-device`                       | GET    |          |
+| `get-windows-protection-state`             | GET    |          |
+| `list-device-compliance-states`            | GET    |          |
+| `list-device-configuration-states`         | GET    |          |
+| `get-managed-device-overview`              | GET    |          |
+| `delete-managed-device`                    | DELETE | critical |
+| `list-managed-device-users`                | GET    |          |
+| `list-managed-device-detected-apps`        | GET    |          |
+| `list-managed-device-health-script-states` | GET    |          |
+| `list-managed-device-cleanup-rules`        | GET    |          |
 
-### Compliance policies (5)
+### Compliance policies (11)
 
-| Tool                                     | Method |
-| ---------------------------------------- | ------ |
-| `list-compliance-policies`               | GET    |
-| `get-compliance-policy`                  | GET    |
-| `list-compliance-policy-device-statuses` | GET    |
-| `get-compliance-policy-status-overview`  | GET    |
-| `get-compliance-state-summary`           | GET    |
+| Tool                                           | Method |
+| ---------------------------------------------- | ------ |
+| `list-compliance-policies`                     | GET    |
+| `get-compliance-policy`                        | GET    |
+| `list-compliance-policy-device-statuses`       | GET    |
+| `get-compliance-policy-status-overview`        | GET    |
+| `get-compliance-state-summary`                 | GET    |
+| `list-compliance-policy-assignments`           | GET    |
+| `list-compliance-policy-scheduled-actions`     | GET    |
+| `list-compliance-policy-user-statuses`         | GET    |
+| `get-compliance-policy-user-status-overview`   | GET    |
+| `list-compliance-policy-setting-summaries`     | GET    |
+| `list-all-compliance-policy-setting-summaries` | GET    |
 
-### Device configurations (4)
+### Device configurations (9)
 
-| Tool                                        | Method |
-| ------------------------------------------- | ------ |
-| `list-device-configurations`                | GET    |
-| `get-device-configuration`                  | GET    |
-| `get-device-configuration-status-overview`  | GET    |
-| `list-device-configuration-device-statuses` | GET    |
+| Tool                                            | Method |
+| ----------------------------------------------- | ------ |
+| `list-device-configurations`                    | GET    |
+| `get-device-configuration`                      | GET    |
+| `get-device-configuration-status-overview`      | GET    |
+| `list-device-configuration-device-statuses`     | GET    |
+| `list-device-configuration-assignments`         | GET    |
+| `list-device-configuration-user-statuses`       | GET    |
+| `get-device-configuration-user-status-overview` | GET    |
+| `list-device-configuration-setting-summaries`   | GET    |
+| `get-device-configuration-state-summary`        | GET    |
 
-### Settings catalog & Endpoint security (6)
+### Settings catalog & Endpoint security (7)
 
 Settings catalog policies, including every modern Endpoint security policy (Disk encryption / BitLocker, Antivirus, Firewall, Attack surface reduction, EDR, Account protection). **Targets Graph beta** — `configurationPolicies` has no v1.0 equivalent. The two report actions are POSTs that only read; they need `--allow-writes` like the other Intune reports.
 
@@ -600,6 +615,7 @@ Settings catalog policies, including every modern Endpoint security policy (Disk
 | `list-configuration-policy-templates`     | GET    |      |
 | `get-configuration-policy-device-status`  | POST   | low  |
 | `get-configuration-policy-device-summary` | POST   | low  |
+| `list-configuration-policy-assignments`   | GET    |      |
 
 ### Endpoint security intents (legacy templates) (4)
 
@@ -620,7 +636,7 @@ Intune encryption report: readiness, state, TPM version and the BitLocker / File
 | --------------------------------------- | ------ |
 | `list-managed-device-encryption-states` | GET    |
 
-### Windows Update profiles (3)
+### Windows Update profiles (4)
 
 Feature and quality update profiles, which override the deferrals of a device's Windows Update for Business ring (rings themselves are device configurations). **Targets Graph beta.**
 
@@ -629,6 +645,7 @@ Feature and quality update profiles, which override the deferrals of a device's 
 | `list-windows-feature-update-profiles` | GET    |
 | `list-windows-quality-update-profiles` | GET    |
 | `list-windows-quality-update-policies` | GET    |
+| `list-windows-driver-update-profiles`  | GET    |
 
 ### macOS Platform Scripts (6)
 
@@ -756,20 +773,26 @@ Notes:
 - Deleting a script in use causes referencing compliance policies to fail evaluation on next device check-in.
 - Assignment shape reuses `deviceHealthScriptAssignment` (set `runRemediationScript: false` since compliance scripts have no remediation pairing).
 
-### Enrollment & Autopilot (10)
+### Enrollment & Autopilot (16)
 
-| Tool                              | Method | Risk   |
-| --------------------------------- | ------ | ------ |
-| `list-enrollment-configurations`  | GET    |        |
-| `get-enrollment-configuration`    | GET    |        |
-| `list-autopilot-devices`          | GET    |        |
-| `get-autopilot-device`            | GET    |        |
-| `create-enrollment-configuration` | POST   | medium |
-| `update-enrollment-configuration` | PATCH  | medium |
-| `delete-enrollment-configuration` | DELETE | high   |
-| `update-autopilot-device`         | PATCH  | medium |
-| `delete-autopilot-device`         | DELETE | high   |
-| `import-autopilot-device`         | POST   | medium |
+| Tool                                        | Method | Risk   |
+| ------------------------------------------- | ------ | ------ |
+| `list-enrollment-configurations`            | GET    |        |
+| `get-enrollment-configuration`              | GET    |        |
+| `list-autopilot-devices`                    | GET    |        |
+| `get-autopilot-device`                      | GET    |        |
+| `create-enrollment-configuration`           | POST   | medium |
+| `update-enrollment-configuration`           | PATCH  | medium |
+| `delete-enrollment-configuration`           | DELETE | high   |
+| `delete-autopilot-device`                   | DELETE | high   |
+| `import-autopilot-device`                   | POST   | medium |
+| `list-enrollment-configuration-assignments` | GET    |        |
+| `list-autopilot-deployment-profiles`        | GET    |        |
+| `list-intune-troubleshooting-events`        | GET    |        |
+| `assign-autopilot-device-user`              | POST   | medium |
+| `unassign-autopilot-device-user`            | POST   | medium |
+| `update-autopilot-device-properties`        | POST   | medium |
+| `assign-enrollment-configuration`           | POST   | high   |
 
 ### Detected apps (3)
 
@@ -779,17 +802,25 @@ Notes:
 | `get-detected-app`          | GET    |
 | `list-detected-app-devices` | GET    |
 
-### Intune RBAC & config (7)
+### Intune RBAC & config (15)
 
-| Tool                               | Method |
-| ---------------------------------- | ------ |
-| `list-intune-audit-events`         | GET    |
-| `get-software-update-summary`      | GET    |
-| `get-apple-push-certificate`       | GET    |
-| `list-intune-role-definitions`     | GET    |
-| `list-intune-role-assignments`     | GET    |
-| `list-intune-terms-and-conditions` | GET    |
-| `list-intune-terms-acceptances`    | GET    |
+| Tool                                      | Method |
+| ----------------------------------------- | ------ |
+| `list-intune-audit-events`                | GET    |
+| `get-software-update-summary`             | GET    |
+| `get-apple-push-certificate`              | GET    |
+| `list-intune-role-definitions`            | GET    |
+| `list-intune-role-assignments`            | GET    |
+| `list-intune-terms-and-conditions`        | GET    |
+| `list-intune-terms-acceptances`           | GET    |
+| `list-intune-terms-assignments`           | GET    |
+| `list-intune-audit-categories`            | GET    |
+| `get-intune-role-definition`              | GET    |
+| `list-intune-role-definition-assignments` | GET    |
+| `get-intune-role-assignment`              | GET    |
+| `list-intune-remote-action-audits`        | GET    |
+| `list-intune-operation-approval-policies` | GET    |
+| `list-intune-operation-approval-requests` | GET    |
 
 ### Intune connectors & updates (3)
 
@@ -882,28 +913,37 @@ Notes:
 
 One deletion tool per authentication-method collection, since the ids are collection-scoped and not interchangeable. Run `list-user-auth-methods` first and match on `@odata.type` to pick the right tool and id. Graph refuses the deletion when the method is the user's only remaining MFA factor and MFA is required.
 
-### Intune device remote actions (18) -- requires `--allow-writes`
+### Intune device remote actions (27) -- requires `--allow-writes`
 
-| Tool                            | Method | Risk     |
-| ------------------------------- | ------ | -------- |
-| `wipe-managed-device`           | POST   | critical |
-| `retire-managed-device`         | POST   | high     |
-| `sync-managed-device`           | POST   | low      |
-| `reboot-managed-device`         | POST   | high     |
-| `remote-lock-device`            | POST   | medium   |
-| `reset-device-passcode`         | POST   | high     |
-| `shutdown-managed-device`       | POST   | high     |
-| `disable-lost-mode`             | POST   | low      |
-| `locate-managed-device`         | POST   | low      |
-| `bypass-activation-lock`        | POST   | high     |
-| `trigger-defender-scan`         | POST   | low      |
-| `update-defender-signatures`    | POST   | low      |
-| `rotate-bitlocker-keys`         | POST   | medium   |
-| `rotate-local-admin-password`   | POST   | medium   |
-| `clean-windows-device`          | POST   | critical |
-| `logout-shared-apple-user`      | POST   | medium   |
-| `delete-shared-apple-user`      | POST   | high     |
-| `update-windows-device-account` | POST   | medium   |
+| Tool                                     | Method | Risk     |
+| ---------------------------------------- | ------ | -------- |
+| `wipe-managed-device`                    | POST   | critical |
+| `retire-managed-device`                  | POST   | high     |
+| `sync-managed-device`                    | POST   | low      |
+| `reboot-managed-device`                  | POST   | high     |
+| `remote-lock-device`                     | POST   | medium   |
+| `reset-device-passcode`                  | POST   | high     |
+| `shutdown-managed-device`                | POST   | high     |
+| `disable-lost-mode`                      | POST   | low      |
+| `locate-managed-device`                  | POST   | low      |
+| `bypass-activation-lock`                 | POST   | high     |
+| `trigger-defender-scan`                  | POST   | low      |
+| `update-defender-signatures`             | POST   | low      |
+| `rotate-bitlocker-keys`                  | POST   | medium   |
+| `rotate-local-admin-password`            | POST   | medium   |
+| `clean-windows-device`                   | POST   | critical |
+| `logout-shared-apple-user`               | POST   | medium   |
+| `delete-shared-apple-user`               | POST   | high     |
+| `update-windows-device-account`          | POST   | medium   |
+| `run-managed-device-remediation`         | POST   | medium   |
+| `collect-managed-device-logs`            | POST   | medium   |
+| `list-managed-device-log-collections`    | GET    |          |
+| `create-managed-device-log-download-url` | POST   | high     |
+| `rotate-filevault-key`                   | POST   | medium   |
+| `set-managed-device-name`                | POST   | medium   |
+| `enable-lost-mode`                       | POST   | medium   |
+| `play-lost-mode-sound`                   | POST   | low      |
+| `request-remote-assistance`              | POST   | medium   |
 
 ### Conditional Access CRUD (7) -- requires `--allow-writes`
 
@@ -1143,7 +1183,7 @@ Listing or reading `retentionLabels` themselves is **not exposed**: Microsoft Gr
 | `unassign-teams-phone-number`      | POST   | high     |
 | `get-teams-phone-number-operation` | GET    |          |
 
-### Intune reports (18) -- requires `--allow-writes` (POST endpoints)
+### Intune reports (20) -- requires `--allow-writes` (POST endpoints)
 
 | Tool                                             | Method | Risk |
 | ------------------------------------------------ | ------ | ---- |
@@ -1165,8 +1205,10 @@ Listing or reading `retentionLabels` themselves is **not exposed**: Microsoft Gr
 | `intune-cached-report`                           | POST   | low  |
 | `list-intune-report-export-jobs`                 | GET    |      |
 | `intune-device-app-install-status-report`        | POST   | low  |
+| `create-intune-report-export-job`                | POST   | low  |
+| `get-intune-report-export-job`                   | GET    |      |
 
-### Intune partners & infrastructure (10)
+### Intune partners & infrastructure (12)
 
 | Tool                                  | Method | Risk |
 | ------------------------------------- | ------ | ---- |
@@ -1180,22 +1222,32 @@ Listing or reading `retentionLabels` themselves is **not exposed**: Microsoft Gr
 | `list-windows-malware-info`           | GET    |      |
 | `list-intune-mobile-apps`             | GET    |      |
 | `list-intune-app-categories`          | GET    |      |
+| `get-intune-mobile-app`               | GET    |      |
+| `list-intune-mobile-app-assignments`  | GET    |      |
 
-### Intune app management (11)
+### Intune app management (19)
 
-| Tool                               | Method | Risk |
-| ---------------------------------- | ------ | ---- |
-| `list-intune-app-configurations`   | GET    |      |
-| `list-managed-app-policies`        | GET    |      |
-| `list-managed-app-registrations`   | GET    |      |
-| `list-managed-app-statuses`        | GET    |      |
-| `list-android-app-protections`     | GET    |      |
-| `list-ios-app-protections`         | GET    |      |
-| `list-default-app-protections`     | GET    |      |
-| `list-targeted-app-configurations` | GET    |      |
-| `list-mdm-wip-policies`            | GET    |      |
-| `list-mam-wip-policies`            | GET    |      |
-| `list-vpp-tokens`                  | GET    |      |
+| Tool                                          | Method | Risk |
+| --------------------------------------------- | ------ | ---- |
+| `list-intune-app-configurations`              | GET    |      |
+| `list-managed-app-policies`                   | GET    |      |
+| `list-managed-app-registrations`              | GET    |      |
+| `list-managed-app-statuses`                   | GET    |      |
+| `list-android-app-protections`                | GET    |      |
+| `list-ios-app-protections`                    | GET    |      |
+| `list-default-app-protections`                | GET    |      |
+| `list-targeted-app-configurations`            | GET    |      |
+| `list-mdm-wip-policies`                       | GET    |      |
+| `list-mam-wip-policies`                       | GET    |      |
+| `list-vpp-tokens`                             | GET    |      |
+| `list-intune-app-configuration-assignments`   | GET    |      |
+| `list-targeted-app-configuration-assignments` | GET    |      |
+| `list-ios-app-protection-assignments`         | GET    |      |
+| `list-android-app-protection-assignments`     | GET    |      |
+| `list-intune-app-troubleshooting-events`      | GET    |      |
+| `assign-intune-mobile-app`                    | POST   | high |
+| `assign-intune-app-configuration`             | POST   | high |
+| `assign-targeted-app-configuration`           | POST   | high |
 
 ### Advanced policies (15)
 
@@ -1641,6 +1693,7 @@ Channel.Create
 Channel.Delete.All
 CloudPC.ReadWrite.All
 Device.ReadWrite.All
+DeviceManagementApps.ReadWrite.All
 DeviceManagementConfiguration.ReadWrite.All
 DeviceManagementManagedDevices.PrivilegedOperations.All
 DeviceManagementManagedDevices.ReadWrite.All
