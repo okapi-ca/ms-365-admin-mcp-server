@@ -8,6 +8,10 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Fixed
+
+- `--list-tools`, `--list-permissions` and `--verify-login` no longer truncate their JSON when stdout is a pipe. They printed with `console.log` and exited at once; Node writes to a pipe asynchronously, so `node dist/index.js --list-tools | jq` received the first 64 KiB and a parse error. They now exit once the document has been handed to the OS.
+
 ## [0.17.0] — 2026-10-19
 
 ### Added — device lookup by name list (674 tools)
@@ -46,6 +50,7 @@ Graph returns at most 50 rows per call from the `POST /deviceManagement/reports/
 - Tool responses now keep `@odata.type` and `@odata.count`. Every `@odata.*` annotation except `@odata.nextLink` used to be stripped, which made an inclusion assignment target (`groupAssignmentTarget`) indistinguishable from an exclusion (`exclusionGroupAssignmentTarget`), hid the concrete type of a device configuration (a Windows Update ring among Wi-Fi and VPN profiles), and dropped the total that `$count=true` asks for. `@odata.context`, `@odata.etag` and the other annotations are still dropped to save tokens.
 - `get-managed-device` now calls Graph beta, so `$select=hardwareInformation` (TPM version and manufacturer, BIOS version, Device Guard / VBS state) no longer fails with 400. Secure Boot is in `deviceHealthAttestationState`, not in `hardwareInformation`; the tip says so.
 - `get-device-configuration` and `list-device-configurations` tips explain how to read a Windows Update for Business ring: `$select` on a ring-specific property such as `qualityUpdatesDeferralPeriodInDays` fails with 400, because `$select` only resolves the base `deviceConfiguration` type, while a call without `$select` already returns every deferral, deadline and pause field.
+- `run-hunting-query` tip explains why calls past 60 s fail and how to keep a query under that limit. The limit is the MCP client's default request timeout, kept by the claude-device bridge; the server sets no timeout on the Graph call. `docs/TROUBLESHOOTING.md` has the details and the Claude Code `MCP_TOOL_TIMEOUT` setting.
 
 ## [0.16.0] — 2026-10-14
 

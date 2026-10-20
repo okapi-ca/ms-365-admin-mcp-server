@@ -250,6 +250,19 @@ RBAC or access policy missing. Grant the identity `Key Vault Secrets User` role 
 - Run `--verify-login` with the same env vars Claude Desktop uses.
 - If env vars come from a secret manager, ensure your MCP config doesn't use shell expansion (it doesn't run a shell).
 
+### A long call fails after 60 seconds (`run-hunting-query`)
+
+The limit is the MCP client's, not this server's. The MCP TypeScript SDK abandons a request after 60,000 ms unless the client sets another value (`DEFAULT_REQUEST_TIMEOUT_MSEC`), and the claude-device bridge that carries local servers into Claude.ai and Claude Desktop keeps that default. The server cannot extend it: the client starts the clock and drops the answer.
+
+The server itself sets no timeout on its Graph call, in stdio or HTTP mode. Node's `fetch` waits up to 300 s for headers and body, and the Container Apps ingress allows 240 s. The next limit is Graph's: an advanced hunting request that runs past about 3 minutes returns an error.
+
+What to do:
+
+- **Narrow the query.** Filter on `Timestamp` first (`| where Timestamp > ago(1d)`) or pass `Timespan` in the body (`"P1D"`, ISO 8601); filter before any `join`; `project` only the needed columns; `summarize` rather than return raw events; cap rows with `take`. Scope `search` and `union` to named tables: an unscoped one spans every table.
+- **Split it.** One query per day or per device group finishes faster than one over 30 days.
+- **Do not retry a timed-out query unchanged.** The client gave up, but Graph kept running it, and each run counts against the tenant's hunting CPU quota (10 minutes of execution per hour). Retrying the same slow query brings the tenant closer to being blocked for the next 15-minute cycle.
+- **Claude Code only:** `MCP_TOOL_TIMEOUT` (milliseconds) raises the client limit, e.g. `MCP_TOOL_TIMEOUT=180000 claude`. The bridge exposes no equivalent setting.
+
 ---
 
 ## OAuth / browser authentication problems

@@ -8,6 +8,20 @@ import AdminGraphServer from './server.js';
 import { version } from './version.js';
 import { getSecrets } from './secrets.js';
 
+/**
+ * Writes a JSON document to stdout and exits once it has been handed to the OS.
+ *
+ * console.log followed by process.exit loses output when stdout is a pipe: pipe
+ * writes are asynchronous in Node, and the exit discards what is still queued,
+ * so `--list-tools | jq` received the first 64 KiB and a truncated document.
+ */
+async function printAndExit(document: unknown, code = 0): Promise<never> {
+  await new Promise<void>((resolve) =>
+    process.stdout.write(`${JSON.stringify(document, null, 2)}\n`, () => resolve())
+  );
+  process.exit(code);
+}
+
 async function main(): Promise<void> {
   try {
     const args = parseArgs();
@@ -17,10 +31,7 @@ async function main(): Promise<void> {
       const permissions = buildPermissionsFromEndpoints(args.enabledTools, readOnly);
       const sorted = [...permissions].sort((a, b) => a.localeCompare(b));
       const filter = args.enabledTools ? args.enabledTools : undefined;
-      console.log(
-        JSON.stringify({ mode: 'application', readOnly, filter, permissions: sorted }, null, 2)
-      );
-      process.exit(0);
+      await printAndExit({ mode: 'application', readOnly, filter, permissions: sorted });
     }
 
     if (args.listTools) {
@@ -60,8 +71,7 @@ async function main(): Promise<void> {
           permissions: e.appPermissions || [],
         }));
 
-      console.log(JSON.stringify({ count: tools.length, maxRiskLevel, tools }, null, 2));
-      process.exit(0);
+      await printAndExit({ count: tools.length, maxRiskLevel, tools });
     }
 
     const secrets = await getSecrets();
@@ -70,8 +80,7 @@ async function main(): Promise<void> {
     if (args.verifyLogin) {
       logger.info('Verifying client credentials...');
       const result = await authManager.testLogin();
-      console.log(JSON.stringify(result, null, 2));
-      process.exit(result.success ? 0 : 1);
+      await printAndExit(result, result.success ? 0 : 1);
     }
 
     const server = new AdminGraphServer(authManager, args);

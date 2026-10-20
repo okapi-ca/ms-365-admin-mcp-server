@@ -2587,7 +2587,7 @@
     "section": "Incident response",
     "appPermissions": ["ThreatHunting.Read.All"],
     "riskLevel": "low",
-    "llmTip": "Runs an advanced hunting query using KQL (Kusto Query Language) against Microsoft 365 Defender data. Body: {\"query\":\"DeviceProcessEvents | where Timestamp > ago(1d) | take 10\"}. Tables include DeviceEvents, DeviceProcessEvents, DeviceNetworkEvents, DeviceFileEvents, EmailEvents, AlertEvidence, IdentityLogonEvents, CloudAppEvents. Powerful for threat investigation."
+    "llmTip": "Runs an advanced hunting query using KQL (Kusto Query Language) against Microsoft 365 Defender data. Body: {\"query\":\"DeviceProcessEvents | where Timestamp > ago(1d) | take 10\"}. Tables include DeviceEvents, DeviceProcessEvents, DeviceNetworkEvents, DeviceFileEvents, EmailEvents, AlertEvidence, IdentityLogonEvents, CloudAppEvents. Powerful for threat investigation. Keep queries narrow: the MCP client, not this server, abandons a call after about 60 s, and Graph stops a query after about 3 minutes. Filter on Timestamp first or pass Timespan (ISO 8601, e.g. \"P1D\"), project only the columns you need, summarize instead of returning raw events, and cap rows with take. Split a slow query by day or by device rather than retrying it."
   },
   {
     "pathPattern": "/security/identities/healthIssues",
