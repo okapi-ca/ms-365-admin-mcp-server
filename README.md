@@ -252,6 +252,16 @@ node dist/index.js --preset security,audit,identity
 node dist/index.js --verify-login
 ```
 
+### Large results
+
+Three levers keep a long list inside the model's context; they combine.
+
+- **`$select`** chooses the fields Graph returns. It is the biggest saving on wide entities such as `managedDevice`.
+- **`shape`** (collection reads and `get-managed-devices-by-names`) shrinks what is left. `compact` drops null and empty fields; `table` also returns the rows as arrays under one `columns` list, so field names appear once instead of on every row. Both return unindented JSON. Paging annotations (`@odata.nextLink`, `@odata.count`) are kept.
+- **`allPages`** (the `intune-*` report tools) fetches every page of a report server-side; the reports are already tabular and take their column list in the request body (`select`).
+
+The server writes no export files: in HTTP mode it has no access to the client's disk, and in stdio mode a file would leave personal data unencrypted outside Graph.
+
 ## Available tools (674)
 
 ### Security (11)

@@ -8,6 +8,15 @@ Tool counts in parentheses indicate the cumulative total after the change.
 
 ## [Unreleased]
 
+### Added — compact output for long lists
+
+A device audit spent most of its context on a 216-row device list in which every row repeated every field name, a third of the fields were null, and the JSON was indented. The 305 collection reads (GET whose path does not end in an entity id or a function call) and `get-managed-devices-by-names` accept `shape`:
+
+- `compact` drops null, empty-string, empty-array and empty-object fields, recursively. Graph uses null for "no value", so nothing is lost.
+- `table` compacts, then returns the list as `{ columns, rows }`: field names once, each row an array in column order, null where a row lacks a column.
+
+Both emit unindented JSON and keep `@odata.nextLink` and `@odata.count`; an empty list stays an empty list. The reshaping runs before the untrusted-content envelope, and a response that is not a JSON object (CSV report, error) is returned unchanged. Without `shape` a call behaves as before. `$select` still chooses the columns. Every group of the partition tests stays under the 512 KiB input-schema ceiling. No file export: the server has no access to the client's disk in HTTP mode, and in stdio mode an export would leave personal data unencrypted on disk.
+
 ## [0.17.0] — 2026-10-19
 
 ### Added — device lookup by name list (674 tools)

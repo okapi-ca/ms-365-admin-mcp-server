@@ -29,6 +29,7 @@ import {
   type GuardrailResult,
 } from './guardrails.js';
 import { compositeTools, type CompositeTool } from './composite-tools.js';
+import { isOutputShape, OUTPUT_SHAPES, shapeResponseText } from './output-shape.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,6 +136,45 @@ export function endpointSections(): { toolName: string; section: string }[] {
     toolName,
     section,
   }));
+}
+
+/**
+ * Tools that accept `shape` (output-shape.ts): reads of a collection. A path
+ * ending in `}` addresses one entity, one ending in `)` is a function-style
+ * report (often CSV); download and raw-Accept endpoints return no JSON to shape.
+ */
+export function acceptsOutputShape(config: EndpointConfig | undefined): boolean {
+  return (
+    config !== undefined &&
+    config.method.toLowerCase() === 'get' &&
+    !/[})]$/.test(config.pathPattern) &&
+    !config.acceptType &&
+    !config.returnDownloadUrl
+  );
+}
+
+// One schema instance shared by every tool that takes the parameter. The text is
+// repeated in ~300 tool schemas, so every character costs ~300 bytes of budget.
+const outputShapeParam = z
+  .enum(OUTPUT_SHAPES)
+  .describe(
+    'For long lists. compact: drop null/empty fields. table: compact, rows as arrays + columns.'
+  )
+  .optional();
+
+/** Applies `shape` to a successful result; anything else passes through. */
+function applyOutputShape(
+  result: CallToolResult,
+  shape: unknown,
+  listKey?: string
+): CallToolResult {
+  if (result.isError || !isOutputShape(shape)) return result;
+  return {
+    ...result,
+    content: result.content.map((item) =>
+      item.type === 'text' ? { ...item, text: shapeResponseText(item.text, shape, listKey) } : item
+    ),
+  };
 }
 
 /** One group of a tool partition, as served on `/mcp/<group>`. */
@@ -329,6 +369,7 @@ async function executeGraphTool(
     for (const [paramName, paramValue] of Object.entries(params)) {
       if (
         paramName === 'excludeResponse' ||
+        (paramName === 'shape' && acceptsOutputShape(config)) ||
         (config?.reportPagination && (paramName === 'allPages' || paramName === 'dedupeBy'))
       ) {
         continue;
@@ -487,6 +528,10 @@ async function executeGraphTool(
       graphResult = appendErrorHints(graphResult, guardrail.errorHints);
     }
 
+    if (acceptsOutputShape(config) && !params.excludeResponse) {
+      graphResult = applyOutputShape(graphResult, params.shape);
+    }
+
     const wrapped = wrapUntrustedContent(graphResult, tool.alias);
 
     // A guardrail notice is server-generated, so it is prepended *outside* the
@@ -523,7 +568,11 @@ async function executeCompositeTool(
 ): Promise<CallToolResult> {
   logger.info(`Tool ${composite.toolName} called with params: [${Object.keys(params).join(', ')}]`);
   try {
-    return wrapUntrustedContent(await composite.run(graphClient, params), composite.toolName);
+    const result = await composite.run(graphClient, params);
+    return wrapUntrustedContent(
+      composite.listKey ? applyOutputShape(result, params.shape, composite.listKey) : result,
+      composite.toolName
+    );
   } catch (error) {
     logger.error(`Error executing tool ${composite.toolName}: ${(error as Error).message}`);
     return {
@@ -716,7 +765,9 @@ function compositeCatalogEntry(composite: CompositeTool): CatalogEntry {
   const entry: CatalogEntry = {
     name: composite.toolName,
     description: describeTool(composite.description, composite, composite.method),
-    inputShape: composite.inputShape,
+    inputShape: composite.listKey
+      ? { ...composite.inputShape, shape: outputShapeParam }
+      : composite.inputShape,
     annotations: toolAnnotations(composite.toolName, composite.method),
     requiresAppOnly: requiresAppOnly(composite.appPermissions),
   };
@@ -822,6 +873,10 @@ function buildCatalogEntry(
     .boolean()
     .describe('Exclude the full response body and only return success or failure')
     .optional();
+
+  if (acceptsOutputShape(endpointConfig)) {
+    paramSchema['shape'] = outputShapeParam;
+  }
 
   if (endpointConfig?.reportPagination) {
     paramSchema['allPages'] = z

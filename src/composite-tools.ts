@@ -38,6 +38,8 @@ interface ToolResult {
 
 export interface CompositeTool extends CompositeEndpoint {
   description: string;
+  /** Key of the result's row list; set, the tool accepts `shape` (output-shape.ts). */
+  listKey?: string;
   inputShape: Record<string, z.ZodTypeAny>;
   run(graphClient: GraphClient, params: Record<string, unknown>): Promise<ToolResult>;
 }
@@ -279,6 +281,7 @@ const getManagedDevicesByNamesTool: CompositeTool = {
     'Look up several Intune managed devices by exact device name. Sends one ' +
     "`$filter=deviceName eq '<name>'` request per name through Graph $batch (20 per call) " +
     'and merges the results.',
+  listKey: 'devices',
   inputShape: {
     deviceNames: deviceNamesSchema.describe(
       `Device names to resolve (1-${MAX_DEVICE_NAMES}). Duplicates and blanks are ignored.`
